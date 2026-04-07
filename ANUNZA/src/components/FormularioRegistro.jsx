@@ -1,0 +1,158 @@
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import './AuthForm.css';
+
+/**
+ * FormularioRegistro - Componente para registro de nuevos usuarios
+ */
+export const FormularioRegistro = () => {
+  const navigate = useNavigate();
+  const { register, error: authError } = useAuth();
+  const [formData, setFormData] = useState({
+    nombre: '',
+    correo: '',
+    telefono: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      // Validar campos
+      if (!formData.nombre || !formData.correo || !formData.telefono || !formData.password) {
+        setError('Por favor completa todos los campos');
+        setLoading(false);
+        return;
+      }
+
+      // Validar que las contraseñas coincidan
+      if (formData.password !== formData.confirmPassword) {
+        setError('Las contraseñas no coinciden');
+        setLoading(false);
+        return;
+      }
+
+      // Validar longitud de contraseña
+      if (formData.password.length < 6) {
+        setError('La contraseña debe tener mínimo 6 caracteres');
+        setLoading(false);
+        return;
+      }
+
+      // Validar formato de correo
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.correo)) {
+        setError('Correo inválido');
+        setLoading(false);
+        return;
+      }
+
+      // Llamar función de registro
+      await register(formData.nombre, formData.correo, formData.telefono, formData.password);
+
+      // Redirigir al dashboard
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-container">
+      <div className="auth-box">
+        <h1>Crear Cuenta</h1>
+
+        {(error || authError) && <div className="error-message">{error || authError}</div>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="nombre">Nombre Completo</label>
+            <input
+              type="text"
+              id="nombre"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              placeholder="Juan Pérez"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="correo">Correo Electrónico</label>
+            <input
+              type="email"
+              id="correo"
+              name="correo"
+              value={formData.correo}
+              onChange={handleChange}
+              placeholder="ejemplo@correo.com"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="telefono">Teléfono</label>
+            <input
+              type="tel"
+              id="telefono"
+              name="telefono"
+              value={formData.telefono}
+              onChange={handleChange}
+              placeholder="+34 123 456 789"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirmar Contraseña</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <button type="submit" className="submit-button" disabled={loading}>
+            {loading ? 'Registrando...' : 'Registrarse'}
+          </button>
+        </form>
+
+        <p className="auth-footer">
+          ¿Ya tienes cuenta? <Link to="/login">Inicia sesión aquí</Link>
+        </p>
+      </div>
+    </div>
+  );
+};
