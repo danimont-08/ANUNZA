@@ -1,0 +1,75 @@
+.filtros-servicios {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 30px;
+}
+
+.filtros-servicios h2 {
+  margin: 0 0 18px;
+  color: #1f2937;
+  font-size: 22px;
+}
+
+.filtro-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.filtro-group label {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.filtro-group input,
+.filtro-group select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+  color: #111827;
+}
+
+.rango-precios {
+  gap: 20px;
+}
+
+.rango-precios > div {
+  display: grid;
+  gap: 8px;
+}
+
+.rango-values {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rating-group .rating-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rating-group button {
+  background-color: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #3730a3;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.rating-group button.active {
+  background-color: #4338ca;
+  color: #fff;
+  border-color: #4338ca;
+}
+
+.rating-group button:hover {
+  background-color: #c7d2fe;
+}

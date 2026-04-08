@@ -1,0 +1,24 @@
+.feature-search {
+  margin-bottom: 30px;
+}
+
+.feature-search-box {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.feature-search-box input {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+  outline: none;
+  font-size: 16px;
+  color: #111827;
+}
+
+.feature-search-box input:focus {
+  border-color: #4338ca;
+  box-shadow: 0 12px 40px rgba(67, 56, 202, 0.15);
+}
