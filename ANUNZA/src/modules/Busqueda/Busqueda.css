@@ -1,0 +1,88 @@
+/* CONTENEDOR PRINCIPAL */
+.busqueda-container {
+  padding: 30px;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f7; /* gris claro */
+  min-height: 100vh;
+}
+
+/* TÍTULO */
+.busqueda-container h2 {
+  color: #5b21b6; /* morado */
+  margin-bottom: 20px;
+}
+
+/* GRID DE CATEGORÍAS */
+.grid-categorias {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* TARJETA DE CATEGORÍA */
+.categoria-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid #e0e0e0; /* gris claro */
+
+  transition: all 0.25s ease;
+}
+
+/* HOVER */
+.categoria-card:hover {
+  transform: translateY(-5px);
+  border-color: #7c3aed; /* morado */
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.2);
+}
+
+/* IMAGEN */
+.categoria-card img {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+/* TEXTO */
+.categoria-card p {
+  margin: 0;
+  font-weight: 600;
+  color: #374151; /* gris oscuro */
+}
+
+/* BOTÓN (para futuro filtros) */
+button {
+  background-color: #7c3aed; /* morado */
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background-color: #5b21b6;
+}
+
+/* LISTA DE RESULTADOS */
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: white;
+  margin-bottom: 10px;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+/* TEXTO DE RESULTADO */
+li strong {
+  color: #5b21b6;
+}

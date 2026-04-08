@@ -1,9 +1,15 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Busqueda from "./modules/Busqueda/Busqueda";
+import CategoriaPage from "./modules/categoria/CategoriaPage";
+
 function App() {
   return (
-    <div>
-      <h1>ANUNZA</h1>
-      <p>Página principal</p>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Busqueda />} />
+        <Route path="/categoria/:nombre" element={<CategoriaPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
