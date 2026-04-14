@@ -228,3 +228,12 @@
   padding: 0 0.85rem;
   cursor: pointer;
 }
+
+/* Botón reportar */
+.pub-btn.pub-report {
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.25);
+}
+.pub-btn.pub-report:hover {
+  background: rgba(192, 57, 43, 0.08);
+}

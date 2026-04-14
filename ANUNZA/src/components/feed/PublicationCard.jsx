@@ -4,7 +4,11 @@ import {
   fetchComentarios,
   addComentarioApi,
 } from '../../models/publicacionModel';
+import { ReportModal } from './ReportModal';
 import './PublicationCard.css';
+
+const DEFAULT_AVATAR =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0aac8'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 20c0-4 3.6-7 8-7s8 3 8 7'/%3E%3C/svg%3E";
 
 function formatDate(iso) {
   if (!iso) return '';
@@ -13,21 +17,16 @@ function formatDate(iso) {
       dateStyle: 'medium',
       timeStyle: 'short',
     });
-  } catch {
-    return '';
-  }
+  } catch { return ''; }
 }
 
-export function PublicationCard({
-  p,
-  currentUserId,
-  onToggleLike,
-  onOpenChat,
-  onError,
-}) {
+export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError }) {
   const [openComments, setOpenComments] = useState(false);
   const [openResena, setOpenResena] = useState(false);
+  const [openReport, setOpenReport] = useState(false);
   const [comments, setComments] = useState([]);
+  // Tomar comentarios_count del servidor (count real de todos los comentarios)
+  const [commentCount, setCommentCount] = useState(p.comentarios_count ?? 0);
   const [draft, setDraft] = useState('');
   const [resenaDraft, setResenaDraft] = useState('');
   const [rating, setRating] = useState(5);
@@ -41,9 +40,9 @@ export function PublicationCard({
     try {
       const data = await fetchComentarios(p.id);
       setComments(data.comentarios || []);
-    } catch (e) {
-      onError(e.message);
-    }
+      // Sincronizar el contador con la respuesta real del servidor
+      setCommentCount(data.comentarios?.length ?? commentCount);
+    } catch (e) { onError(e.message); }
   };
 
   const toggleComments = () => {
@@ -59,9 +58,8 @@ export function PublicationCard({
       const data = await addComentarioApi(p.id, text);
       setDraft('');
       setComments((c) => [...c, data.comentario]);
-    } catch (e) {
-      onError(e.message);
-    }
+      setCommentCount((n) => n + 1);
+    } catch (e) { onError(e.message); }
   };
 
   const sendResena = async () => {
@@ -74,28 +72,21 @@ export function PublicationCard({
       setOpenResena(false);
       setOpenComments(true);
       setComments((c) => [...c, data.comentario]);
-    } catch (e) {
-      onError(e.message);
-    }
+      setCommentCount((n) => n + 1);
+    } catch (e) { onError(e.message); }
   };
 
   const shareLink = async () => {
     const url = `${window.location.origin}/dashboard?post=${p.id}`;
     try {
       await navigator.clipboard.writeText(url);
-    } catch {
-      onError('No se pudo copiar el enlace');
-    }
+    } catch { onError('No se pudo copiar el enlace'); }
   };
 
   return (
     <article className="pub-card">
       <header className="pub-card-head">
-        <img
-          className="pub-avatar"
-          src={p.autor_foto || 'https://api.dicebear.com/7.x/avataaars/svg?seed=anunza'}
-          alt=""
-        />
+        <img className="pub-avatar" src={p.autor_foto || DEFAULT_AVATAR} alt="" />
         <div className="pub-head-text">
           <div className="pub-author">{p.autor_nombre}</div>
           <time className="pub-time">{formatDate(p.created_at)}</time>
@@ -110,30 +101,16 @@ export function PublicationCard({
       {tags.length > 0 && (
         <div className="pub-tags">
           {tags.map((t) => (
-            <span key={t} className="pub-tag">
-              #{t}
-            </span>
+            <span key={t} className="pub-tag">#{t}</span>
           ))}
         </div>
       )}
 
       {svc && (svc.materiales || svc.tiempo_estimado || svc.detalles) && (
         <div className="pub-service">
-          {svc.materiales && (
-            <p>
-              <strong>Materiales:</strong> {svc.materiales}
-            </p>
-          )}
-          {svc.tiempo_estimado && (
-            <p>
-              <strong>Tiempo estimado:</strong> {svc.tiempo_estimado}
-            </p>
-          )}
-          {svc.detalles && (
-            <p>
-              <strong>Detalles:</strong> {svc.detalles}
-            </p>
-          )}
+          {svc.materiales && <p><strong>Materiales:</strong> {svc.materiales}</p>}
+          {svc.tiempo_estimado && <p><strong>Tiempo estimado:</strong> {svc.tiempo_estimado}</p>}
+          {svc.detalles && <p><strong>Detalles:</strong> {svc.detalles}</p>}
         </div>
       )}
 
@@ -153,12 +130,8 @@ export function PublicationCard({
         >
           {p.user_liked ? 'Te gusta' : 'Me gusta'} · {p.interacciones_count ?? 0}
         </button>
-        <button type="button" className="pub-btn" onClick={shareLink}>
-          Reenviar
-        </button>
-        <button type="button" className="pub-btn" onClick={() => setOpenResena((v) => !v)}>
-          Reseñar
-        </button>
+        <button type="button" className="pub-btn" onClick={shareLink}>Reenviar</button>
+        <button type="button" className="pub-btn" onClick={() => setOpenResena((v) => !v)}>Reseñar</button>
         <button
           type="button"
           className="pub-btn pub-chat"
@@ -168,7 +141,14 @@ export function PublicationCard({
           Chat
         </button>
         <button type="button" className="pub-btn" onClick={toggleComments}>
-          Comentar
+          Comentar · {commentCount}
+        </button>
+        <button
+          type="button"
+          className="pub-btn pub-report"
+          onClick={() => setOpenReport(true)}
+        >
+          Reportar
         </button>
       </footer>
 
@@ -182,9 +162,7 @@ export function PublicationCard({
                 type="button"
                 className={n <= rating ? 'is-on' : ''}
                 onClick={() => setRating(n)}
-              >
-                ★
-              </button>
+              >★</button>
             ))}
           </div>
           <textarea
@@ -204,7 +182,7 @@ export function PublicationCard({
           <ul className="pub-comment-list">
             {comments.map((c) => (
               <li key={c.id} className="pub-comment">
-                <img src={c.autor_foto || ''} alt="" className="pub-c-av" />
+                <img src={c.autor_foto || DEFAULT_AVATAR} alt="" className="pub-c-av" />
                 <div>
                   <strong>{c.autor_nombre}</strong>
                   <p>{c.contenido}</p>
@@ -218,12 +196,19 @@ export function PublicationCard({
               placeholder="Escribe un comentario…"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendComment()}
             />
-            <button type="button" onClick={sendComment}>
-              Enviar
-            </button>
+            <button type="button" onClick={sendComment}>Enviar</button>
           </div>
         </div>
+      )}
+
+      {openReport && (
+        <ReportModal
+          publicacionId={p.id}
+          publicacionTitulo={p.titulo}
+          onClose={() => setOpenReport(false)}
+        />
       )}
     </article>
   );

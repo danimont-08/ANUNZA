@@ -23,7 +23,11 @@ if (!databaseUrl) {
 export const pool = new Pool({
   connectionString: databaseUrl,
   ssl: process.env.DATABASE_SSL !== 'false' ? { rejectUnauthorized: false } : false,
-  max: 10,
+  max: 10,                        // Transaction Pooler: hasta ~15 en plan free; 10 deja margen para multi-usuario
+  idleTimeoutMillis: 30000,       // Liberar conexiones inactivas a los 30s
+  connectionTimeoutMillis: 15000, // Esperar hasta 15s antes de fallar
+  keepAlive: true,                // Mantener TCP vivo; reduce latencia en conexiones reutilizadas
+  keepAliveInitialDelayMillis: 10000,
 });
 
 export const testConnection = async () => {
@@ -32,6 +36,16 @@ export const testConnection = async () => {
     await client.query('SELECT 1');
     client.release();
     console.log('Conectado a PostgreSQL (Supabase) exitosamente');
+
+    // Keep-alive: ping cada 4 min para evitar que Supabase pause la BD 
+   
+    setInterval(async () => {
+      try {
+        await pool.query('SELECT 1');
+      } catch {
+        
+      }
+    }, 4 * 60 * 1000); // cada 4 minutos
   } catch (error) {
     const msg = String(error.message);
     console.error('Error conectando a PostgreSQL:', msg);
@@ -39,16 +53,16 @@ export const testConnection = async () => {
       console.error(
         '\nENOTFOUND suele indicar que tu red/PC no resuelve o no alcanza el host de la conexión DIRECTA.\n' +
           'Supabase usa IPv6 en db.PROJECT_REF.supabase.co; muchas redes Windows solo IPv4 fallan así.\n\n' +
-          'Qué hacer: Dashboard Supabase → Connect (Conectar) → modo "Session pooler" / "Session mode".\n' +
+          'Qué hacer: Dashboard Supabase → Connect (Conectar) → modo "Transaction pooler".\n' +
           'Copia esa URI completa a DATABASE_URL en backend/.env (host tipo aws-0-REGION.pooler.supabase.com,\n' +
-          'usuario postgres.TU_PROJECT_REF, puerto 5432). No pegues espacios ni comillas alrededor.\n' +
-          'Si usas conexión directa, revisa que el host sea exactamente el del panel (sin typos).\n'
+          'usuario postgres.TU_PROJECT_REF, puerto 6543). No pegues espacios ni comillas alrededor.\n'
       );
     } else if (/password|28P01|SASL/i.test(msg)) {
       console.error(
-        'Pista: revisa la contraseña en DATABASE_URL. Los caracteres especiales deben ir codificados en la URI.'
+        'Revisar la contraseña en DATABASE_URL. Los caracteres especiales deben ir codificados en la URI.'
       );
     }
     process.exit(1);
   }
 };
+

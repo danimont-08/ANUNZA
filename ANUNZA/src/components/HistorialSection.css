@@ -83,3 +83,24 @@
   color: #666;
   margin-top: 0.2rem;
 }
+
+/* Nuevos helpers */
+.hist-icon {
+  margin-right: 5px;
+  font-size: 1rem;
+}
+
+.hist-item-link {
+  color: var(--anunza-violet, #8a4eff);
+  font-weight: 600;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 2px;
+}
+.hist-item-link:hover { text-decoration: underline; }
+
+.hist-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}

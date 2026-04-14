@@ -2,6 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../services/api';
 import './HistorialSection.css';
 
+/** Parsea la descripción que puede ser texto plano o JSON {"text":"..."}. */
+function parseTitulo(raw) {
+  if (!raw) return '';
+  const s = String(raw).trim();
+  if (s.startsWith('{')) {
+    try { return JSON.parse(s).text?.slice(0, 80) || s.slice(0, 80); } catch { return s.slice(0, 80); }
+  }
+  return s.slice(0, 80);
+}
+
+const TIPO_ICONO = {
+  me_gusta: '❤️',
+  like: '❤️',
+  me_interesa: '⭐',
+};
+
 export function HistorialSection() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,26 +35,11 @@ export function HistorialSection() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  if (loading) {
-    return (
-      <div className="hist-wrap">
-        <p>Cargando tu historial…</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="hist-wrap">
-        <div className="hist-error">{error}</div>
-      </div>
-    );
-  }
+  if (loading) return <div className="hist-wrap"><p>Cargando tu historial…</p></div>;
+  if (error)   return <div className="hist-wrap"><div className="hist-error">{error}</div></div>;
 
   return (
     <div className="hist-wrap">
@@ -46,13 +47,12 @@ export function HistorialSection() {
         <h1>Mi historial</h1>
         <p className="hist-promedio">
           Promedio de calificación:{' '}
-          <strong>
-            {data.promedio_calificacion != null ? data.promedio_calificacion : '—'}
-          </strong>
+          <strong>{data.promedio_calificacion != null ? data.promedio_calificacion : '—'}</strong>
         </p>
       </header>
 
       <div className="hist-grid">
+        {/* Trabajos */}
         <section className="hist-card">
           <h2>Trabajos</h2>
           <ul className="hist-list">
@@ -62,51 +62,72 @@ export function HistorialSection() {
                 <span className="hist-item-title">{t.publicacion_titulo || 'Trabajo'}</span>
                 <span className="hist-meta">
                   {t.estado ? `Estado: ${t.estado}` : ''}
-                  {t.created_at ? ` · ${new Date(t.created_at).toLocaleDateString('es-CO')}` : ''}
+                  {t.fecha_inicio ? ` · Inicio: ${new Date(t.fecha_inicio).toLocaleDateString('es-CO')}` : ''}
+                  {t.fecha_fin   ? ` · Fin: ${new Date(t.fecha_fin).toLocaleDateString('es-CO')}` : ''}
                 </span>
               </li>
             ))}
           </ul>
         </section>
 
+        {/* Calificaciones */}
         <section className="hist-card">
           <h2>Calificaciones recibidas</h2>
           <ul className="hist-list">
             {(data.calificaciones || []).length === 0 && <li className="hist-empty">Sin calificaciones</li>}
             {(data.calificaciones || []).map((c) => (
               <li key={c.id}>
-                <strong>Puntuación: {c.puntuacion ?? c.puntos ?? '—'}</strong>
+                <strong>{'★'.repeat(c.puntuacion ?? c.puntos ?? 0)} {c.puntuacion ?? c.puntos ?? '—'}/5</strong>
                 {c.comentario && <p>{c.comentario}</p>}
               </li>
             ))}
           </ul>
         </section>
 
+        {/* Mis publicaciones */}
         <section className="hist-card">
           <h2>Mis publicaciones</h2>
           <ul className="hist-list">
             {(data.publicaciones || []).length === 0 && <li className="hist-empty">Sin publicaciones</li>}
             {(data.publicaciones || []).map((p) => (
               <li key={p.id}>
-                <span className="hist-item-title">{p.titulo || 'Sin título'}</span>
-                <span className="hist-meta">{p.descripcion?.slice(0, 80)}</span>
+                <a
+                  href={`/dashboard?post=${p.id}`}
+                  className="hist-item-link"
+                  title={p.titulo || 'Ver publicación'}
+                >
+                  {p.titulo || 'Sin título'}
+                </a>
+                <span className="hist-meta">{parseTitulo(p.descripcion)}</span>
               </li>
             ))}
           </ul>
         </section>
 
+        {/* Interacciones */}
         <section className="hist-card">
           <h2>Mis interacciones</h2>
           <ul className="hist-list">
             {(data.interacciones || []).length === 0 && <li className="hist-empty">Sin interacciones</li>}
             {(data.interacciones || []).map((i) => (
               <li key={i.id}>
-                {i.tipo} · publicación {i.publicacion_id}
+                <span className="hist-icon">{TIPO_ICONO[i.tipo] || '🔹'}</span>
+                <span>
+                  {i.tipo === 'me_gusta' || i.tipo === 'like'
+                    ? `Le diste me gusta a "${i.publicacion_titulo || 'una publicación'}"`
+                    : `${i.tipo} en "${i.publicacion_titulo || 'una publicación'}"`}
+                </span>
+                {i.created_at && (
+                  <span className="hist-meta">
+                    {new Date(i.created_at).toLocaleDateString('es-CO')}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
         </section>
 
+        {/* Historial de actividad */}
         <section className="hist-card hist-card-wide">
           <h2>Historial de actividad</h2>
           <ul className="hist-list">

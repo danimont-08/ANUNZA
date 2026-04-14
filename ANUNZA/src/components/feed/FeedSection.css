@@ -35,3 +35,58 @@
   flex-direction: column;
   gap: 1.25rem;
 }
+
+/* ── Botón "Nueva publicación" ── */
+.feed-new-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--anunza-midnight);   /* #2f086d – morado más oscuro */
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 14px rgba(47, 8, 109, 0.35);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.feed-new-btn:hover {
+  background: #3d0a8f;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(47, 8, 109, 0.45);
+}
+
+.feed-new-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Wrapper del formulario desplegable ── */
+.feed-composer-wrap {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+.feed-composer-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  color: #666;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.feed-composer-close:hover {
+  background: #f0eaff;
+  color: var(--anunza-midnight);
+}

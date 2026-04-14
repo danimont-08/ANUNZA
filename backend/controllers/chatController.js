@@ -22,56 +22,51 @@ async function assertParticipant(conversacionId, userId) {
 export const listConversations = async (req, res) => {
   const userId = req.userId;
   try {
-    const { rows: convs } = await pool.query(
-      `SELECT c.id, c.created_at
+    // Solo conversaciones que tienen al menos un mensaje enviado por otra persona
+    const { rows } = await pool.query(
+      `SELECT
+         c.id,
+         c.created_at,
+         u.id          AS peer_id,
+         u.nombre      AS peer_nombre,
+         u.foto_perfil AS peer_foto,
+         m.contenido   AS ultimo_mensaje,
+         m.created_at  AS ultimo_mensaje_at
        FROM conversaciones c
        INNER JOIN participantes_conversacion pc
          ON pc.conversacion_id = c.id AND pc.usuario_id = $1
-       ORDER BY c.created_at DESC`,
+       LEFT JOIN participantes_conversacion pcp
+         ON pcp.conversacion_id = c.id AND pcp.usuario_id <> $1
+       LEFT JOIN usuarios u ON u.id = pcp.usuario_id
+       LEFT JOIN LATERAL (
+         SELECT contenido, created_at
+         FROM mensajes
+         WHERE conversacion_id = c.id
+         ORDER BY created_at DESC NULLS LAST
+         LIMIT 1
+       ) m ON true
+       WHERE EXISTS (
+         SELECT 1 FROM mensajes msg WHERE msg.conversacion_id = c.id
+       )
+       ORDER BY COALESCE(m.created_at, c.created_at) DESC NULLS LAST`,
       [userId]
     );
 
-    const enriched = [];
-    for (const c of convs) {
-      const peer = await pool.query(
-        `SELECT u.id, u.nombre, u.foto_perfil
-         FROM participantes_conversacion pcp
-         INNER JOIN usuarios u ON u.id = pcp.usuario_id
-         WHERE pcp.conversacion_id = $1 AND pcp.usuario_id <> $2
-         LIMIT 1`,
-        [c.id, userId]
-      );
+    const conversaciones = rows.map((r) => ({
+      id: r.id,
+      created_at: r.created_at,
+      peer: r.peer_id ? { id: r.peer_id, nombre: r.peer_nombre, foto_perfil: r.peer_foto } : null,
+      ultimo_mensaje: r.ultimo_mensaje || null,
+      ultimo_mensaje_at: r.ultimo_mensaje_at || null,
+    }));
 
-      const last = await pool.query(
-        `SELECT contenido, created_at, remitente_id
-         FROM mensajes
-         WHERE conversacion_id = $1
-         ORDER BY created_at DESC NULLS LAST
-         LIMIT 1`,
-        [c.id]
-      );
-
-      enriched.push({
-        id: c.id,
-        created_at: c.created_at,
-        peer: peer.rows[0] || null,
-        ultimo_mensaje: last.rows[0]?.contenido || null,
-        ultimo_mensaje_at: last.rows[0]?.created_at || null,
-      });
-    }
-
-    enriched.sort((a, b) => {
-      const ta = a.ultimo_mensaje_at ? new Date(a.ultimo_mensaje_at).getTime() : 0;
-      const tb = b.ultimo_mensaje_at ? new Date(b.ultimo_mensaje_at).getTime() : 0;
-      return tb - ta;
-    });
-
-    res.json({ conversaciones: enriched });
+    res.json({ conversaciones });
   } catch (error) {
     console.error('listConversations:', error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export const getOrCreateConversation = async (req, res) => {
   const userId = req.userId;
@@ -165,9 +160,27 @@ export const sendMessage = async (req, res) => {
       [userId]
     );
 
+    // Notificar al otro participante
+    try {
+      const otro = await pool.query(
+        `SELECT usuario_id FROM participantes_conversacion
+         WHERE conversacion_id = $1 AND usuario_id <> $2 LIMIT 1`,
+        [conversacionId, userId]
+      );
+      if (otro.rows.length) {
+        const nombre = u.rows[0]?.remitente_nombre || 'Alguien';
+        await pool.query(
+          `INSERT INTO notificaciones (usuario_id, tipo, referencia_id, mensaje)
+           VALUES ($1, 'nuevo_mensaje', $2, $3)`,
+          [otro.rows[0].usuario_id, conversacionId, `${nombre} te envió un mensaje`]
+        );
+      }
+    } catch { /* no bloquear la respuesta */ }
+
     res.status(201).json({ mensaje: { ...rows[0], ...u.rows[0] } });
   } catch (error) {
     console.error('sendMessage:', error);
     res.status(500).json({ message: error.message });
   }
 };
+

@@ -16,6 +16,7 @@ export function FeedSection({ user, onChatWithUser }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({ categoria_id: '', ciudad: '' });
+  const [showComposer, setShowComposer] = useState(false);
 
   const loadFeed = useCallback(async () => {
     setError('');
@@ -54,11 +55,7 @@ export function FeedSection({ user, onChatWithUser }) {
       setItems((prev) =>
         prev.map((p) =>
           p.id === publicacionId
-            ? {
-                ...p,
-                user_liked: data.liked,
-                interacciones_count: data.interacciones_count,
-              }
+            ? { ...p, user_liked: data.liked, interacciones_count: data.interacciones_count }
             : p
         )
       );
@@ -70,6 +67,7 @@ export function FeedSection({ user, onChatWithUser }) {
   const handleCreated = async (body) => {
     const data = await crearPublicacion(body);
     setItems((prev) => [data.publicacion, ...prev]);
+    setShowComposer(false); // cierra el formulario tras publicar
   };
 
   const handleFilterChange = (patch) => {
@@ -99,11 +97,35 @@ export function FeedSection({ user, onChatWithUser }) {
 
       {error && <div className="feed-error">{error}</div>}
 
-      <PublicationComposer
-        categorias={categorias}
-        onCreated={handleCreated}
-        onError={setError}
-      />
+      {/* Botón morado oscuro para abrir el formulario */}
+      {!showComposer && (
+        <button
+          type="button"
+          className="feed-new-btn"
+          onClick={() => setShowComposer(true)}
+        >
+          Nueva publicación
+        </button>
+      )}
+
+      {/* Formulario desplegable con animación slideUp */}
+      {showComposer && (
+        <div className="feed-composer-wrap animate-slide-up">
+          <button
+            type="button"
+            className="feed-composer-close"
+            onClick={() => setShowComposer(false)}
+            title="Cerrar formulario"
+          >
+            ✕
+          </button>
+          <PublicationComposer
+            categorias={categorias}
+            onCreated={handleCreated}
+            onError={setError}
+          />
+        </div>
+      )}
 
       <FeedFiltersBar
         categorias={categorias}
@@ -114,7 +136,9 @@ export function FeedSection({ user, onChatWithUser }) {
       />
 
       <div className="feed-list">
-        {items.length === 0 && !error && <p className="feed-empty">No hay publicaciones con estos filtros.</p>}
+        {items.length === 0 && !error && (
+          <p className="feed-empty">No hay publicaciones con estos filtros.</p>
+        )}
         {items.map((p) => (
           <PublicationCard
             key={p.id}

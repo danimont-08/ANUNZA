@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 /**
- * Home - Solo lógica de redirección
+ * Home - Lógica de redirección
  */
 export const Home = () => {
   const { isAuthenticated, loading } = useAuth();

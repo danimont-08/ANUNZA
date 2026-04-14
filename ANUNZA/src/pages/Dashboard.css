@@ -83,22 +83,27 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  align-items: flex-start;
+  min-height: calc(100vh - 70px);
 }
 
-/* Sidebar */
+/* Sidebar — sticky al costado */
 .sidebar {
-  width: 250px;
+  width: 220px;
+  flex-shrink: 0;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(47, 8, 109, 0.08);
   margin-right: 20px;
-  padding: 20px 0;
+  padding: 12px 0;
   position: sticky;
-  top: 90px;
+  top: 80px;           
   align-self: flex-start;
-  max-height: calc(100vh - 110px);
+  max-height: calc(100vh - 100px);
   overflow-y: auto;
+  z-index: 10;         
 }
+
 
 .sidebar-nav ul {
   list-style: none;
@@ -125,10 +130,20 @@
   font-weight: 500;
 }
 
-/* Main Content */
+/* Main Content — toma el espacio restante */
 .main-content {
   flex: 1;
+  min-width: 0;   /* evita desbordamiento en flex */
 }
+
+/* Wrapper del panel de notificaciones (debajo de la navbar, alineado a la derecha) */
+.notif-panel-wrapper {
+  position: fixed;
+  top: 70px;
+  right: max(calc(50% - 600px + 16px), 16px);
+  z-index: 400;
+}
+
 
 /* Welcome Section */
 .welcome-section {
@@ -332,57 +347,56 @@
   color: #555;
 }
 
-/* Responsive Design */
+/* Responsive — en móvil el sidebar pasa a barra inferior fija */
 @media (max-width: 768px) {
-  .navbar-content {
-    flex-direction: column;
-    height: auto;
-    padding: 15px 20px;
-  }
-
-  .navbar-search {
-    max-width: none;
-    margin: 15px 0;
-  }
-
   .dashboard-body {
     flex-direction: column;
-    padding: 10px;
+    padding: 10px 10px 80px; /* espacio inferior para la barra de navegación */
   }
 
+  /* El sidebar se convierte en nav bottom */
   .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
     width: 100%;
+    max-height: none;
+    border-radius: 0;
     margin-right: 0;
-    margin-bottom: 20px;
+    padding: 0;
+    box-shadow: 0 -2px 12px rgba(47, 8, 109, 0.12);
+    z-index: 50;
+    overflow: visible;
   }
 
   .sidebar-nav ul {
     display: flex;
-    flex-wrap: wrap;
+    justify-content: space-around;
   }
 
   .sidebar-nav li {
-    flex: 1 1 auto;
+    flex: 1;
     text-align: center;
-    padding: 10px;
+    padding: 10px 4px;
+    font-size: 0.75rem;
+    border-left: none;
+    border-top: 3px solid transparent;
   }
 
-  .welcome-section {
-    padding: 20px;
+  .sidebar-nav li.active {
+    border-left: none;
+    border-top-color: #8A4EFF;
+    background-color: #f0e9ff;
   }
 
-  .welcome-section h1 {
-    font-size: 24px;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .ads-grid {
-    grid-template-columns: 1fr;
+  .sidebar-nav li:hover {
+    border-left: none;
+    border-top-color: #8A4EFF;
   }
 }
+
 
 @media (max-width: 480px) {
   .stats-grid {

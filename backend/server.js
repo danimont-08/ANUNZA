@@ -7,6 +7,9 @@ import userRoutes from './routes/userRoutes.js';
 import feedRoutes from './routes/feedRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import historialRoutes from './routes/historialRoutes.js';
+import notificacionesRoutes from './routes/notificacionesRoutes.js';
+import reportesRoutes from './routes/reportesRoutes.js';
+
 
 dotenv.config();
 
@@ -23,6 +26,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/historial', historialRoutes);
+app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/reportes', reportesRoutes);
+
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {

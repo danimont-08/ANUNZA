@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/Logo_Anunza.png';
 import './Navbar.css';
 
-export function Navbar({ user, onLogout, onOpenProfile }) {
+const DEFAULT_AVATAR =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0aac8'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 20c0-4 3.6-7 8-7s8 3 8 7'/%3E%3C/svg%3E";
+
+export function Navbar({ user, onLogout, onOpenProfile, noLeidas = 0, onToggleNotificaciones }) {
   return (
     <header className="anunza-navbar">
       <div className="anunza-navbar-inner">
@@ -11,9 +14,23 @@ export function Navbar({ user, onLogout, onOpenProfile }) {
           <img src={logo} alt="ANUNZA" className="anunza-navbar-logo" />
         </Link>
         <div className="anunza-navbar-actions">
+          {/* Campanita de notificaciones */}
+          <button
+            type="button"
+            className="anunza-notif-btn"
+            onClick={onToggleNotificaciones}
+            aria-label={`Notificaciones${noLeidas > 0 ? ` (${noLeidas} nuevas)` : ''}`}
+            title="Notificaciones"
+          >
+            🔔
+            {noLeidas > 0 && (
+              <span className="anunza-notif-badge">{noLeidas > 9 ? '9+' : noLeidas}</span>
+            )}
+          </button>
+
           <button type="button" className="anunza-navbar-user" onClick={onOpenProfile}>
             <img
-              src={user?.foto_perfil || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'}
+              src={user?.foto_perfil || DEFAULT_AVATAR}
               alt=""
               className="anunza-navbar-avatar"
             />

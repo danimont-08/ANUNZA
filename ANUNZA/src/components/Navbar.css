@@ -84,3 +84,36 @@
     display: none;
   }
 }
+
+/* Botón de notificaciones (campanita) */
+.anunza-notif-btn {
+  position: relative;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  line-height: 1;
+}
+.anunza-notif-btn:hover { background: rgba(138, 78, 255, 0.12); }
+
+.anunza-notif-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  background: #e53e3e;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  line-height: 1;
+  pointer-events: none;
+}

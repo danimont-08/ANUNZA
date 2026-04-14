@@ -40,6 +40,7 @@ export const getFeed = async (req, res) => {
          u.ciudad AS autor_ciudad,
          cat.nombre AS categoria_nombre,
          COALESCE(ic.cnt, 0)::int AS interacciones_count,
+         COALESCE(cc.cnt, 0)::int AS comentarios_count,
          EXISTS (
            SELECT 1 FROM interacciones i2
            WHERE i2.publicacion_id = p.id
@@ -55,6 +56,11 @@ export const getFeed = async (req, res) => {
          WHERE tipo IN ('me_gusta', 'like')
          GROUP BY publicacion_id
        ) ic ON ic.publicacion_id = p.id
+       LEFT JOIN (
+         SELECT publicacion_id, COUNT(*)::int AS cnt
+         FROM comentarios
+         GROUP BY publicacion_id
+       ) cc ON cc.publicacion_id = p.id
        WHERE COALESCE(p.estado, 'activo') = 'activo'
          AND ($2::integer IS NULL OR p.categoria_id = $2)
          AND ($3::text IS NULL OR TRIM(COALESCE(u.ciudad, '')) ILIKE '%' || $3 || '%')
@@ -151,6 +157,7 @@ export const createPublication = async (req, res) => {
       ...u.rows[0],
       categoria_nombre: cat.rows[0]?.categoria_nombre || null,
       interacciones_count: 0,
+      comentarios_count: 0,
       user_liked: false,
     };
 
@@ -190,6 +197,21 @@ export const toggleLike = async (req, res) => {
       `SELECT COUNT(*)::int AS c FROM interacciones WHERE publicacion_id = $1 AND tipo IN ('me_gusta', 'like')`,
       [publicacionId]
     );
+    // Notificar al dueño de la publicación (si es diferente al que da like)
+    try {
+      const pub = await pool.query(`SELECT usuario_id, titulo FROM publicaciones WHERE id = $1`, [publicacionId]);
+      const owner = pub.rows[0];
+      if (owner && owner.usuario_id !== userId) {
+        const liker = await pool.query(`SELECT nombre FROM usuarios WHERE id = $1`, [userId]);
+        const nombre = liker.rows[0]?.nombre || 'Alguien';
+        const titulo = owner.titulo || 'tu publicación';
+        await pool.query(
+          `INSERT INTO notificaciones (usuario_id, tipo, referencia_id, mensaje)
+           VALUES ($1, 'me_gusta', $2, $3)`,
+          [owner.usuario_id, publicacionId, `${nombre} le dio me gusta a "${titulo}"`]
+        );
+      }
+    } catch { /* no fallar la respuesta por la notificación */ }
     res.json({ liked: true, interacciones_count: count.rows[0].c });
   } catch (error) {
     console.error('toggleLike:', error);
@@ -237,6 +259,21 @@ export const addComentario = async (req, res) => {
       `SELECT nombre AS autor_nombre, foto_perfil AS autor_foto FROM usuarios WHERE id = $1`,
       [userId]
     );
+
+    // Notificar al dueño de la publicación
+    try {
+      const pub = await pool.query(`SELECT usuario_id, titulo FROM publicaciones WHERE id = $1`, [publicacionId]);
+      const owner = pub.rows[0];
+      if (owner && owner.usuario_id !== userId) {
+        const nombre = u.rows[0]?.autor_nombre || 'Alguien';
+        const titulo = owner.titulo || 'tu publicación';
+        await pool.query(
+          `INSERT INTO notificaciones (usuario_id, tipo, referencia_id, mensaje)
+           VALUES ($1, 'comentario', $2, $3)`,
+          [owner.usuario_id, publicacionId, `${nombre} comentó en "${titulo}"`]
+        );
+      }
+    } catch { /* no fallar la respuesta por la notificación */ }
 
     res.status(201).json({
       comentario: { ...rows[0], ...u.rows[0] },

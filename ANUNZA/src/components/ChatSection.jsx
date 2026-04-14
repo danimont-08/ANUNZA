@@ -3,10 +3,17 @@ import { apiFetch } from '../services/api';
 import { supabase } from '../services/supabaseClient';
 import './ChatSection.css';
 
+// Avatar por defecto: silueta de persona (sin dependencia externa)
+const DEFAULT_AVATAR =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0aac8'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 20c0-4 3.6-7 8-7s8 3 8 7'/%3E%3C/svg%3E";
+
 function formatTime(iso) {
   if (!iso) return '';
   try {
-    return new Date(iso).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    // Los timestamps de PostgreSQL 'without time zone' llegan sin sufijo Z.
+    // Forzamos la interpretación UTC para que toLocaleTimeString use la zona local del navegador.
+    const str = /Z$|[+-]\d{2}:\d{2}$/.test(String(iso)) ? iso : iso + 'Z';
+    return new Date(str).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   } catch {
     return '';
   }
@@ -191,10 +198,7 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
                   onClick={() => setActiveId(c.id)}
                 >
                   <img
-                    src={
-                      c.peer?.foto_perfil ||
-                      'https://api.dicebear.com/7.x/avataaars/svg?seed=chat'
-                    }
+                    src={c.peer?.foto_perfil || DEFAULT_AVATAR}
                     alt=""
                   />
                   <div className="chat-conv-text">
@@ -217,10 +221,7 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
             <>
               <header className="chat-peer-bar">
                 <img
-                  src={
-                    peer?.foto_perfil ||
-                    'https://api.dicebear.com/7.x/avataaars/svg?seed=peer'
-                  }
+                  src={peer?.foto_perfil || DEFAULT_AVATAR}
                   alt=""
                 />
                 <div>

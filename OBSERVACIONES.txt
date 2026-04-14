@@ -125,4 +125,50 @@ CREATE TABLE public.usuarios (
   descripcion text,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT usuarios_pkey PRIMARY KEY (id)
+
+
+SQL EJECUTADOS:
+ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE publicaciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mensajes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversaciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE trabajos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE calificaciones ENABLE ROW LEVEL SECURITY;
+
+POLITICAS:
+-Usuarios solo ven su info:
+CREATE POLICY "Usuarios ven su perfil"
+ON usuarios
+FOR SELECT
+USING (auth.uid() = id);
+
+Publicaciones visibles para todos:
+CREATE POLICY "Publicaciones visibles"
+ON publicaciones
+FOR SELECT
+USING (true);
+
+Crear publicaciones:
+CREATE POLICY "Usuarios crean publicaciones"
+ON publicaciones
+FOR INSERT
+WITH CHECK (auth.uid() = usuario_id);
+
+Mensajes:
+CREATE POLICY "Usuarios ven mensajes de sus chats"
+ON mensajes
+FOR SELECT
+USING (
+    EXISTS (
+        SELECT 1 FROM participantes_conversacion pc
+        WHERE pc.conversacion_id = mensajes.conversacion_id
+        AND pc.usuario_id = auth.uid()
+    )
+);
+
+CREATE POLICY "Enviar mensajes"
+ON mensajes
+FOR INSERT
+WITH CHECK (auth.uid() = remitente_id);
+
 );

@@ -3,7 +3,7 @@ import ServicioCard from './ServicioCard';
 import './ListaServicios.css';
 
 /**
- * ListaServicios - Renderiza una lista de tarjetas de servicios filtrados.
+ * ListaServicios
  */
 const ListaServicios = ({ servicios }) => {
   if (servicios.length === 0) {

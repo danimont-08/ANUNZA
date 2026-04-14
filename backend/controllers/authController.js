@@ -9,7 +9,7 @@ const sanitizeUser = (row) => {
 };
 
 /**
- * Registrar nuevo usuario (tabla usuarios en Supabase, sin auth.users).
+ * Registrar nuevo usuario.
  */
 export const register = async (req, res) => {
   try {
