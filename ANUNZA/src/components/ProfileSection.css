@@ -1,0 +1,138 @@
+.prof h2 {
+  color: var(--anunza-midnight);
+  margin-bottom: 1rem;
+}
+
+.prof-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(47, 8, 109, 0.08);
+  box-shadow: 0 8px 28px rgba(47, 8, 109, 0.08);
+}
+
+.prof-head {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.prof-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--anunza-lavender);
+}
+
+.prof-avatar-lg {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--anunza-lavender);
+}
+
+.prof-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--anunza-midnight);
+}
+
+.prof-meta {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.prof-bio {
+  margin: 1rem 0;
+  line-height: 1.5;
+  color: #333;
+}
+
+.prof-grid p {
+  margin: 0.35rem 0;
+}
+
+.prof-edit-btn {
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--anunza-violet);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prof-form {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(47, 8, 109, 0.08);
+}
+
+.prof-photo-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.prof-file {
+  display: none;
+}
+
+.prof-photo-btn {
+  border: 1px dashed var(--anunza-violet);
+  background: var(--anunza-lavender);
+  padding: 0.5rem 0.85rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--anunza-midnight);
+}
+
+.prof-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.prof-label input,
+.prof-label textarea {
+  font-weight: 400;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+  font-family: inherit;
+}
+
+.prof-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.prof-save {
+  border: none;
+  background: var(--anunza-midnight);
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.prof-cancel {
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+}

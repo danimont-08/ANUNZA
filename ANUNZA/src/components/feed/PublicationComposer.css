@@ -1,0 +1,140 @@
+.pc-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 28px rgba(47, 8, 109, 0.08);
+  border: 1px solid rgba(138, 78, 255, 0.12);
+}
+
+.pc-title {
+  font-size: 1.15rem;
+  color: var(--anunza-midnight);
+  margin-bottom: 1rem;
+}
+
+.pc-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 0.75rem;
+}
+
+.pc-label input,
+.pc-label select,
+.pc-label textarea {
+  font-weight: 400;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  font-family: inherit;
+}
+
+.pc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .pc-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pc-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.75rem;
+  font-weight: 600;
+  color: var(--anunza-midnight);
+  cursor: pointer;
+}
+
+.pc-extra {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+}
+
+.pc-extra.is-open {
+  max-height: 900px;
+  opacity: 1;
+  margin-bottom: 0.5rem;
+}
+
+.pc-media-block {
+  margin: 1rem 0;
+}
+
+.pc-file {
+  display: none;
+}
+
+.pc-add-media {
+  border: 1px dashed var(--anunza-violet);
+  background: var(--anunza-lavender);
+  color: var(--anunza-midnight);
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  font-weight: 600;
+}
+
+.pc-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.pc-prev {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pc-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pc-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.pc-submit {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--anunza-violet), var(--anunza-midnight));
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pc-submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

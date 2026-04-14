@@ -12,7 +12,25 @@
   border-radius: 10px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
+}
+
+.geo-btn {
+  margin-top: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid #8a4eff;
+  background: #f5f2ff;
+  color: #2f086d;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.geo-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
 }
 
 .auth-box h1 {

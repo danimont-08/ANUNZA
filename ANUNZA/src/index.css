@@ -1,6 +1,9 @@
 :root {
-  --primary-color: #667eea;
-  --secondary-color: #764ba2;
+  --anunza-violet: #8a4eff;
+  --anunza-midnight: #2f086d;
+  --anunza-lavender: #f5f2ff;
+  --primary-color: #8a4eff;
+  --secondary-color: #2f086d;
   --danger-color: #e74c3c;
   --success-color: #27ae60;
   --text-dark: #333;
@@ -32,8 +35,17 @@ body {
 }
 
 body {
-  background-color: #f5f5f5;
+  background-color: var(--anunza-lavender);
   color: var(--text-dark);
+}
+
+.auth-loading-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--anunza-lavender);
+  color: var(--anunza-midnight);
+  font-size: 1.1rem;
 }
 
 /* Scrollbar personalizada */

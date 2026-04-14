@@ -1,5 +1,5 @@
 -- Script SQL para crear la base de datos y tabla de usuarios
-
+--Anunza_2026
 -- Crear base de datos
 CREATE DATABASE IF NOT EXISTS anunza_db;
 

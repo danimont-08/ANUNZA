@@ -1,35 +1,50 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 
-/**
- * AuthContext - Contexto global para manejar autenticación
- * Proporciona: user, token, login, logout, register
- */
 const AuthContext = createContext(null);
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+/**
+ * Sesión JWT: valida token contra /users/profile al cargar (evita sesión rota en localStorage).
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_URL = 'http://localhost:5000/api';
-
-  // Cargar usuario del localStorage al montar el componente
-  useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    const savedToken = localStorage.getItem('token');
-
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
-    }
-
-    setLoading(false);
+  const clearSession = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   }, []);
 
-  /**
-   * Función de login
-   */
+  useEffect(() => {
+    const t = localStorage.getItem('token');
+    if (!t) {
+      setLoading(false);
+      return;
+    }
+
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/users/profile`, {
+          headers: { Authorization: `Bearer ${t}` },
+        });
+        if (!res.ok) throw new Error('Sesión inválida');
+        const data = await res.json();
+        setUser(data.user);
+        setToken(t);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      } catch {
+        clearSession();
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [clearSession]);
+
   const login = async (correo, password) => {
     try {
       setError(null);
@@ -40,13 +55,12 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Error en login');
       }
 
       const data = await response.json();
 
-      // Guardar usuario y token
       setUser(data.user);
       setToken(data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -59,26 +73,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Función de registro
-   */
-  const register = async (nombre, correo, telefono, password) => {
+  const register = async (nombre, correo, telefono, password, cedula, ciudad, latitud, longitud) => {
     try {
       setError(null);
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, correo, telefono, password }),
+        body: JSON.stringify({
+          nombre,
+          correo,
+          telefono,
+          password,
+          cedula,
+          ciudad,
+          latitud,
+          longitud,
+        }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Error en registro');
       }
 
       const data = await response.json();
 
-      // Guardar usuario y token
       setUser(data.user);
       setToken(data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -91,21 +110,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Función de logout
-   */
   const logout = () => {
-    setUser(null);
-    setToken(null);
     setError(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    clearSession();
   };
 
-  /**
-   * Actualizar perfil del usuario
-   */
-  const updateProfile = async (id, nombre, correo, telefono) => {
+  const updateProfile = async (id, payload) => {
     try {
       setError(null);
       const response = await fetch(`${API_URL}/users/${id}`, {
@@ -114,17 +124,16 @@ export const AuthProvider = ({ children }) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ nombre, correo, telefono }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Error al actualizar perfil');
       }
 
       const data = await response.json();
 
-      // Actualizar usuario en estado y localStorage
       setUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
 
@@ -144,15 +153,12 @@ export const AuthProvider = ({ children }) => {
     logout,
     register,
     updateProfile,
-    isAuthenticated: !!token,
+    isAuthenticated: !!token && !!user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-/**
- * Hook para usar AuthContext
- */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

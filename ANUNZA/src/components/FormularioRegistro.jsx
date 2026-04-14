@@ -13,6 +13,10 @@ export const FormularioRegistro = () => {
     nombre: '',
     correo: '',
     telefono: '',
+    cedula: '',
+    ciudad: '',
+    latitud: '',
+    longitud: '',
     password: '',
     confirmPassword: '',
   });
@@ -24,6 +28,24 @@ export const FormularioRegistro = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const usarUbicacion = () => {
+    if (!navigator.geolocation) {
+      setError('Tu navegador no permite geolocalización.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFormData((prev) => ({
+          ...prev,
+          latitud: String(pos.coords.latitude),
+          longitud: String(pos.coords.longitude),
+        }));
+        setError('');
+      },
+      () => setError('No se pudo obtener la ubicación. Puedes escribir la ciudad manualmente.')
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -31,8 +53,15 @@ export const FormularioRegistro = () => {
 
     try {
       // Validar campos
-      if (!formData.nombre || !formData.correo || !formData.telefono || !formData.password) {
-        setError('Por favor completa todos los campos');
+      if (
+        !formData.nombre ||
+        !formData.correo ||
+        !formData.telefono ||
+        !formData.cedula ||
+        !formData.ciudad ||
+        !formData.password
+      ) {
+        setError('Por favor completa todos los campos (incluye ciudad)');
         setLoading(false);
         return;
       }
@@ -60,7 +89,16 @@ export const FormularioRegistro = () => {
       }
 
       // Llamar función de registro
-      await register(formData.nombre, formData.correo, formData.telefono, formData.password);
+      await register(
+        formData.nombre,
+        formData.correo,
+        formData.telefono,
+        formData.password,
+        formData.cedula,
+        formData.ciudad,
+        formData.latitud !== '' ? Number(formData.latitud) : null,
+        formData.longitud !== '' ? Number(formData.longitud) : null
+      );
 
       // Redirigir al dashboard
       navigate('/dashboard');
@@ -113,9 +151,44 @@ export const FormularioRegistro = () => {
               name="telefono"
               value={formData.telefono}
               onChange={handleChange}
-              placeholder="+34 123 456 789"
+              placeholder="+57 300 000 0000"
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="cedula">Cédula</label>
+            <input
+              type="text"
+              id="cedula"
+              name="cedula"
+              value={formData.cedula}
+              onChange={handleChange}
+              placeholder="Documento de identidad"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="ciudad">Ciudad / ubicación</label>
+            <input
+              type="text"
+              id="ciudad"
+              name="ciudad"
+              value={formData.ciudad}
+              onChange={handleChange}
+              placeholder="Ej. Medellín"
+              required
+            />
+            <button type="button" className="geo-btn" onClick={usarUbicacion}>
+              Obtener coordenadas (opcional)
+            </button>
+            {(formData.latitud || formData.longitud) && (
+              <p className="geo-hint">
+                Coordenadas guardadas para “cerca de mí”. Lat: {formData.latitud} · Lng:{' '}
+                {formData.longitud}
+              </p>
+            )}
           </div>
 
           <div className="form-group">

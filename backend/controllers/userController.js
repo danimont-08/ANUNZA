@@ -51,16 +51,26 @@ export const getUserProfile = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, correo, telefono } = req.body;
+    const {
+      nombre,
+      correo,
+      telefono,
+      descripcion,
+      foto_perfil,
+      ciudad,
+      codigo_postal,
+      latitud,
+      longitud,
+    } = req.body;
 
     // Validar que el usuario solo pueda actualizar su propio perfil
-    if (parseInt(id) !== req.userId) {
+    if (String(id) !== String(req.userId)) {
       return res.status(403).json({ message: 'No tienes permisos para actualizar este usuario' });
     }
 
-    // Validar campos
+    // Validar campos obligatorios de contacto
     if (!nombre || !correo || !telefono) {
-      return res.status(400).json({ message: 'Todos los campos son requeridos' });
+      return res.status(400).json({ message: 'Nombre, correo y teléfono son requeridos' });
     }
 
     // Validar correo
@@ -70,7 +80,17 @@ export const updateUser = async (req, res) => {
     }
 
     // Actualizar usuario
-    const success = await User.update(id, { nombre, correo, telefono });
+    const success = await User.update(id, {
+      nombre,
+      correo,
+      telefono,
+      descripcion,
+      foto_perfil,
+      ciudad,
+      codigo_postal,
+      latitud,
+      longitud,
+    });
     if (!success) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
@@ -98,7 +118,7 @@ export const deleteUser = async (req, res) => {
     const { id } = req.params;
 
     // Validar que el usuario solo pueda eliminar su propio usuario
-    if (parseInt(id) !== req.userId) {
+    if (String(id) !== String(req.userId)) {
       return res.status(403).json({ message: 'No tienes permisos para eliminar este usuario' });
     }
 

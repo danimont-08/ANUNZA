@@ -9,8 +9,11 @@ export const Home = () => {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    // Mientras se verifica el estado de autenticación, se puede retornar null o un spinner mínimo
-    return null; // O un <div>Cargando...</div> muy simple
+    return (
+      <div className="auth-loading-screen">
+        <p>Cargando…</p>
+      </div>
+    );
   }
 
   if (isAuthenticated) {

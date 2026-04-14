@@ -1,0 +1,64 @@
+.mc-carousel {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--anunza-lavender);
+  margin-top: 0.75rem;
+}
+
+.mc-viewport {
+  aspect-ratio: 16 / 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mc-media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  max-height: 420px;
+}
+
+.mc-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(47, 8, 109, 0.55);
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.mc-prev {
+  left: 8px;
+}
+
+.mc-next {
+  right: 8px;
+}
+
+.mc-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: 8px;
+}
+
+.mc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(47, 8, 109, 0.25);
+  cursor: pointer;
+}
+
+.mc-dot.is-active {
+  background: var(--anunza-violet);
+}

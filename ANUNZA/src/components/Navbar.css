@@ -1,0 +1,86 @@
+.anunza-navbar {
+  background: var(--anunza-lavender);
+  border-bottom: 1px solid rgba(47, 8, 109, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.anunza-navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.65rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.anunza-navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.anunza-navbar-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.anunza-navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.anunza-navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--anunza-midnight);
+  font-size: 0.95rem;
+}
+
+.anunza-navbar-user:hover {
+  background: rgba(138, 78, 255, 0.12);
+}
+
+.anunza-navbar-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--anunza-violet);
+}
+
+.anunza-navbar-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.anunza-navbar-logout {
+  background: var(--anunza-violet);
+  color: #fff;
+  border: none;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.anunza-navbar-logout:hover {
+  filter: brightness(1.05);
+}
+
+@media (max-width: 600px) {
+  .anunza-navbar-name {
+    display: none;
+  }
+}
