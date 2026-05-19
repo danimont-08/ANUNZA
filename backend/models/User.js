@@ -28,16 +28,51 @@ export class User {
     }
   }
 
-  static async findAll() {
+  static async findAll({ estado, q } = {}) {
     try {
+      const params = [];
+      const conditions = [];
+      if (estado) {
+        params.push(estado);
+        conditions.push(`estado = $${params.length}`);
+      }
+      if (q && String(q).trim()) {
+        params.push(`%${String(q).trim()}%`);
+        const i = params.length;
+        conditions.push(
+          `(nombre ILIKE $${i} OR correo ILIKE $${i} OR cedula ILIKE $${i})`
+        );
+      }
+      const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
       const { rows } = await pool.query(
-        `SELECT id, nombre, correo, telefono, cedula, foto_perfil, verificado, ciudad, created_at
+        `SELECT id, nombre, correo, telefono, cedula, foto_perfil, verificado, ciudad,
+                rol, estado, created_at
          FROM usuarios
-         ORDER BY nombre`
+         ${where}
+         ORDER BY created_at DESC`,
+        params
       );
       return rows;
     } catch (error) {
       throw new Error(`Error al obtener usuarios: ${error.message}`);
+    }
+  }
+
+  static async updateEstado(id, estado) {
+    const allowed = ['activo', 'suspendido'];
+    if (!allowed.includes(estado)) {
+      throw new Error('Estado inválido');
+    }
+    try {
+      const { rowCount, rows } = await pool.query(
+        `UPDATE usuarios SET estado = $1 WHERE id = $2
+         RETURNING id, nombre, correo, telefono, cedula, foto_perfil, verificado, ciudad, rol, estado, created_at`,
+        [estado, id]
+      );
+      if (!rowCount) return null;
+      return rows[0];
+    } catch (error) {
+      throw new Error(`Error al actualizar estado: ${error.message}`);
     }
   }
 

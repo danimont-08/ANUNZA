@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, verifyActiveAccount } from '../middleware/auth.js';
 import { crearReporte } from '../controllers/reportesController.js';
 
 const router = Router();
-router.use(verifyToken);
+router.use(verifyToken, verifyActiveAccount);
 
 router.post('/', crearReporte);
 

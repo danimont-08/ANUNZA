@@ -143,7 +143,7 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
 
   const loadUsers = async () => {
     try {
-      const data = await apiFetch('/users');
+      const data = await apiFetch('/chat/usuarios');
       const list = (data.users || []).filter((u) => u.id !== user?.id);
       setUsers(list);
     } catch (e) {

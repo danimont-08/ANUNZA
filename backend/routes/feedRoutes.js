@@ -1,5 +1,5 @@
 import express from 'express';
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, verifyActiveAccount } from '../middleware/auth.js';
 import {
   getFeed,
   getCategorias,
@@ -11,11 +11,11 @@ import {
 
 const router = express.Router();
 
-router.get('/categorias', verifyToken, getCategorias);
-router.post('/publicaciones', verifyToken, createPublication);
-router.get('/', verifyToken, getFeed);
-router.post('/publicaciones/:publicacionId/like', verifyToken, toggleLike);
-router.get('/publicaciones/:publicacionId/comentarios', verifyToken, getComentarios);
-router.post('/publicaciones/:publicacionId/comentarios', verifyToken, addComentario);
+router.get('/categorias', verifyToken, verifyActiveAccount, getCategorias);
+router.post('/publicaciones', verifyToken, verifyActiveAccount, createPublication);
+router.get('/', verifyToken, verifyActiveAccount, getFeed);
+router.post('/publicaciones/:publicacionId/like', verifyToken, verifyActiveAccount, toggleLike);
+router.get('/publicaciones/:publicacionId/comentarios', verifyToken, verifyActiveAccount, getComentarios);
+router.post('/publicaciones/:publicacionId/comentarios', verifyToken, verifyActiveAccount, addComentario);
 
 export default router;

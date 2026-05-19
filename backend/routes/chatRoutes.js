@@ -1,6 +1,7 @@
 import express from 'express';
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, verifyActiveAccount } from '../middleware/auth.js';
 import {
+  listUsersForChat,
   listConversations,
   getOrCreateConversation,
   listMessages,
@@ -9,9 +10,10 @@ import {
 
 const router = express.Router();
 
-router.get('/conversaciones', verifyToken, listConversations);
-router.post('/conversaciones', verifyToken, getOrCreateConversation);
-router.get('/conversaciones/:conversacionId/mensajes', verifyToken, listMessages);
-router.post('/conversaciones/:conversacionId/mensajes', verifyToken, sendMessage);
+router.get('/usuarios', verifyToken, verifyActiveAccount, listUsersForChat);
+router.get('/conversaciones', verifyToken, verifyActiveAccount, listConversations);
+router.post('/conversaciones', verifyToken, verifyActiveAccount, getOrCreateConversation);
+router.get('/conversaciones/:conversacionId/mensajes', verifyToken, verifyActiveAccount, listMessages);
+router.post('/conversaciones/:conversacionId/mensajes', verifyToken, verifyActiveAccount, sendMessage);
 
 export default router;

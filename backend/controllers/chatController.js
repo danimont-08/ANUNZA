@@ -19,6 +19,25 @@ async function assertParticipant(conversacionId, userId) {
   return rows.length > 0;
 }
 
+/** Lista usuarios activos para iniciar un chat (sin datos sensibles). */
+export const listUsersForChat = async (req, res) => {
+  const userId = req.userId;
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, nombre, correo, foto_perfil
+       FROM usuarios
+       WHERE id <> $1
+         AND COALESCE(estado, 'activo') = 'activo'
+       ORDER BY nombre ASC`,
+      [userId]
+    );
+    res.json({ users: rows });
+  } catch (error) {
+    console.error('listUsersForChat:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const listConversations = async (req, res) => {
   const userId = req.userId;
   try {

@@ -9,7 +9,7 @@ import chatRoutes from './routes/chatRoutes.js';
 import historialRoutes from './routes/historialRoutes.js';
 import notificacionesRoutes from './routes/notificacionesRoutes.js';
 import reportesRoutes from './routes/reportesRoutes.js';
-
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -28,7 +28,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/historial', historialRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/reportes', reportesRoutes);
-
+app.use('/api/admin', adminRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {

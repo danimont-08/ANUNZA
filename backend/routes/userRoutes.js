@@ -1,5 +1,5 @@
 import express from 'express';
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, verifyAdmin } from '../middleware/auth.js';
 import {
   getAllUsers,
   getUserProfile,
@@ -17,7 +17,7 @@ const router = express.Router();
  * GET /api/users
  * Obtener todos los usuarios
  */
-router.get('/', verifyToken, getAllUsers);
+router.get('/', verifyToken, verifyAdmin, getAllUsers);
 
 /**
  * GET /api/users/profile

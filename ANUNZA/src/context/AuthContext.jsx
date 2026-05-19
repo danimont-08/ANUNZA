@@ -32,6 +32,10 @@ export const AuthProvider = ({ children }) => {
         const res = await fetch(`${API_URL}/users/profile`, {
           headers: { Authorization: `Bearer ${t}` },
         });
+        if (res.status === 403) {
+          clearSession();
+          return;
+        }
         if (!res.ok) throw new Error('Sesión inválida');
         const data = await res.json();
         setUser(data.user);
@@ -154,6 +158,7 @@ export const AuthProvider = ({ children }) => {
     register,
     updateProfile,
     isAuthenticated: !!token && !!user,
+    isAdmin: user?.rol === 'admin',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

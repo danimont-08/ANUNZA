@@ -30,6 +30,12 @@ export const getUserProfile = async (req, res) => {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
+    if (user.estado === 'suspendido' && user.rol !== 'admin') {
+      return res.status(403).json({
+        message: 'Tu cuenta está suspendida. Contacta al administrador.',
+      });
+    }
+
     // No devolvemos la contraseña
     const { password, ...userWithoutPassword } = user;
 

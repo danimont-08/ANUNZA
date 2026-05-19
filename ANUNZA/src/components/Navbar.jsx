@@ -14,6 +14,11 @@ export function Navbar({ user, onLogout, onOpenProfile, noLeidas = 0, onToggleNo
           <img src={logo} alt="ANUNZA" className="anunza-navbar-logo" />
         </Link>
         <div className="anunza-navbar-actions">
+          {user?.rol === 'admin' && (
+            <Link to="/admin" className="anunza-admin-link" title="Panel de administración">
+              Admin
+            </Link>
+          )}
           {/* Campanita de notificaciones */}
           <button
             type="button"

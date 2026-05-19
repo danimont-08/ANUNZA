@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, verifyActiveAccount } from '../middleware/auth.js';
 import {
   getNotificaciones,
   marcarLeida,
@@ -7,7 +7,7 @@ import {
 } from '../controllers/notificacionesController.js';
 
 const router = Router();
-router.use(verifyToken);
+router.use(verifyToken, verifyActiveAccount);
 
 router.get('/', getNotificaciones);
 router.patch('/leer-todas', marcarTodasLeidas);

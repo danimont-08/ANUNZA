@@ -32,10 +32,13 @@ export const FormularioLogin = () => {
       }
 
       // Llamar función de login
-      await login(formData.correo, formData.password);
+      const data = await login(formData.correo, formData.password);
 
-      // Redirigir al dashboard
-      navigate('/dashboard');
+      if (data.user?.rol === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
