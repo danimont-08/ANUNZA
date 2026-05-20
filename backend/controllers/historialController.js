@@ -70,7 +70,7 @@ async function queryCalificacionesStats(userId) {
 export const getMiHistorial = async (req, res) => {
   const userId = req.userId;
   try {
-    const [publicaciones, interacciones, historialRows, trabajos, cal] = await Promise.all([
+    const [publicaciones, interacciones, historialRows, trabajos, cal, favoritos] = await Promise.all([
       pool
         .query(
           `SELECT * FROM publicaciones WHERE usuario_id = $1 ORDER BY created_at DESC NULLS LAST`,
@@ -91,6 +91,16 @@ export const getMiHistorial = async (req, res) => {
         .then((r) => r.rows),
       queryTrabajos(userId),
       queryCalificacionesStats(userId),
+      pool
+        .query(
+          `SELECT p.*, f.created_at AS saved_at
+           FROM favoritos f
+           INNER JOIN publicaciones p ON p.id = f.publicacion_id
+           WHERE f.usuario_id = $1
+           ORDER BY f.created_at DESC NULLS LAST`,
+          [userId]
+        )
+        .then((r) => r.rows),
     ]);
 
     res.json({
@@ -99,6 +109,7 @@ export const getMiHistorial = async (req, res) => {
       historial: historialRows,
       trabajos,
       calificaciones: cal.lista,
+      favoritos,
       promedio_calificacion: cal.promedio != null ? Number(Number(cal.promedio).toFixed(2)) : null,
     });
   } catch (error) {

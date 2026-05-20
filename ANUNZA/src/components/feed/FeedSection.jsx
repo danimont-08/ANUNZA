@@ -7,6 +7,8 @@ import {
   fetchFeed,
   crearPublicacion,
   toggleLikePost,
+  toggleFavoritoPost,
+  deletePublicacionApi,
 } from '../../models/publicacionModel';
 import './FeedSection.css';
 
@@ -72,6 +74,28 @@ export function FeedSection({ user, onChatWithUser }) {
     setItems((prev) => [data.publicacion, ...prev]);
   };
 
+  const handleToggleFavorito = async (publicacionId) => {
+    try {
+      const data = await toggleFavoritoPost(publicacionId);
+      setItems((prev) =>
+        prev.map((p) =>
+          p.id === publicacionId ? { ...p, user_saved: data.saved } : p
+        )
+      );
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const handleDeletePublicacion = async (publicacionId) => {
+    try {
+      await deletePublicacionApi(publicacionId);
+      setItems((prev) => prev.filter((p) => p.id !== publicacionId));
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
   const handleFilterChange = (patch) => {
     setFilters((f) => ({ ...f, ...patch }));
     setLoading(true);
@@ -121,6 +145,8 @@ export function FeedSection({ user, onChatWithUser }) {
             p={p}
             currentUserId={user?.id}
             onToggleLike={handleToggleLike}
+            onToggleFavorito={handleToggleFavorito}
+            onDeletePublicacion={handleDeletePublicacion}
             onOpenChat={onChatWithUser}
             onError={setError}
           />

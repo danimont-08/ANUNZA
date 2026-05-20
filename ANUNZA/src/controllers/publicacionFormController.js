@@ -47,6 +47,7 @@ export function parseHashtagInput(raw) {
 }
 
 export function validateCreatePayload(payload) {
+  if (!payload.titulo || !String(payload.titulo).trim()) return 'Escribe un título para la publicación.';
   if (!payload.descripcion) return 'Escribe una descripción.';
   if (!payload.categoria_id || Number.isNaN(payload.categoria_id)) return 'Elige una categoría.';
   return null;

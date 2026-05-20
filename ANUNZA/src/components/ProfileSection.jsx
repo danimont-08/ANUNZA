@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { apiFetch } from '../services/api';
 import './ProfileSection.css';
 
-export function ProfileSection({ user, updateProfile, onError }) {
+export function ProfileSection({ user, updateProfile, onError, isOwnProfile = true }) {
   const [editing, setEditing] = useState(false);
   const [data, setData] = useState({
     nombre: '',
@@ -15,6 +16,9 @@ export function ProfileSection({ user, updateProfile, onError }) {
     foto_perfil: '',
   });
   const fileRef = useRef(null);
+  const [openReport, setOpenReport] = useState(false);
+  const [reportMotivo, setReportMotivo] = useState('Contenido inapropiado');
+  const [reportDetalles, setReportDetalles] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -72,6 +76,20 @@ export function ProfileSection({ user, updateProfile, onError }) {
     }
   };
 
+  const sendReporte = async () => {
+    if (!reportMotivo || !user?.id) return;
+    try {
+      await apiFetch('/reportes', {
+        method: 'POST',
+        body: JSON.stringify({ tipo: 'usuario', objeto_id: user.id, motivo: reportMotivo, detalles: reportDetalles }),
+      });
+      setOpenReport(false);
+      setReportDetalles('');
+    } catch (err) {
+      onError(err.message);
+    }
+  };
+
   return (
     <section className="prof anunza-profile">
       <h2>Mi perfil</h2>
@@ -108,6 +126,42 @@ export function ProfileSection({ user, updateProfile, onError }) {
           <button type="button" className="prof-edit-btn" onClick={() => setEditing(true)}>
             Editar perfil
           </button>
+          {!isOwnProfile && (
+            <button
+              type="button"
+              className="prof-edit-btn"
+              style={{ marginTop: '0.5rem', background: '#fde8e8', color: '#9b1c1c', border: '1px solid #f5c6c6' }}
+              onClick={() => setOpenReport((v) => !v)}
+            >
+              Reportar usuario
+            </button>
+          )}
+          {!isOwnProfile && openReport && (
+            <div className="pub-panel pub-panel-reveal" style={{ marginTop: '0.75rem' }}>
+              <p className="pub-panel-title">Reportar usuario</p>
+              <select
+                value={reportMotivo}
+                onChange={(e) => setReportMotivo(e.target.value)}
+                style={{ width: '100%', marginBottom: '0.5rem', borderRadius: '8px', border: '1px solid #ddd', padding: '0.45rem 0.6rem', fontFamily: 'inherit' }}
+              >
+                <option>Contenido inapropiado</option>
+                <option>Spam o publicidad</option>
+                <option>Información falsa</option>
+                <option>Acoso o amenazas</option>
+                <option>Otro</option>
+              </select>
+              <textarea
+                rows={2}
+                placeholder="Detalles adicionales (opcional)…"
+                value={reportDetalles}
+                onChange={(e) => setReportDetalles(e.target.value)}
+                style={{ width: '100%', borderRadius: '8px', border: '1px solid #ddd', padding: '0.5rem', marginBottom: '0.5rem', fontFamily: 'inherit' }}
+              />
+              <button type="button" className="pub-send" onClick={sendReporte}>
+                Enviar reporte
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <form className="prof-form" onSubmit={save}>

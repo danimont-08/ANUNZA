@@ -1,0 +1,735 @@
+================================================================================
+                    ANUNZA - EXPLICACIÓN GENERAL DEL SISTEMA
+================================================================================
+
+Este documento explica cómo funciona ANUNZA de forma clara y entendible,
+pensado para responder preguntas del profesor en forma oral.
+
+================================================================================
+1. EXPLICACIÓN GENERAL DEL PROYECTO
+================================================================================
+
+¿CUÁL ES EL OBJETIVO DE ANUNZA?
+─────────────────────────────────
+
+ANUNZA es una plataforma digital para conectar personas que ofrecen servicios 
+con personas que los buscan. Es como un marketplace donde:
+
+• Personas con habilidades pueden publicar servicios que ofrecen 
+  (ej: "Hago reparación de computadoras", "Doy clases de inglés")
+
+• Personas que necesitan ayuda pueden buscar y contratar esos servicios
+
+• Ambas partes pueden comunicarse directamente a través de un chat
+
+• Toda la información se organiza y se guarda en una base de datos centralizada
+
+
+¿QUÉ PUEDE HACER EL USUARIO EN ANUNZA?
+──────────────────────────────────────
+
+Un usuario autenticado puede:
+
+1. Crear su perfil con nombre, correo, teléfono, documento de identidad y ubicación
+
+2. Publicar servicios que ofrece (con título, descripción, fotos, precio, categoría)
+
+3. Buscar servicios usando filtros (por categoría, by ciudad)
+
+4. Interactuar con publicaciones (dar "me gusta", hacer comentarios)
+
+5. Comunicarse con otros usuarios mediante chat privado
+
+6. Ver historial de sus acciones
+
+7. Recibir notificaciones de mensajes y actividades
+
+8. Calificar y reportar usuarios y publicaciones problemáticas
+
+
+FLUJO GENERAL DEL SISTEMA
+─────────────────────────
+
+┌─────────────────────────────────────────────────────────┐
+│                  PANTALLA DEL USUARIO                    │
+│         (React - Frontend en navegador)                  │
+│    • Login / Registro                                    │
+│    • Ver Feed de Publicaciones                           │
+│    • Crear Publicaciones                                 │
+│    • Chat con otros usuarios                             │
+└─────────────────────┬───────────────────────────────────┘
+                      │
+                      │ HTTP Requests + JWT Token
+                      │ (JSON)
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│            API REST (EXPRESS.JS Backend)                 │
+│        • Recibe solicitudes del frontend                 │
+│        • Valida el JWT Token                             │
+│        • Procesa la lógica del negocio                   │
+│        • Interactúa con la BD                            │
+└─────────────────────┬───────────────────────────────────┘
+                      │
+         SQL Queries con parámetros
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│    BASE DE DATOS (PostgreSQL - Supabase)                 │
+│    ▪ Usuarios (perfiles, contraseñas hasheadas)         │
+│    ▪ Publicaciones (servicios ofrecidos)                 │
+│    ▪ Mensajes (chat entre usuarios)                      │
+│    ▪ Interacciones (likes, comentarios)                  │
+│    ▪ Categorías (tipos de servicios)                     │
+│    ▪ Historial (registro de eventos)                     │
+└─────────────────────────────────────────────────────────┘
+
+
+================================================================================
+2. SISTEMA DE PUBLICACIONES
+================================================================================
+
+¿CÓMO FUNCIONAN LAS PUBLICACIONES?
+──────────────────────────────────
+
+Una publicación es un ANUNCIO que una persona crea para ofrecer un servicio 
+o buscar uno.
+
+
+CREAR UNA PUBLICACIÓN:
+──────────────────────
+
+El usuario:
+1. Va a la sección "Crear Publicación" en el frontend
+2. Completa un formulario con:
+   • Título: Nombre del servicio ("Reparación de Celulares")
+   • Descripción: Detalles del servicio
+   • Tipo: "Ofrezco" o "Busco"
+   • Categoría: Clasificación (Tecnología, Educación, etc)
+   • Precio (opcional): Si es un servicio pagado
+   • Fotos/Videos: Hasta 12 archivos para mostrar ejemplos
+   • Hashtags: Etiquetas para búsqueda
+
+3. Presiona "Publicar"
+
+
+¿CÓMO SE GUARDA?
+────────────────
+
+El frontend:
+• Convierte las imágenes a formato Base64
+• Envía TODO al backend en el endpoint `/api/feed` con un POST request
+• Incluye el token JWT en su cabecera para demostrar que es un usuario de verdad
+
+El backend:
+1. Verifica que el JWT sea válido ✓
+2. Obtiene el ID del usuario del token
+3. Valida los datos (categoría existe, descripción no vacía, etc)
+4. Guarda todo en la tabla "publicaciones" de la BD
+5. Retorna un JSON con: { mensaje: "Éxito", publicacion: {...} }
+
+La BD almacena:
+┌────────────────┬──────────────────────────────────┐
+│ Campo          │ Ejemplo                          │
+├────────────────┼──────────────────────────────────┤
+│ id             │ uuid generado automáticamente    │
+│ usuario_id     │ ID de quién publicó              │
+│ titulo         │ "Reparación de Computadoras"     │
+│ descripcion    │ "Soluciono problemas de sofware" │
+│ tipo           │ "ofrezco"                        │
+│ categoria_id   │ 3 (Tecnología)                   │
+│ precio         │ 50.00                            │
+│ imagen         │ datos en Base64                  │
+│ estado         │ "activo"                         │
+│ created_at     │ 2024-01-15 10:30:00              │
+└────────────────┴──────────────────────────────────┘
+
+
+¿CÓMO SE MUESTRAN EN PANTALLA?
+──────────────────────────────
+
+Cuando un usuario abre la app:
+
+1. Frontend envía GET a `/api/feed?categoria_id=&ciudad=`
+
+2. Backend consulta la BD con SQL:
+   SELECT p.*, u.nombre, u.foto_perfil, COUNT(likes), COUNT(comentarios)
+   FROM publicaciones p
+   INNER JOIN usuarios u ON u.id = p.usuario_id
+   WHERE p.estado = 'activo'
+   ORDER BY p.created_at DESC
+
+3. Backend retorna JSON con lista de publicaciones
+
+4. Frontend renderiza las publicaciones en el "Feed" como tarjetas
+
+5. Cada tarjeta muestra: foto del autor, título, descripción, precio, likes, comentarios
+
+CON FILTROS:
+• Cuando selecciona categoría: el frontend agrega `?categoria_id=3`
+• Cuando selecciona ciudad: el frontend agrega `?ciudad=Bogotá`
+• El SQL del backend filtra automáticamente
+
+
+================================================================================
+3. SISTEMA DE CHAT
+================================================================================
+
+¿CÓMO FUNCIONA EL CHAT?
+───────────────────────
+
+El chat es un SISTEMA DE MENSAJERÍA PRIVADA ENTRE DOS USUARIOS.
+
+
+ESTRUCTURA DE DATOS:
+────────────────────
+
+Tabla: conversaciones
+├─ id (único identificador de la conversación)
+└─ created_at (cuándo se creó)
+
+Tabla: participantes_conversacion
+├─ conversacion_id (cuál conversación)
+├─ usuario_id (quién participa)
+
+Tabla: mensajes
+├─ id (único identificador del mensaje)
+├─ conversacion_id (a cuál conversación pertenece)
+├─ remitente_id (quién lo envió)
+├─ contenido (el texto del mensaje)
+├─ created_at (cuándo se envió)
+
+
+FLUJO DE UN MENSAJE:
+────────────────────
+
+Usuario A abre el chat con Usuario B:
+
+1. Frontend envía `POST /api/chat/conversaciones` con `{ otro_usuario_id: UUID }`
+
+2. Backend busca si YA EXISTE una conversación entre A y B
+   • Si existe: retorna esa conversación
+   • Si no: crea una nueva conversación y agrega a ambos como participantes
+
+3. Frontend muestra el chat con el historial de mensajes
+
+
+Usuario A escribe un mensaje:
+
+1. Usuario escribe en el input del chat
+
+2. Presiona Enter o botón "Enviar"
+
+3. Frontend envía `POST /api/chat/conversaciones/{id}/mensajes` 
+   con `{ contenido: "Hola!" }`
+
+4. Backend:
+   • Verifica el JWT (¿es usuario real?)
+   • Verifica que el usuario sea participante de esta conversación (protección)
+   • Guarda el mensaje en la tabla "mensajes"
+   • Retorna `{ success: true, mensaje: {...} }`
+
+5. Frontend agrega el mensaje a la lista visible
+
+
+Usuario B recibe el mensaje:
+
+¿Usa HTTP o WebSockets?
+ACTUALMENTE: HTTP (polling)
+CÓMO FUNCIONA:
+• Cada X segundos, el frontend hace GET a `/api/chat/conversaciones/{id}/mensajes`
+• El backend retorna todos los mensajes nuevos
+• El frontend los muestra en pantalla
+
+
+ALMACENAMIENTO EN BD:
+─────────────────────
+
+CREATE TABLE mensajes (
+  id UUID PRIMARY KEY,
+  conversacion_id UUID,          -- A cuál chat pertenece
+  remitente_id UUID,             -- Quién envió
+  contenido TEXT,                -- El texto
+  tipo VARCHAR DEFAULT 'texto',  
+  created_at TIMESTAMP
+);
+
+EJEMPLO DE DATOS GUARDADOS:
+┌──────────┬──────────────────┬──────────────┬──────────────────────┬─────────────────┐
+│ id       │ conversacion_id   │ remitente_id │ contenido            │ created_at      │
+├──────────┼──────────────────┼──────────────┼──────────────────────┼─────────────────┤
+│ uuid-1   │ conv-123         │ user-A       │ "Hola, ¿disponible?" │ 2024-01-15 10:30│
+│ uuid-2   │ conv-123         │ user-B       │ "Sí, claro"          │ 2024-01-15 10:31│
+└──────────┴──────────────────┴──────────────┴──────────────────────┴─────────────────┘
+
+
+================================================================================
+4. SEGURIDAD DEL SISTEMA
+================================================================================
+
+🔐 LOGIN - ¿CÓMO FUNCIONA?
+──────────────────────────
+
+Usuario entra correo y contraseña:
+
+1. Frontend envía `POST /api/auth/login` con `{ correo, password }`
+
+2. Backend:
+   • Busca el usuario en la BD por email
+   • Si NO existe: responde con error "Credenciales incorrectas"
+   • Si existe: compara la contraseña enviada con la guardada usando BCRYPT
+
+¿QUÉ ES BCRYPT?
+Es un algoritmo que TRANSFORMA LA CONTRASEÑA en un hash irreversible:
+• password123 → $2b$10$N9qo8uLOickgx2Z5RW... (nunca se ve igual)
+• Al login, corre bcrypt de nuevo sobre lo que escribió el usuario
+• Si da el MISMO hash que lo guardado: ✓ Contraseña correcta
+
+Backend: bcrypt.compare("123456", "$2b$10$N9...") → true/false
+
+3. Si la contraseña es correcta:
+   • Crea un JWT Token (un código especial)
+   • Token contiene: { id: "user-uuid", email: "user@test.com" }
+   • Token expira en 24 HORAS
+   • Responde: { token: "eyJhbGc...", user: {...} }
+
+4. Frontend:
+   • Guarda el token en localStorage
+   • Lo incluye en TODOS los requests futuros:
+     Authorization: Bearer eyJhbGc...
+
+
+🔑 AUTENTICACIÓN - ¿CÓMO SE VERIFICA?
+──────────────────────────────────────
+
+Cada request protegido:
+
+1. Frontend envía el token en la cabecera Authorization
+
+2. Backend MIDDLEWARE verifyToken() intercepta:
+   • Extrae el token de la cabecera
+   • Lo decodifica con la clave secreta (process.env.JWT_SECRET)
+   • Si es válido: extrae el userId → continúa
+   • Si expiró: responde 401 Token expirado
+   • Si es inválido: responde 401 Token inválido
+
+3. Si pasó verificación: req.userId contiene el ID del usuario
+   • El controlador SABE quién está haciendo la solicitud
+   • Puede permitir o denegar según permisos
+
+
+FLUJO VISUAL:
+─────────────
+
+POST /api/feed (crear publicación)
+Headers: { Authorization: "Bearer token123" }
+    ↓
+Middleware verifyToken()
+    ├─ Decodifica token
+    ├─ Extrae userId
+    └─ req.userId = user-uuid ✓
+    ↓
+Controller recibe userId del usuario autenticado
+    ├─ Valida datos de la publicación
+    ├─ Guarda en BD con ese usuario_id
+    └─ Responde éxito
+
+
+🔐 ENCRIPTACIÓN DE CONTRASEÑAS
+──────────────────────────────
+
+Registro de nuevo usuario:
+
+1. Usuario completa formulario con contraseña "123456"
+
+2. Frontend envía `POST /api/auth/register` con contraseña en TEXTO PLANO
+
+3. Backend:
+   const salt = await bcrypt.genSalt(10);  // Genera un "condimento" aleatorio
+   const hash = await bcrypt.hash(password, salt);
+   // "123456" + salt → "$2b$10$XyZ..." (diferente cada vez)
+
+4. NUNCA guarda la contraseña original en la BD
+
+5. Guarda SOLO el hash
+
+6. Usuario y contraseña NUNCA viajan sin encriptación en HTTPS
+
+
+SI LA BD ES HACKEADA:
+No pueden ver contraseñas reales porque solo hay hashes.
+
+
+✅ VALIDACIONES
+───────────────
+
+El backend valida ANTES de guardar:
+
+// Email válido
+if (!email.includes('@') || !email.includes('.')) {
+  return error "Correo inválido"
+}
+
+// Contraseña mínimo 6 caracteres
+if (password.length < 6) {
+  return error "Contraseña muy corta"
+}
+
+// Cédula válida
+if (cedula.length < 5) {
+  return error "Cédula inválida"
+}
+
+// Email no duplicado
+const existe = await DB.findByEmail(email);
+if (existe) {
+  return error "Correo ya registrado"
+}
+
+// Datos de publicación
+if (!titulo || !descripcion || !categoria_id) {
+  return error "Rellena todos los campos"
+}
+
+El frontend TAMBIÉN valida para UX rápido, pero el backend es la fuente de verdad.
+
+
+🛡️ PROTECCIÓN CONTRA SQL INJECTION
+───────────────────────────────────
+
+¿QUÉ ES SQL INJECTION?
+Cuando alguien intenta inyectar código SQL malicioso en un campo de texto.
+
+EJEMPLO PELIGROSO (sin protección):
+const email = "'; DROP TABLE usuarios; --";
+const query = "SELECT * FROM usuarios WHERE correo = '" + email + "'";
+// Resultado: SELECT * FROM usuarios WHERE correo = ''; DROP TABLE usuarios; --'
+// ¡ELIMINA LA TABLA!
+
+
+ANUNZA ESTÁ PROTEGIDO:
+
+El backend usa PARÁMETROS PREPARADOS (parameterized queries):
+
+// ✓ SEGURO (lo que usa ANUNZA)
+const { rows } = await pool.query(
+  'SELECT * FROM usuarios WHERE correo = $1',
+  [email]  // Parámetro separado
+);
+
+// Aunque intentes inyectar: "'; DROP TABLE..."
+// PostgreSQL SABE que es un STRING, no código SQL
+
+El framework siempre:
+1. Separa el SQL del data
+2. Escapa caracteres especiales automáticamente
+3. Previene que el $1 se interprete como código
+
+
+👥 PERMISOS
+───────────
+
+Cada usuario solo puede:
+• Ver su propio perfil
+• Editar su propia información
+• Eliminar sus propias publicaciones
+• Ver publicaciones de todos
+
+EJEMPLO - Editar perfil:
+─────────────────────
+
+PUT /api/users/123 (editar usuario con ID 123)
+Headers: { Authorization: "Bearer token-user-456" }
+
+Backend verifica:
+├─ ¿Es token válido? → Sí
+├─ ¿ID en token = 456?
+├─ ¿ID en URL = 123?
+└─ ¿456 == 123? 
+   ├─ NO → Responde 403 "No tienes permiso"
+   └─ SÍ → Permite editar
+
+
+EN LA BD:
+─────────
+
+-- Row Level Security (RLS)
+CREATE POLICY "Usuarios ven su perfil"
+ON usuarios
+FOR SELECT
+USING (auth.uid() = id);
+
+-- Solo el dueño puede ver sus datos
+
+
+================================================================================
+5. CÓMO SE CONECTA TODO
+================================================================================
+
+📡 ARQUITECTURA EN CAPAS
+────────────────────────
+
+┌──────────────────────────────────────────────────┐
+│           FRONTEND (React + Vite)                │
+│  • Componentes (PublicationComposer, ChatForm)  │
+│  • Context (AuthContext para estado global)     │
+│  • Servicios (api.js para HTTP calls)           │
+│  • localStorage (guarda token y usuario)        │
+└───────────────┬────────────────────────────────┘
+                │
+                │ HTTP/JSON
+                │ Authorization: Bearer {token}
+                │
+┌───────────────▼────────────────────────────────┐
+│         BACKEND (Express.js)                    │
+│  ├─ Rutas (routing de endpoints)               │
+│  ├─ Middleware (verificar JWT)                 │
+│  ├─ Controladores (lógica del negocio)         │
+│  ├─ Modelos (consultas a BD)                   │
+│  └─ Utils (funciones auxiliares)               │
+└───────────────┬────────────────────────────────┘
+                │
+                │ SQL Queries
+                │
+┌───────────────▼────────────────────────────────┐
+│      BASE DE DATOS (PostgreSQL)                │
+│  Tablas:                                       │
+│  • usuarios                                    │
+│  • publicaciones                               │
+│  • mensajes                                    │
+│  • conversaciones                              │
+│  • categorias                                  │
+│  ... más                                       │
+└──────────────────────────────────────────────────┘
+
+
+🔄 EJEMPLO COMPLETO: CREAR UNA PUBLICACIÓN
+────────────────────────────────────────────
+
+1. USUARIO EN FRONTEND HACE ESTO:
+   • Llena formulario (título, descripción, fotos)
+   • Presiona botón "Publicar"
+
+2. JAVASCRIPT EN EL NAVEGADOR:
+   // PublicationComposer.jsx
+   const handleSubmit = async () => {
+     const body = {
+       titulo: "Reparación de Laptops",
+       descripcion: "Soluciono problemas de hardware y software...",
+       categoria_id: 3,
+       tipo: "ofrezco",
+       precio: 50,
+       media: [{ url: "data:image/png;base64,iVBORw0K...", type: "image" }]
+     };
+     
+     // Hace petición HTTP
+     const response = await fetch('http://localhost:5000/api/feed', {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
+         'Authorization': 'Bearer eyJhbGciOi...'  // El token guardado
+       },
+       body: JSON.stringify(body)
+     });
+     
+     if (response.ok) {
+       alert('¡Publicado!');
+     }
+   };
+
+3. EN EL BACKEND (EXPRESS):
+   Ruta: POST /api/feed → controlador feedController.js
+
+   export const createPublicacion = async (req, res) => {
+     // Middleware verifyToken ya pasó
+     const userId = req.userId;  // Extraído del JWT
+     const { titulo, descripcion, categoria_id, media, hashtags } = req.body;
+     
+     // VALIDAR
+     if (!titulo || !descripcion) {
+       return res.status(400).json({ message: 'Campos requeridos' });
+     }
+     
+     const categExiste = await pool.query(
+       'SELECT id FROM categorias WHERE id = $1',
+       [categoria_id]
+     );
+     if (categExiste.rows.length === 0) {
+       return res.status(400).json({ message: 'Categoría no válida' });
+     }
+     
+     // GUARDAR EN BD
+     const { rows } = await pool.query(
+       `INSERT INTO publicaciones (usuario_id, titulo, descripcion, categoria_id, imagen, tipo)
+        VALUES ($1, $2, $3, $4, $5, 'ofrezco')
+        RETURNING *`,
+       [userId, titulo, descripcion, categoria_id, media[0]?.url]
+     );
+     
+     // RESPONDER
+     res.status(201).json({
+       message: 'Publicación creada',
+       publicacion: rows[0]
+     });
+   };
+
+4. EN LA BASE DE DATOS:
+   PostgreSQL recibe la consulta SQL:
+   
+   INSERT INTO publicaciones (usuario_id, titulo, descripcion, categoria_id, imagen, tipo)
+   VALUES ('uuid-user-123', 'Reparación de Laptops', '...', 3, 'data:image/png...', 'ofrezco');
+   -- BD crea automáticamente: id, created_at
+
+5. RESPUESTA AL FRONTEND:
+   {
+     "message": "Publicación creada",
+     "publicacion": {
+       "id": "uuid-pub-456",
+       "usuario_id": "uuid-user-123",
+       "titulo": "Reparación de Laptops",
+       "categoria_id": 3,
+       "precio": 50,
+       "created_at": "2024-01-15T10:30:00Z",
+       "estado": "activo"
+     }
+   }
+
+6. FRONTEND ACTUALIZA LA PANTALLA:
+   if (response.ok) {
+     const newPublicacion = response.data.publicacion;
+     setPublicaciones([newPublicacion, ...publicaciones]); // Agrega al inicio
+     navigate('/feed'); // Redirige
+   }
+
+
+📊 RESUMEN VISUAL - FLUJO DE UN MENSAJE EN CHAT
+────────────────────────────────────────────────
+
+     USUARIO                    FRONTEND                BACKEND                    BD
+        │                         │                       │                        │
+        │ Escribe mensaje         │                       │                        │
+        ├────────────────────────>│                       │                        │
+        │                         │ POST /chat/msg        │                        │
+        │                         │ Auth: Bearer token    │                        │
+        │                         ├──────────────────────>│ Verifica JWT           │
+        │                         │                       ├─────┐                  │
+        │                         │                       │     │ ¿Token válido?   │
+        │                         │                       │<────┘                  │
+        │                         │                       │ Sí → obtiene userId    │
+        │                         │                       │                        │
+        │                         │                       │ INSERT INTO mensajes   │
+        │                         │                       │ (conversacion_id,      │
+        │                         │                       │  remitente_id,         │
+        │                         │                       │  contenido)            │
+        │                         │                       ├───────────────────────>│
+        │                         │                       │                        │ Guarda
+        │                         │                       │<───────────────────────┤
+        │                         │ { success: true }     │                        │
+        │                         │<──────────────────────┤                        │
+        │ Mensaje aparece en chat │                       │                        │
+        │<────────────────────────┤                       │                        │
+        │                         │ GET /chat/msg         │                        │
+        │                         │ (polling cada 3s)     │                        │
+        │                         ├──────────────────────>│ SELECT * FROM mensajes │
+        │                         │                       ├───────────────────────>│
+        │                         │ [nuevo mensaje]       │                        │ Retorna
+        │                         │<──────────────────────┤<───────────────────────┤
+        │ Ver mensaje en chat     │                       │                        │
+        │<────────────────────────┤                       │                        │
+
+
+================================================================================
+6. PUNTOS CLAVE PARA RESPONDER PREGUNTAS DEL PROFESOR
+================================================================================
+
+¿CÓMO FUNCIONA EL CHAT?
+───────────────────────
+
+"Los usuarios se conectan a través de conversaciones. Cuando escriben un mensaje, 
+el frontend envía una solicitud HTTP POST al backend con el mensaje y el token JWT. 
+El backend verifica que el usuario es real, guarda el mensaje en la BD y retorna éxito. 
+El frontend pregunta cada pocos segundos (polling) si hay nuevos mensajes."
+
+
+¿USA HTTP O WEBSOCKETS?
+──────────────────────
+
+"Actualmente usa HTTP con polling. Cada X segundos, hace GET al servidor preguntando 
+'hay mensajes nuevos?'. Es más simple pero menos eficiente que WebSockets. 
+WebSockets sería mejor para chat en tiempo real."
+
+
+¿CÓMO SE CONECTA FRONTEND Y BACKEND?
+─────────────────────────────────────
+
+"El frontend hace requests HTTP con JSON a URLs como /api/feed, /api/chat, etc. 
+Siempre incluye el JWT token en la cabecera Authorization. El backend responde 
+con JSON que el frontend parsea y renderiza en pantalla."
+
+
+¿CÓMO SE MANEJA LA SEGURIDAD?
+──────────────────────────────
+
+"Con 3 capas: 
+1) Encriptación de contraseñas con bcrypt al registrarse. 
+2) JWT tokens que verifican que sea usuario real en cada request. 
+3) Validación de datos en el backend y parametrización de SQL para prevenir inyecciones."
+
+
+¿CÓMO SE CREAN LAS PUBLICACIONES?
+──────────────────────────────────
+
+"El usuario completa un formulario, el frontend convierte fotos a Base64, 
+envía todo al backend con token JWT. El backend valida y guarda en la tabla 
+'publicaciones' de la BD. Luego otros usuarios ven la publicación en el feed."
+
+
+¿CÓMO FUNCIONA EL LOGIN?
+────────────────────────
+
+"El usuario entra correo y contraseña. El backend busca el usuario por correo, 
+compara la contraseña con bcrypt (algoritmo irreversible), y si es correcta 
+genera un JWT token válido por 24 horas. El frontend lo guarda en localStorage 
+e incluye en todos los requests posteriores."
+
+
+¿QUÉ ES BCRYPT?
+───────────────
+
+"Es un algoritmo que transforma la contraseña en un hash irreversible. 
+Por ejemplo: '123456' se convierte en '$2b$10$XyZ...' y cada vez da diferente. 
+Nunca se guarda la contraseña original, solo el hash. Si la BD es hackeada, 
+los atacantes no pueden ver las contraseñas reales."
+
+
+¿CÓMO SE EVITA SQL INJECTION?
+──────────────────────────────
+
+"Usamos parámetros preparados en lugar de concatenar strings. En lugar de:
+SELECT * FROM usuarios WHERE correo = '" + email + "'
+Usamos:
+SELECT * FROM usuarios WHERE correo = $1, [email]
+
+PostgreSQL sabe que $1 es un valor, no código SQL, así que aunque alguien 
+intente inyectar código, no se ejecuta."
+
+
+¿QUÉ ES JWT (JSON WEB TOKEN)?
+──────────────────────────────
+
+"Es un token encriptado que contiene el ID del usuario y expira después de 24 horas. 
+Al hacer login, el backend crea uno y lo devuelve. El frontend lo guarda y lo 
+incluye en la cabecera de cada request. El backend lo verifica para saber quién 
+está haciendo la solicitud sin necesidad de una sesión en el servidor."
+
+
+¿CÓMO SE QUE SOLO VEAN MIS PUBLICACIONES?
+──────────────────────────────────────────
+
+"El backend verifica el JWT en cada operación. Si quieres editar una publicación, 
+el backend comprueba que el usuario_id en el token coincida con el usuario_id 
+en la publicación. Si no coincide, responde 403 'No tienes permiso'."
+
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================
