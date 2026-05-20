@@ -2,7 +2,7 @@
 .admin-root {
   min-height: 100vh;
   background: var(--anunza-lavender, #f5f2ff);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   color: var(--anunza-midnight, #2f086d);
 }
 

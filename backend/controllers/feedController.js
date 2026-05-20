@@ -92,7 +92,7 @@ try {
             SELECT 1 FROM interacciones i2
             WHERE i2.publicacion_id = p.id
               AND i2.usuario_id = $1
-              AND i2.tipo IN ('me_gusta', 'like')
+              AND i2.tipo = 'me_gusta'
           ) AS user_liked
         FROM publicaciones p
         INNER JOIN usuarios u ON u.id = p.usuario_id
@@ -101,7 +101,7 @@ try {
         LEFT JOIN (
           SELECT publicacion_id, COUNT(*)::int AS cnt
           FROM interacciones
-          WHERE tipo IN ('me_gusta', 'like')
+          WHERE tipo = 'me_gusta'
           GROUP BY publicacion_id
         ) ic ON ic.publicacion_id = p.id
         LEFT JOIN (
@@ -284,14 +284,14 @@ export const toggleLike = async (req, res) => {
   try {
     const existing = await pool.query(
       `SELECT id, tipo FROM interacciones
-       WHERE usuario_id = $1 AND publicacion_id = $2 AND tipo IN ('me_gusta', 'like')`,
+       WHERE usuario_id = $1 AND publicacion_id = $2 AND tipo = 'me_gusta'`,
       [userId, publicacionId]
     );
 
     if (existing.rows.length > 0) {
       await pool.query(`DELETE FROM interacciones WHERE id = $1`, [existing.rows[0].id]);
       const count = await pool.query(
-        `SELECT COUNT(*)::int AS c FROM interacciones WHERE publicacion_id = $1 AND tipo IN ('me_gusta', 'like')`,
+        `SELECT COUNT(*)::int AS c FROM interacciones WHERE publicacion_id = $1 AND tipo = 'me_gusta'`,
         [publicacionId]
       );
       return res.json({ liked: false, interacciones_count: count.rows[0].c });
@@ -303,7 +303,7 @@ export const toggleLike = async (req, res) => {
       [userId, publicacionId]
     );
     const count = await pool.query(
-      `SELECT COUNT(*)::int AS c FROM interacciones WHERE publicacion_id = $1 AND tipo IN ('me_gusta', 'like')`,
+      `SELECT COUNT(*)::int AS c FROM interacciones WHERE publicacion_id = $1 AND tipo = 'me_gusta'`,
       [publicacionId]
     );
     // Notificar al dueño de la publicación (si es diferente al que da like)

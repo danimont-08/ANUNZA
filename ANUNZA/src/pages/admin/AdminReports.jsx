@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import {
   fetchAdminReportes,
   patchReporteEstado,
+  fetchAdminPublicacion,
   patchPublicacionEstado,
 } from '../../models/adminModel';
 import { PublicationReviewModal } from '../../components/admin/PublicationReviewModal';
@@ -14,16 +16,14 @@ const MOTIVO_LABEL = {
   otro: 'Otro',
 };
 
-const REPORTE_ESTADO_LABEL = {
-  pendiente: 'Pendiente',
-  revisado: 'Revisado',
-  rechazado: 'Rechazado',
-};
-
 function Badge({ estado }) {
   const raw = (estado || 'pendiente').toLowerCase();
   const badgeKey = raw === 'desestimado' ? 'rechazado' : raw;
-  const label = REPORTE_ESTADO_LABEL[badgeKey] || REPORTE_ESTADO_LABEL[raw] || estado || 'pendiente';
+  const label = {
+    pendiente: 'Pendiente',
+    revisado: 'Revisado',
+    rechazado: 'Rechazado',
+  }[badgeKey] || estado || 'pendiente';
   return <span className={`admin-badge admin-badge--${badgeKey}`}>{label}</span>;
 }
 
@@ -35,8 +35,15 @@ function truncate(str, max = 60) {
 }
 
 export function AdminReports() {
+  const ctx = useOutletContext();
+  const pc = ctx?.panelConfig ?? {};
+  const apiFetchReportes    = pc.fetchReportes     ?? fetchAdminReportes;
+  const apiDescartarReporte = pc.descartarReporte  ?? patchReporteEstado;
+  const apiFetchPublicacion = pc.fetchPublicacion  ?? fetchAdminPublicacion;
+  const apiPatchPublicacion = pc.patchPublicacion  ?? patchPublicacionEstado;
+  const puedeEliminar       = pc.puedeEliminar     ?? true;
+
   const [reportes, setReportes] = useState([]);
-  const [estadoFilter, setEstadoFilter] = useState('pendiente');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
@@ -46,56 +53,29 @@ export function AdminReports() {
     setLoading(true);
     setError('');
     try {
-      const data = await fetchAdminReportes({
-        estado: estadoFilter || undefined,
-      });
+      const data = await apiFetchReportes();
       setReportes(data.reportes || []);
     } catch (e) {
       setError(e.message || 'Error al cargar reportes');
     } finally {
       setLoading(false);
     }
-  }, [estadoFilter]);
+  }, [apiFetchReportes]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const handleReporte = async (id, estado, { closeModal } = {}) => {
+  const handleDescartarReporte = async (id, { closeModal } = {}) => {
     setBusyId(`r-${id}`);
     try {
-      await patchReporteEstado(id, estado);
+      await apiDescartarReporte(id);
+      if (closeModal) setReviewReporte(null);
       await load();
-      if (closeModal) {
-        setReviewReporte((prev) =>
-          prev && prev.id === id ? { ...prev, estado } : prev
-        );
-      }
     } catch (e) {
-      setError(e.message || 'Error al actualizar reporte');
+      setError(e.message || 'Error al descartar reporte');
     } finally {
       setBusyId(null);
-    }
-  };
-
-  const openReview = async (r) => {
-    if (r.estado === 'pendiente') {
-      setBusyId(`r-${r.id}`);
-      try {
-        await patchReporteEstado(r.id, 'revisado');
-        const actualizado = { ...r, estado: 'revisado' };
-        setReportes((prev) =>
-          prev.map((item) => (item.id === r.id ? actualizado : item))
-        );
-        setReviewReporte(actualizado);
-      } catch (e) {
-        setError(e.message || 'Error al marcar reporte como revisado');
-        setReviewReporte(r);
-      } finally {
-        setBusyId(null);
-      }
-    } else {
-      setReviewReporte(r);
     }
   };
 
@@ -112,18 +92,17 @@ export function AdminReports() {
 
     setBusyId(`p-${publicacionId}`);
     try {
-      await patchPublicacionEstado(publicacionId, estado);
+      await apiPatchPublicacion(publicacionId, estado);
       if (estado === 'eliminado') {
         setReviewReporte(null);
-        await load();
       } else {
-        await load();
         setReviewReporte((prev) =>
-          prev && prev.publicacion_id === publicacionId
+          prev && prev.objeto_id === publicacionId
             ? { ...prev, publicacion_estado: estado }
             : prev
         );
       }
+      await load();
     } catch (e) {
       setError(e.message || 'Error al moderar publicación');
     } finally {
@@ -139,12 +118,6 @@ export function AdminReports() {
       {error && <p className="admin-error">{error}</p>}
 
       <div className="admin-toolbar">
-        <select value={estadoFilter} onChange={(e) => setEstadoFilter(e.target.value)}>
-          <option value="">Todos</option>
-          <option value="pendiente">Pendientes</option>
-          <option value="revisado">Revisados</option>
-          <option value="rechazado">Rechazados</option>
-        </select>
         <button type="button" className="admin-btn admin-btn--primary" onClick={load}>
           Actualizar
         </button>
@@ -159,54 +132,51 @@ export function AdminReports() {
           <table className="admin-table admin-table--reportes">
             <thead>
               <tr>
-                <th>Publicación</th>
-                <th>Comentario</th>
-                <th>Autor</th>
-                <th>Reportó</th>
+                <th>Tipo</th>
+                <th>Publicación / Usuario</th>
                 <th>Motivo</th>
+                <th>Detalles</th>
+                <th>Reportó</th>
                 <th>Estado pub.</th>
-                <th>Reporte</th>
                 <th>Fecha</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {reportes.map((r) => {
-                const desc = r.descripcion?.trim();
+                const detalles = r.detalles?.trim();
+                const titulo =
+                  r.tipo === 'publicacion'
+                    ? r.publicacion_titulo || 'Sin título'
+                    : r.usuario_reportado_nombre || r.autor_nombre || '—';
                 return (
                   <tr key={r.id}>
+                    <td><Badge estado={r.tipo} /></td>
                     <td className="admin-cell-pub">
                       <button
                         type="button"
                         className="admin-link-btn"
-                        onClick={() => openReview(r)}
-                        title="Ver publicación completa"
+                        onClick={() => setReviewReporte(r)}
+                        title="Ver detalle"
                       >
-                        {r.publicacion_titulo || 'Sin título'}
+                        {titulo}
                       </button>
                     </td>
+                    <td>{MOTIVO_LABEL[r.motivo] || r.motivo}</td>
                     <td className="admin-cell-desc">
-                      {desc ? (
-                        <button
-                          type="button"
-                          className="admin-desc-preview"
-                          onClick={() => openReview(r)}
-                          title={desc}
-                        >
-                          {truncate(desc, 48)}
-                        </button>
+                      {detalles ? (
+                        <span title={detalles}>{truncate(detalles, 48)}</span>
                       ) : (
                         <span className="admin-desc-empty">—</span>
                       )}
                     </td>
-                    <td>{r.autor_nombre}</td>
                     <td>{r.reportante_nombre}</td>
-                    <td>{MOTIVO_LABEL[r.motivo] || r.motivo}</td>
                     <td>
-                      <Badge estado={r.publicacion_estado} />
-                    </td>
-                    <td>
-                      <Badge estado={r.estado} />
+                      {r.tipo === 'publicacion' ? (
+                        <Badge estado={r.publicacion_estado} />
+                      ) : (
+                        <span className="admin-desc-empty">—</span>
+                      )}
                     </td>
                     <td>
                       {r.created_at
@@ -218,13 +188,23 @@ export function AdminReports() {
                     </td>
                     <td>
                       <div className="admin-actions">
+                        {r.tipo === 'publicacion' && (
+                          <button
+                            type="button"
+                            className="admin-btn-review"
+                            disabled={busyId === `r-${r.id}`}
+                            onClick={() => setReviewReporte(r)}
+                          >
+                            Revisar
+                          </button>
+                        )}
                         <button
                           type="button"
-                          className="admin-btn-review"
+                          className="admin-btn admin-btn--danger"
                           disabled={busyId === `r-${r.id}`}
-                          onClick={() => openReview(r)}
+                          onClick={() => handleDescartarReporte(r.id)}
                         >
-                          Revisar
+                          Descartar
                         </button>
                       </div>
                     </td>
@@ -240,11 +220,11 @@ export function AdminReports() {
         <PublicationReviewModal
           reporte={reviewReporte}
           busy={modalBusy}
+          puedeEliminar={puedeEliminar}
           onClose={() => setReviewReporte(null)}
-          onPatchReporte={(id, estado) =>
-            handleReporte(id, estado, { closeModal: true })
-          }
+          onPatchReporte={(id) => handleDescartarReporte(id, { closeModal: true })}
           onPatchPublicacion={handlePublicacion}
+          fetchPublicacion={apiFetchPublicacion}
         />
       )}
     </>

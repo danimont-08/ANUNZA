@@ -19,10 +19,10 @@ const MOTIVO_LABEL = {
   otro: 'Otro',
 };
 
-const ESTADO_BADGE = {
-  pendiente:  { label: 'Pendiente',  cls: 'badge-pendiente' },
-  revisado:   { label: 'Revisado',   cls: 'badge-resuelto' },
-  rechazado:  { label: 'Rechazado',  cls: 'badge-descartado' },
+const TIPO_BADGE = {
+  publicacion: { label: 'Publicación', cls: 'mod-badge-tipo-pub' },
+  usuario:     { label: 'Usuario',     cls: 'mod-badge-tipo-usr' },
+  mensaje:     { label: 'Mensaje',     cls: 'mod-badge-tipo-msg' },
 };
 
 function formatDate(iso) {
@@ -83,28 +83,10 @@ function TabReportes() {
     } catch (e) { showFeedback(r.id, e.message, false); }
   };
 
-  const handleSuspender = async (r) => {
-    const dias = parseInt(diasMap[r.id] || '', 10);
-    if (!dias || dias < 1) return showFeedback(r.id, 'Ingresa días válidos.', false);
+  const handleDescartar = async (r) => {
     try {
-      const d = await suspenderUsuario(r.dueno_id, dias);
-      showFeedback(r.id, d.message);
-      load();
-    } catch (e) { showFeedback(r.id, e.message, false); }
-  };
-
-  const handleLevantarSuspension = async (r) => {
-    try {
-      const d = await levantarSuspension(r.dueno_id);
-      showFeedback(r.id, d.message);
-      load();
-    } catch (e) { showFeedback(r.id, e.message, false); }
-  };
-
-  const handleResolver = async (r, accion) => {
-    try {
-      await resolverReporte(r.id, accion);
-      showFeedback(r.id, accion === 'revisado' ? 'Reporte marcado como revisado.' : 'Reporte rechazado.');
+      await resolverReporte(r.id);
+      showFeedback(r.id, 'Reporte descartado.');
       load();
     } catch (e) { showFeedback(r.id, e.message, false); }
   };
@@ -117,19 +99,44 @@ function TabReportes() {
     <>
       <div className="mod-card-list">
         {reportes.map((r) => {
-          const est = ESTADO_BADGE[r.estado] || ESTADO_BADGE.pendiente;
-          const suspendido = isSuspendido(r.dueno_estado);
+          const tipoBadge = TIPO_BADGE[r.tipo] || { label: r.tipo, cls: '' };
+
+          // Normalizar el "usuario afectado" según el tipo de reporte
+          const targetId     = r.tipo === 'publicacion' ? r.dueno_id     : r.usuario_obj_id;
+          const targetNombre = r.tipo === 'publicacion' ? r.dueno_nombre : r.usuario_obj_nombre;
+          const targetEstado = r.tipo === 'publicacion' ? r.dueno_estado : r.usuario_obj_estado;
+          const targetRol    = r.tipo === 'publicacion' ? r.dueno_rol    : r.usuario_obj_rol;
+          const suspendido   = isSuspendido(targetEstado);
+
+          const handleSuspenderTarget = async () => {
+            const dias = parseInt(diasMap[r.id] || '', 10);
+            if (!dias || dias < 1) return showFeedback(r.id, 'Ingresa días válidos.', false);
+            try {
+              const d = await suspenderUsuario(targetId, dias);
+              showFeedback(r.id, d.message);
+              load();
+            } catch (e) { showFeedback(r.id, e.message, false); }
+          };
+
+          const handleLevantarTarget = async () => {
+            try {
+              const d = await levantarSuspension(targetId);
+              showFeedback(r.id, d.message);
+              load();
+            } catch (e) { showFeedback(r.id, e.message, false); }
+          };
+
           return (
-            <div key={r.id} className={`mod-card ${r.estado !== 'pendiente' ? 'mod-card-dim' : ''}`}>
+            <div key={r.id} className="mod-card">
               <div className="mod-card-top">
-                <span className={`mod-badge ${est.cls}`}>{est.label}</span>
+                <span className={`mod-badge ${tipoBadge.cls}`}>{tipoBadge.label}</span>
                 <span className="mod-badge mod-badge-motivo">
                   {MOTIVO_LABEL[r.motivo] || r.motivo}
                 </span>
                 <time className="mod-date">{formatDate(r.created_at)}</time>
               </div>
 
-              {r.publicacion_titulo && (
+              {r.tipo === 'publicacion' && r.publicacion_titulo && (
                 <p className="mod-pub-title">
                   <strong>Publicación:</strong> {r.publicacion_titulo}
                   {r.publicacion_estado === 'oculta' && (
@@ -138,15 +145,14 @@ function TabReportes() {
                 </p>
               )}
 
-
-              {r.descripcion && (
-                <p className="mod-desc">"{r.descripcion}"</p>
+              {r.detalles && (
+                <p className="mod-desc">"{r.detalles}"</p>
               )}
 
               <p className="mod-meta">
                 Reportado por: <strong>{r.reportado_por || '—'}</strong>
-                {r.dueno_nombre && (
-                  <> · Autor: <strong>{r.dueno_nombre}</strong></>
+                {targetNombre && (
+                  <> · {r.tipo === 'publicacion' ? 'Autor' : 'Usuario reportado'}: <strong>{targetNombre}</strong></>
                 )}
               </p>
 
@@ -156,54 +162,49 @@ function TabReportes() {
                 </p>
               )}
 
-              {r.estado === 'pendiente' && (
-                <div className="mod-actions">
-                  {/* Acciones sobre la publicación */}
-                  {r.publicacion_id && (
-                    r.publicacion_estado === 'oculta' ? (
-                      <button type="button" className="mod-btn mod-btn-secondary" onClick={() => handleMostrar(r)}>
-                        Restaurar publicación
-                      </button>
-                    ) : (
-                      <button type="button" className="mod-btn mod-btn-danger" onClick={() => handleOcultar(r)}>
-                        Ocultar publicación
-                      </button>
-                    )
-                  )}
+              <div className="mod-actions">
+                {/* Acciones sobre la publicación (solo si tipo='publicacion') */}
+                {r.tipo === 'publicacion' && r.publicacion_id && (
+                  r.publicacion_estado === 'oculta' ? (
+                    <button type="button" className="mod-btn mod-btn-secondary" onClick={() => handleMostrar(r)}>
+                      Restaurar publicación
+                    </button>
+                  ) : (
+                    <button type="button" className="mod-btn mod-btn-danger" onClick={() => handleOcultar(r)}>
+                      Ocultar publicación
+                    </button>
+                  )
+                )}
 
-                  {/* Acciones sobre el usuario autor */}
-                  {r.dueno_id && (
-                    suspendido ? (
-                      <button type="button" className="mod-btn mod-btn-secondary" onClick={() => handleLevantarSuspension(r)}>
-                        Levantar suspensión
+                {/* Acciones sobre el usuario afectado */}
+                {targetId && targetRol !== 'admin' && (
+                  suspendido ? (
+                    <button type="button" className="mod-btn mod-btn-secondary" onClick={handleLevantarTarget}>
+                      Levantar suspensión
+                    </button>
+                  ) : (
+                    <div className="mod-suspend-row">
+                      <input
+                        type="number"
+                        min="1"
+                        max="365"
+                        placeholder="Días"
+                        className="mod-input-dias"
+                        value={diasMap[r.id] || ''}
+                        onChange={(e) => setDiasMap((p) => ({ ...p, [r.id]: e.target.value }))}
+                      />
+                      <button type="button" className="mod-btn mod-btn-warn" onClick={handleSuspenderTarget}>
+                        Suspender usuario
                       </button>
-                    ) : (
-                      <div className="mod-suspend-row">
-                        <input
-                          type="number"
-                          min="1"
-                          max="365"
-                          placeholder="Días"
-                          className="mod-input-dias"
-                          value={diasMap[r.id] || ''}
-                          onChange={(e) => setDiasMap((p) => ({ ...p, [r.id]: e.target.value }))}
-                        />
-                        <button type="button" className="mod-btn mod-btn-warn" onClick={() => handleSuspender(r)}>
-                          Suspender usuario
-                        </button>
-                      </div>
-                    )
-                  )}
+                    </div>
+                  )
+                )}
 
-                  {/* Resolver o descartar reporte */}
-                  <button type="button" className="mod-btn mod-btn-success" onClick={() => handleResolver(r, 'revisado')}>
-                    Marcar revisado
-                  </button>
-                  <button type="button" className="mod-btn mod-btn-ghost" onClick={() => handleResolver(r, 'rechazado')}>
-                    Rechazar
-                  </button>
-                </div>
-              )}
+                {/* Descartar el reporte */}
+                <button type="button" className="mod-btn mod-btn-ghost" onClick={() => handleDescartar(r)}>
+                  Descartar reporte
+                </button>
+              </div>
             </div>
           );
         })}
@@ -293,6 +294,7 @@ function TabUsuarios() {
                   {u.ciudad && <p className="mod-user-city">{u.ciudad}</p>}
                 </div>
                 <div className="mod-user-badges">
+                  {u.rol === 'admin' && <span className="mod-badge mod-badge-admin">Admin</span>}
                   {u.rol === 'moderador' && <span className="mod-badge mod-badge-mod">Moderador</span>}
                   {suspendido && (
                     <span className="mod-badge mod-badge-suspendido">Suspendido</span>
@@ -312,7 +314,7 @@ function TabUsuarios() {
                 </p>
               )}
 
-              {u.rol !== 'moderador' && (
+              {u.rol !== 'moderador' && u.rol !== 'admin' && (
                 <div className="mod-actions">
                   {suspendido ? (
                     <button type="button" className="mod-btn mod-btn-secondary" onClick={() => handleLevantar(u)}>

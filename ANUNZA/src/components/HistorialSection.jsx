@@ -18,7 +18,7 @@ const TIPO_ICONO = {
   me_interesa: '⭐',
 };
 
-export function HistorialSection() {
+export function HistorialSection({ onNavigateToPost }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -97,13 +97,14 @@ export function HistorialSection() {
             {(data.publicaciones || []).length === 0 && <li className="hist-empty">Sin publicaciones</li>}
             {(data.publicaciones || []).map((p) => (
               <li key={p.id}>
-                <a
-                  href={`/dashboard?post=${p.id}`}
+                <button
+                  type="button"
                   className="hist-item-link"
                   title={p.titulo || 'Ver publicación'}
+                  onClick={() => onNavigateToPost?.(p.id)}
                 >
                   {p.titulo || 'Sin título'}
-                </a>
+                </button>
                 <span className="hist-meta">{parseTitulo(p.descripcion)}</span>
               </li>
             ))}
@@ -118,11 +119,15 @@ export function HistorialSection() {
             {(data.interacciones || []).map((i) => (
               <li key={i.id}>
                 <span className="hist-icon">{TIPO_ICONO[i.tipo] || '🔹'}</span>
-                <span>
+                <button
+                  type="button"
+                  className="hist-item-link"
+                  onClick={() => i.publicacion_id && onNavigateToPost?.(i.publicacion_id)}
+                >
                   {i.tipo === 'me_gusta' || i.tipo === 'like'
                     ? `Le diste me gusta a "${i.publicacion_titulo || 'una publicación'}"`
                     : `${i.tipo} en "${i.publicacion_titulo || 'una publicación'}"`}
-                </span>
+                </button>
                 {i.created_at && (
                   <span className="hist-meta">
                     {new Date(i.created_at).toLocaleDateString('es-CO')}

@@ -2,7 +2,7 @@
 .dashboard {
   min-height: 100vh;
   background-color: #F5F2FF;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Navbar */
@@ -533,7 +533,7 @@
 }
 
 .save-button {
-  background: #27ae60;
+  background: #8A4EFF;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -544,22 +544,22 @@
 }
 
 .save-button:hover {
-  background: #229954;
+  background: #7442d9;
 }
 
 .cancel-button {
-  background: #95a5a6;
-  color: white;
-  border: none;
+  background: #fff;
+  color: #8A4EFF;
+  border: 1.5px solid #8A4EFF;
   padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
   font-weight: 600;
-  transition: background 0.3s;
+  transition: all 0.3s;
 }
 
 .cancel-button:hover {
-  background: #7f8c8d;
+  background: #f0e9ff;
 }
 
 /* Sección de Usuarios */
@@ -584,7 +584,7 @@
 }
 
 .refresh-button {
-  background: #3498db;
+  background: #8A4EFF;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -595,7 +595,7 @@
 }
 
 .refresh-button:hover:not(:disabled) {
-  background: #2980b9;
+  background: #7442d9;
 }
 
 .refresh-button:disabled {

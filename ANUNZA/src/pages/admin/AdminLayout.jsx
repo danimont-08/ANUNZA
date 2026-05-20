@@ -3,7 +3,11 @@ import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Admin.css';
 
-export function AdminLayout() {
+export function AdminLayout({
+  basePath = '/admin',
+  brand = 'ANUNZA · Administración',
+  panelConfig = {},
+}) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -16,8 +20,8 @@ export function AdminLayout() {
     <div className="admin-root">
       <header className="admin-header">
         <div className="admin-header-inner">
-          <Link to="/admin" className="admin-brand">
-            ANUNZA · Administración
+          <Link to={basePath} className="admin-brand">
+            {brand}
           </Link>
           <div className="admin-header-actions">
             <Link to="/dashboard">Ir al feed</Link>
@@ -33,14 +37,14 @@ export function AdminLayout() {
 
       <div className="admin-body">
         <nav className="admin-nav">
-          <NavLink to="/admin" end>
+          <NavLink to={basePath} end>
             Resumen
           </NavLink>
-          <NavLink to="/admin/usuarios">Usuarios</NavLink>
-          <NavLink to="/admin/reportes">Reportes</NavLink>
+          <NavLink to={`${basePath}/usuarios`}>Usuarios</NavLink>
+          <NavLink to={`${basePath}/reportes`}>Reportes</NavLink>
         </nav>
         <main className="admin-main">
-          <Outlet />
+          <Outlet context={{ panelConfig }} />
         </main>
       </div>
     </div>

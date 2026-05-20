@@ -19,6 +19,11 @@ export function Navbar({ user, onLogout, onOpenProfile, noLeidas = 0, onToggleNo
               Admin
             </Link>
           )}
+          {user?.rol === 'moderador' && (
+            <Link to="/moderador" className="anunza-admin-link" title="Panel de moderación">
+              Moderación
+            </Link>
+          )}
           {/* Campanita de notificaciones */}
           <button
             type="button"

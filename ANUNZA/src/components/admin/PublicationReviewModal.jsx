@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MediaCarousel } from '../feed/MediaCarousel';
-import { fetchAdminPublicacion } from '../../models/adminModel';
+import { fetchAdminPublicacion as defaultFetchPublicacion } from '../../models/adminModel';
 import './PublicationReviewModal.css';
 
 const MOTIVO_LABEL = {
@@ -29,19 +29,22 @@ export function PublicationReviewModal({
   onPatchReporte,
   onPatchPublicacion,
   busy,
+  puedeEliminar = true,
+  fetchPublicacion = defaultFetchPublicacion,
 }) {
   const [publicacion, setPublicacion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!reporte?.publicacion_id) return;
+    const pubId = reporte?.tipo === 'publicacion' ? reporte?.objeto_id : null;
+    if (!pubId) { setLoading(false); return; }
     let cancelled = false;
     (async () => {
       setLoading(true);
       setError('');
       try {
-        const data = await fetchAdminPublicacion(reporte.publicacion_id);
+        const data = await fetchPublicacion(pubId);
         if (!cancelled) setPublicacion(data.publicacion);
       } catch (e) {
         if (!cancelled) setError(e.message || 'No se pudo cargar la publicación');
@@ -52,7 +55,7 @@ export function PublicationReviewModal({
     return () => {
       cancelled = true;
     };
-  }, [reporte?.publicacion_id]);
+  }, [reporte?.objeto_id, reporte?.tipo]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -68,7 +71,7 @@ export function PublicationReviewModal({
   const media = publicacion?.media_items?.length ? publicacion.media_items : [];
   const tags = publicacion?.hashtags || [];
   const svc = publicacion?.service_detalle;
-  const reporteDesc = reporte.descripcion?.trim();
+  const reporteDesc = reporte.detalles?.trim();
   const pubEstado = reporte.publicacion_estado || publicacion?.estado || 'activo';
 
   return (
@@ -202,7 +205,7 @@ export function PublicationReviewModal({
                 type="button"
                 className="admin-btn admin-btn--secondary"
                 disabled={busy}
-                onClick={() => onPatchReporte(reporte.id, 'rechazado')}
+                onClick={() => onPatchReporte(reporte.id)}
               >
                 Rechazar reporte
               </button>
@@ -219,7 +222,7 @@ export function PublicationReviewModal({
                     Ocultar publicación
                   </button>
                 )}
-                {pubEstado !== 'eliminado' && (
+                {puedeEliminar && pubEstado !== 'eliminado' && (
                   <button
                     type="button"
                     className="admin-btn admin-btn--secondary admin-review-btn-danger"

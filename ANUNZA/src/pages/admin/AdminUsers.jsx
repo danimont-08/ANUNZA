@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { fetchAdminUsers, patchUserEstado } from '../../models/adminModel';
 
 function Badge({ estado }) {
@@ -7,6 +8,13 @@ function Badge({ estado }) {
 }
 
 export function AdminUsers() {
+  const ctx = useOutletContext();
+  const pc = ctx?.panelConfig ?? {};
+  const apiFetchUsers   = pc.fetchUsers    ?? fetchAdminUsers;
+  const apiSuspender    = pc.suspenderUser ?? ((id) => patchUserEstado(id, 'suspendido'));
+  const apiReactivar    = pc.reactivarUser ?? ((id) => patchUserEstado(id, 'activo'));
+  const puedeGestionarMods = pc.puedeGestionarMods ?? true;
+
   const [users, setUsers] = useState([]);
   const [estadoFilter, setEstadoFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -18,17 +26,18 @@ export function AdminUsers() {
     setLoading(true);
     setError('');
     try {
-      const data = await fetchAdminUsers({
+      const data = await apiFetchUsers({
         estado: estadoFilter || undefined,
         q: search.trim() || undefined,
       });
-      setUsers(data.users || []);
+      // admin endpoint returns { users }, mod endpoint returns { usuarios }
+      setUsers(data.users ?? data.usuarios ?? []);
     } catch (e) {
       setError(e.message || 'Error al cargar usuarios');
     } finally {
       setLoading(false);
     }
-  }, [estadoFilter, search]);
+  }, [apiFetchUsers, estadoFilter, search]);
 
   useEffect(() => {
     const t = setTimeout(load, 300);
@@ -37,20 +46,28 @@ export function AdminUsers() {
 
   const handleEstado = async (userId, nuevoEstado) => {
     const msg =
-      nuevoEstado === 'suspendido'
-        ? '¿Suspender esta cuenta?'
-        : '¿Reactivar esta cuenta?';
+      nuevoEstado === 'suspendido' ? '¿Suspender esta cuenta?' : '¿Reactivar esta cuenta?';
     if (!window.confirm(msg)) return;
 
     setActionId(userId);
     try {
-      await patchUserEstado(userId, nuevoEstado);
+      if (nuevoEstado === 'suspendido') {
+        await apiSuspender(userId);
+      } else {
+        await apiReactivar(userId);
+      }
       await load();
     } catch (e) {
       setError(e.message || 'Error al actualizar usuario');
     } finally {
       setActionId(null);
     }
+  };
+
+  const canActOn = (u) => {
+    if (u.rol === 'admin') return false;
+    if (!puedeGestionarMods && u.rol === 'moderador') return false;
+    return true;
   };
 
   return (
@@ -61,7 +78,7 @@ export function AdminUsers() {
       <div className="admin-toolbar">
         <input
           type="search"
-          placeholder="Buscar por nombre, correo o cédula…"
+          placeholder="Buscar por nombre o correo…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -86,7 +103,6 @@ export function AdminUsers() {
               <tr>
                 <th>Nombre</th>
                 <th>Correo</th>
-                <th>Cédula</th>
                 <th>Rol</th>
                 <th>Estado</th>
                 <th>Registro</th>
@@ -98,7 +114,6 @@ export function AdminUsers() {
                 <tr key={u.id}>
                   <td>{u.nombre}</td>
                   <td>{u.correo}</td>
-                  <td>{u.cedula}</td>
                   <td>{u.rol || 'usuario'}</td>
                   <td>
                     <Badge estado={u.estado} />
@@ -110,8 +125,8 @@ export function AdminUsers() {
                   </td>
                   <td>
                     <div className="admin-actions">
-                      {u.rol !== 'admin' &&
-                        (u.estado === 'suspendido' ? (
+                      {canActOn(u) ? (
+                        u.estado === 'suspendido' ? (
                           <button
                             type="button"
                             disabled={actionId === u.id}
@@ -128,9 +143,11 @@ export function AdminUsers() {
                           >
                             Suspender
                           </button>
-                        ))}
-                      {u.rol === 'admin' && (
-                        <span style={{ color: '#7a6f96', fontSize: '0.8rem' }}>Admin</span>
+                        )
+                      ) : (
+                        <span style={{ color: '#7a6f96', fontSize: '0.8rem' }}>
+                          {u.rol === 'admin' ? 'Admin' : 'Moderador'}
+                        </span>
                       )}
                     </div>
                   </td>

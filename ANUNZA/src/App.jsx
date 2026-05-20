@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import { AdminRoute } from './components/AdminRoute';
+import { ModeradorRoute } from './components/ModeradorRoute';
 import { Home } from './pages/Home';
 import { FormularioLogin } from './components/FormularioLogin';
 import { FormularioRegistro } from './components/FormularioRegistro';
@@ -11,12 +12,9 @@ import { AdminLayout } from './pages/admin/AdminLayout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminReports } from './pages/admin/AdminReports';
+import { ModeradorLayout } from './pages/moderador/ModeradorLayout';
 import './App.css';
 
-/**
- * Componente principal de la aplicación
- * Define las rutas y estructura general
- */
 function App() {
   return (
     <Router>
@@ -26,7 +24,6 @@ function App() {
           <Route path="/login" element={<FormularioLogin />} />
           <Route path="/register" element={<FormularioRegistro />} />
 
-          {/* Ruta protegida - solo para usuarios autenticados */}
           <Route
             path="/dashboard"
             element={
@@ -49,7 +46,19 @@ function App() {
             <Route path="reportes" element={<AdminReports />} />
           </Route>
 
-          {/* Ruta por defecto */}
+          <Route
+            path="/moderador"
+            element={
+              <ModeradorRoute>
+                <ModeradorLayout />
+              </ModeradorRoute>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="usuarios" element={<AdminUsers />} />
+            <Route path="reportes" element={<AdminReports />} />
+          </Route>
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

@@ -18,7 +18,7 @@ router.get('/stats', getStats);
 router.get('/users', listUsers);
 router.patch('/users/:id/estado', patchUserEstado);
 router.get('/reportes', listReportes);
-router.patch('/reportes/:id', patchReporteEstado);
+router.delete('/reportes/:id', patchReporteEstado);
 router.get('/publicaciones/:id', getPublicacionDetalle);
 router.patch('/publicaciones/:id', patchPublicacionEstado);
 

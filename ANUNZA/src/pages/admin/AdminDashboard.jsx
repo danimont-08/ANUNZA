@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAdminStats } from '../../models/adminModel';
 
@@ -14,6 +15,9 @@ const STAT_ITEMS = [
 
 export function AdminDashboard() {
   const { user } = useAuth();
+  const ctx = useOutletContext();
+  const apiFetchStats = ctx?.panelConfig?.fetchStats ?? fetchAdminStats;
+
   const [stats, setStats] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -23,7 +27,7 @@ export function AdminDashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchAdminStats();
+        const data = await apiFetchStats();
         setStats(data.stats);
       } catch (e) {
         setError(e.message || 'Error al cargar estadísticas');
@@ -31,7 +35,7 @@ export function AdminDashboard() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [apiFetchStats]);
 
   if (loading) return <p className="admin-loading-inline">Cargando estadísticas…</p>;
   if (error) return <p className="admin-error">{error}</p>;

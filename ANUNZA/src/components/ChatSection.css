@@ -418,6 +418,26 @@
   white-space: nowrap;
 }
 
+.chat-modal-cerrar {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.55rem 1.25rem;
+  background: #fff;
+  color: var(--anunza-violet);
+  border: 1.5px solid var(--anunza-violet);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.chat-modal-cerrar:hover {
+  background: var(--anunza-violet);
+  color: #fff;
+}
+
 .chat-placeholder .chat-hint {
   font-size: 0.9rem;
   margin-top: 0.5rem;

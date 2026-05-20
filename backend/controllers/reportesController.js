@@ -24,8 +24,8 @@ export const crearReporte = async (req, res) => {
     }
 
     await pool.query(
-      `INSERT INTO reportes (publicacion_id, usuario_id, motivo, descripcion)
-       VALUES ($1, $2, $3, $4)`,
+      `INSERT INTO reportes (tipo, objeto_id, reportado_por, motivo, detalles)
+       VALUES ('publicacion', $1, $2, $3, $4)`,
       [publicacion_id, userId, String(motivo).toLowerCase(), descripcion ? String(descripcion).trim() : null]
     );
 

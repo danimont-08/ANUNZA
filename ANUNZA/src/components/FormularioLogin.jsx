@@ -28,6 +28,8 @@ export const FormularioLogin = () => {
       const data = await login(formData.correo, formData.password);
       if (data.user?.rol === 'admin') {
         navigate('/admin');
+      } else if (data.user?.rol === 'moderador') {
+        navigate('/moderador');
       } else {
         navigate('/dashboard');
       }

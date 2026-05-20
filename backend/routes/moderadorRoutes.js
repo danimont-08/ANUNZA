@@ -11,6 +11,8 @@ import {
   resolverReporte,
   getMensajesConversacion,
   getPublicacionesOcultas,
+  getStats,
+  getPublicacion,
 } from '../controllers/moderadorController.js';
 
 const router = Router();
@@ -18,12 +20,14 @@ const router = Router();
 // Toda ruta requiere token válido Y rol de moderador
 router.use(verifyToken, isModerador);
 
+router.get('/stats',                               getStats);
 router.get('/reportes',                            getReportes);
-router.patch('/reportes/:id/resolver',             resolverReporte);
+router.delete('/reportes/:id/resolver',            resolverReporte);
 
+router.get('/publicaciones/ocultas',               getPublicacionesOcultas);
+router.get('/publicaciones/:id',                   getPublicacion);
 router.patch('/publicaciones/:id/ocultar',         ocultarPublicacion);
 router.patch('/publicaciones/:id/mostrar',         mostrarPublicacion);
-router.get('/publicaciones/ocultas',               getPublicacionesOcultas);
 
 router.get('/usuarios',                            getUsuarios);
 router.patch('/usuarios/:id/suspender',            suspenderUsuario);

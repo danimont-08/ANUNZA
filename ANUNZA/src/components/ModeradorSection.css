@@ -120,11 +120,12 @@
   font-weight: 600;
   white-space: nowrap;
 }
-.badge-pendiente   { background: #fff3cd; color: #7a5c00; }
-.badge-resuelto    { background: #d4edda; color: #155724; }
-.badge-descartado  { background: #e2e3e5; color: #555; }
-.mod-badge-motivo  { background: #ede8ff; color: #5b35d5; }
+.mod-badge-tipo-pub  { background: #ede8ff; color: #5b35d5; }
+.mod-badge-tipo-usr  { background: #fff3cd; color: #7a5c00; }
+.mod-badge-tipo-msg  { background: #e2e3e5; color: #444; }
+.mod-badge-motivo    { background: #f0ebff; color: #7a27eb; }
 .mod-badge-oculta  { background: #f8d7da; color: #721c24; }
+.mod-badge-admin   { background: #2f086d; color: #fff; }
 .mod-badge-mod     { background: #cce5ff; color: #004085; }
 .mod-badge-suspendido { background: #f8d7da; color: #721c24; }
 .mod-badge-count   { background: #e9ecef; color: #495057; }
@@ -152,10 +153,10 @@
 .mod-btn-sm { padding: 0.28rem 0.65rem; font-size: 0.78rem; }
 
 .mod-btn-danger    { background: #dc3545; color: #fff; }
-.mod-btn-warn      { background: #fd7e14; color: #fff; }
-.mod-btn-success   { background: #28a745; color: #fff; }
-.mod-btn-secondary { background: #6c757d; color: #fff; }
-.mod-btn-ghost     { background: #f0ebff; color: #5b35d5; border: 1px solid #d6caff; }
+.mod-btn-warn      { background: #7a27eb; color: #fff; }
+.mod-btn-success   { background: #8a4eff; color: #fff; }
+.mod-btn-secondary { background: #f0ebff; color: #5b35d5; border: 1px solid #d6caff; }
+.mod-btn-ghost     { background: transparent; color: #5b35d5; border: 1.5px solid #d6caff; }
 .mod-btn-close {
   background: none;
   border: none;

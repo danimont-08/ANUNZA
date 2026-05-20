@@ -19,18 +19,12 @@ export async function patchUserEstado(userId, estado) {
   });
 }
 
-export async function fetchAdminReportes({ estado } = {}) {
-  const params = new URLSearchParams();
-  if (estado) params.set('estado', estado);
-  const suffix = params.toString() ? `?${params.toString()}` : '';
-  return apiFetch(`/admin/reportes${suffix}`);
+export async function fetchAdminReportes() {
+  return apiFetch('/admin/reportes');
 }
 
-export async function patchReporteEstado(reporteId, estado) {
-  return apiFetch(`/admin/reportes/${reporteId}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ estado }),
-  });
+export async function patchReporteEstado(reporteId) {
+  return apiFetch(`/admin/reportes/${reporteId}`, { method: 'DELETE' });
 }
 
 export async function fetchAdminPublicacion(publicacionId) {

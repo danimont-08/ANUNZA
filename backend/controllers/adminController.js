@@ -3,7 +3,6 @@ import { User } from '../models/User.js';
 import { enrichPublicacionRow } from '../utils/publicacionPayload.js';
 
 const ESTADOS_USUARIO = ['activo', 'suspendido'];
-const ESTADOS_REPORTE = ['pendiente', 'revisado', 'rechazado'];
 const ESTADOS_PUBLICACION = ['activo', 'oculto', 'eliminado'];
 
 /** GET /api/admin/stats */
@@ -16,8 +15,8 @@ export const getStats = async (req, res) => {
         (SELECT COUNT(*)::int FROM usuarios WHERE estado = 'suspendido') AS usuarios_suspendidos,
         (SELECT COUNT(*)::int FROM publicaciones) AS publicaciones_total,
         (SELECT COUNT(*)::int FROM publicaciones WHERE COALESCE(estado, 'activo') = 'activo') AS publicaciones_activas,
-        (SELECT COUNT(DISTINCT publicacion_id)::int FROM reportes) AS publicaciones_reportadas,
-        (SELECT COUNT(*)::int FROM reportes WHERE COALESCE(estado, 'pendiente') = 'pendiente') AS reportes_pendientes
+        (SELECT COUNT(DISTINCT objeto_id)::int FROM reportes WHERE tipo = 'publicacion') AS publicaciones_reportadas,
+        (SELECT COUNT(*)::int FROM reportes) AS reportes_pendientes
     `);
     res.json({ stats: rows[0] });
   } catch (error) {
@@ -74,33 +73,23 @@ export const patchUserEstado = async (req, res) => {
   }
 };
 
-/** GET /api/admin/reportes?estado= */
+/** GET /api/admin/reportes */
 export const listReportes = async (req, res) => {
   try {
-    let estado = req.query.estado || null;
-    if (estado === 'desestimado') estado = 'rechazado';
-    const params = [];
-    let where = '';
-    if (estado) {
-      params.push(estado);
-      where = `WHERE COALESCE(r.estado, 'pendiente') = $1`;
-    }
-
     const { rows } = await pool.query(
-      `SELECT r.id, r.publicacion_id, r.usuario_id AS reportante_id,
-              r.motivo, r.descripcion, r.estado, r.created_at,
-              p.titulo AS publicacion_titulo, p.estado AS publicacion_estado,
-              p.usuario_id AS publicacion_autor_id,
+      `SELECT r.id, r.tipo, r.objeto_id, r.motivo, r.detalles, r.created_at,
               u_rep.nombre AS reportante_nombre,
-              u_aut.nombre AS autor_nombre
+              p.titulo     AS publicacion_titulo,
+              p.estado     AS publicacion_estado,
+              u_due.nombre AS autor_nombre,
+              u_obj.nombre AS usuario_reportado_nombre
        FROM reportes r
-       INNER JOIN publicaciones p ON p.id = r.publicacion_id
-       INNER JOIN usuarios u_rep ON u_rep.id = r.usuario_id
-       INNER JOIN usuarios u_aut ON u_aut.id = p.usuario_id
-       ${where}
+       LEFT JOIN usuarios u_rep ON u_rep.id = r.reportado_por
+       LEFT JOIN publicaciones p   ON r.tipo = 'publicacion' AND p.id = r.objeto_id
+       LEFT JOIN usuarios u_due    ON r.tipo = 'publicacion' AND u_due.id = p.usuario_id
+       LEFT JOIN usuarios u_obj    ON r.tipo = 'usuario'     AND u_obj.id = r.objeto_id
        ORDER BY r.created_at DESC
-       LIMIT 100`,
-      params
+       LIMIT 100`
     );
     res.json({ reportes: rows });
   } catch (error) {
@@ -109,28 +98,15 @@ export const listReportes = async (req, res) => {
   }
 };
 
-/** PATCH /api/admin/reportes/:id  body: { estado } */
+/** DELETE /api/admin/reportes/:id — descarta (elimina) el reporte */
 export const patchReporteEstado = async (req, res) => {
   try {
     const { id } = req.params;
-    let { estado } = req.body;
-    if (estado === 'desestimado') estado = 'rechazado';
-
-    if (!estado || !ESTADOS_REPORTE.includes(estado)) {
-      return res.status(400).json({
-        message: `Estado inválido. Opciones: ${ESTADOS_REPORTE.join(', ')}`,
-      });
-    }
-
-    const { rowCount, rows } = await pool.query(
-      `UPDATE reportes SET estado = $1 WHERE id = $2
-       RETURNING id, publicacion_id, estado`,
-      [estado, id]
-    );
+    const { rowCount } = await pool.query(`DELETE FROM reportes WHERE id = $1`, [id]);
     if (!rowCount) {
       return res.status(404).json({ message: 'Reporte no encontrado' });
     }
-    res.json({ message: 'Reporte actualizado', reporte: rows[0] });
+    res.json({ message: 'Reporte descartado', reporte: { id } });
   } catch (error) {
     console.error('patchReporteEstado:', error);
     res.status(500).json({ message: error.message });
@@ -177,7 +153,7 @@ async function deletePublicacionPermanentemente(publicacionId) {
     await client.query(`DELETE FROM trabajos WHERE publicacion_id = $1`, [publicacionId]);
     await client.query(`DELETE FROM comentarios WHERE publicacion_id = $1`, [publicacionId]);
     await client.query(`DELETE FROM interacciones WHERE publicacion_id = $1`, [publicacionId]);
-    await client.query(`DELETE FROM reportes WHERE publicacion_id = $1`, [publicacionId]);
+    await client.query(`DELETE FROM reportes WHERE tipo = 'publicacion' AND objeto_id = $1`, [publicacionId]);
 
     const { rowCount, rows } = await client.query(
       `DELETE FROM publicaciones WHERE id = $1

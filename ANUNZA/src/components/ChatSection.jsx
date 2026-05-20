@@ -351,7 +351,7 @@ export function ChatSection({
                 </li>
               ))}
             </ul>
-            <button type="button" onClick={() => setBlockOpen(false)}>Cerrar</button>
+            <button type="button" className="chat-modal-cerrar" onClick={() => setBlockOpen(false)}>Cerrar</button>
           </div>
         </div>
       )}

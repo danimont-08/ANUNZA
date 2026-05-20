@@ -6,26 +6,20 @@ import { FeedSection } from '../components/feed/FeedSection';
 import { ChatSection } from '../components/ChatSection';
 import { HistorialSection } from '../components/HistorialSection';
 import { ProfileSection } from '../components/ProfileSection';
-import { ModeradorSection } from '../components/ModeradorSection';
 import { NotificacionesPanel } from '../components/NotificacionesPanel';
 import { fetchNotificaciones } from '../models/notificacionModel';
 import './Dashboard.css';
 
-const NAV_BASE = [
+const NAV_ITEMS = [
   { key: 'inicio',    label: 'Inicio' },
   { key: 'mensajes',  label: 'Mensajes' },
   { key: 'historial', label: 'Mi historial' },
   { key: 'perfil',    label: 'Perfil' },
 ];
-const NAV_MOD = { key: 'moderacion', label: 'Moderación' };
 
 export const Dashboard = () => {
   const { user, logout, updateProfile } = useAuth();
   const navigate = useNavigate();
-
-  const isModerador = user?.rol === 'moderador';
-
-  const navItems = isModerador ? [...NAV_BASE, NAV_MOD] : NAV_BASE;
 
   const [activeSection, setActiveSection]             = useState('inicio');
   const [chatBootstrapUserId, setChatBootstrapUserId] = useState(null);
@@ -79,10 +73,10 @@ export const Dashboard = () => {
     } else if (tipo === 'comentario' || tipo === 'me_gusta') {
       setFeedHighlightId(referencia_id || null);
       setActiveSection('inicio');
-    } else if (tipo === 'reporte' && isModerador) {
-      setActiveSection('moderacion');
+    } else if (tipo === 'reporte') {
+      navigate('/moderador');
     }
-  }, [isModerador]);
+  }, [navigate]);
 
   return (
     <div className="dashboard anunza-dashboard">
@@ -109,7 +103,7 @@ export const Dashboard = () => {
         <aside className="sidebar anunza-sidebar">
           <nav className="sidebar-nav">
             <ul>
-              {navItems.map(({ key, label }) => (
+              {NAV_ITEMS.map(({ key, label }) => (
                 <li
                   key={key}
                   className={activeSection === key ? 'active' : ''}
@@ -153,11 +147,17 @@ export const Dashboard = () => {
               }}
             />
           )}
-          {activeSection === 'historial' && <HistorialSection />}
+          {activeSection === 'historial' && (
+            <HistorialSection
+              onNavigateToPost={(id) => {
+                setFeedHighlightId(id);
+                setActiveSection('inicio');
+              }}
+            />
+          )}
           {activeSection === 'perfil' && (
             <ProfileSection user={user} updateProfile={updateProfile} onError={setProfileError} />
           )}
-          {activeSection === 'moderacion' && isModerador && <ModeradorSection />}
         </main>
       </div>
     </div>
