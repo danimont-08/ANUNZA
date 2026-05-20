@@ -5,7 +5,9 @@ import {
   addComentarioApi,
 } from '../../models/publicacionModel';
 import { ReportModal } from './ReportModal';
+import { DestacarModal } from './DestacarModal';
 import './PublicationCard.css';
+import './DestacarModal.css';
 
 const DEFAULT_AVATAR =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0aac8'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 20c0-4 3.6-7 8-7s8 3 8 7'/%3E%3C/svg%3E";
@@ -20,10 +22,19 @@ function formatDate(iso) {
   } catch { return ''; }
 }
 
-export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError }) {
+function isDestacadaActiva(p) {
+  if (!p.destacada) return false;
+  if (!p.destacada_hasta) return true;
+  return new Date(p.destacada_hasta.endsWith('Z') ? p.destacada_hasta : p.destacada_hasta + 'Z') > new Date();
+}
+
+export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError, onDestacar }) {
   const [openComments, setOpenComments] = useState(false);
   const [openResena, setOpenResena] = useState(false);
   const [openReport, setOpenReport] = useState(false);
+  const [openDestacar, setOpenDestacar] = useState(false);
+  const destacadaActiva = isDestacadaActiva(p);
+  const esMio = p.usuario_id === currentUserId;
   const [comments, setComments] = useState([]);
   // Tomar comentarios_count del servidor (count real de todos los comentarios)
   const [commentCount, setCommentCount] = useState(p.comentarios_count ?? 0);
@@ -84,11 +95,22 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
   };
 
   return (
-    <article className="pub-card">
+    <article className={`pub-card ${destacadaActiva ? 'pub-card-featured' : ''}`}>
+      {destacadaActiva && (
+        <div className="pub-badge-destacado">⭐ Destacado</div>
+      )}
       <header className="pub-card-head">
         <img className="pub-avatar" src={p.autor_foto || DEFAULT_AVATAR} alt="" />
         <div className="pub-head-text">
-          <div className="pub-author">{p.autor_nombre}</div>
+          <div className="pub-author">
+            {p.autor_nombre}
+            {p.autor_verificado && (
+              <span className="pub-badge-verificado" title="Usuario verificado">✓ Verificado</span>
+            )}
+            {p.autor_plan === 'premium' && (
+              <span className="pub-badge-premium" title="Usuario Premium">★ Premium</span>
+            )}
+          </div>
           <time className="pub-time">{formatDate(p.created_at)}</time>
           {p.autor_ciudad && <div className="pub-loc">📍 {p.autor_ciudad}</div>}
         </div>
@@ -150,6 +172,15 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
         >
           Reportar
         </button>
+        {esMio && !destacadaActiva && (
+          <button
+            type="button"
+            className="pub-btn-destacar"
+            onClick={() => setOpenDestacar(true)}
+          >
+            ⭐ Destacar
+          </button>
+        )}
       </footer>
 
       {openResena && (
@@ -208,6 +239,17 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
           publicacionId={p.id}
           publicacionTitulo={p.titulo}
           onClose={() => setOpenReport(false)}
+        />
+      )}
+
+      {openDestacar && (
+        <DestacarModal
+          publicacion={p}
+          onClose={() => setOpenDestacar(false)}
+          onSuccess={(data) => {
+            setOpenDestacar(false);
+            onDestacar?.(p.id, data);
+          }}
         />
       )}
     </article>

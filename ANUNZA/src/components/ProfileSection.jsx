@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { PlanPremiumModal } from './PlanPremiumModal';
+import { fetchMiEstado } from '../models/pagosModel';
 import './ProfileSection.css';
 
 // Avatar por defecto: silueta de persona (SVG inline, sin dependencia externa)
@@ -7,6 +9,8 @@ const DEFAULT_AVATAR =
 
 export function ProfileSection({ user, updateProfile, onError }) {
   const [editing, setEditing] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [miEstado, setMiEstado] = useState(null);
   const [data, setData] = useState({
     nombre: '',
     correo: '',
@@ -19,6 +23,10 @@ export function ProfileSection({ user, updateProfile, onError }) {
     foto_perfil: '',
   });
   const fileRef = useRef(null);
+
+  useEffect(() => {
+    fetchMiEstado().then(setMiEstado).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -80,6 +88,7 @@ export function ProfileSection({ user, updateProfile, onError }) {
     <section className="prof anunza-profile">
       <h2>Mi perfil</h2>
       {!editing ? (
+        <>
         <div className="prof-card">
           <div className="prof-head">
             <img
@@ -88,28 +97,61 @@ export function ProfileSection({ user, updateProfile, onError }) {
               className="prof-avatar"
             />
             <div>
-              <p className="prof-name">{user?.nombre}</p>
+              <p className="prof-name">
+                {user?.nombre}
+                {user?.verificado && (
+                  <span className="prof-badge prof-badge-verificado" title="Usuario verificado">✓ Verificado</span>
+                )}
+                {(miEstado?.plan || user?.plan) === 'premium' && (
+                  <span className="prof-badge prof-badge-premium">★ Premium</span>
+                )}
+              </p>
               {user?.ciudad && <p className="prof-meta">📍 {user.ciudad}</p>}
             </div>
           </div>
+
+          {/* Panel de plan */}
+          <div className={`prof-plan-box ${(miEstado?.plan || user?.plan) === 'premium' ? 'prof-plan-premium' : ''}`}>
+            {(miEstado?.plan || user?.plan) === 'premium' ? (
+              <p className="prof-plan-txt">💜 Plan <strong>Premium</strong> activo — publicaciones ilimitadas</p>
+            ) : (
+              <>
+                <p className="prof-plan-txt">
+                  Plan gratuito ·{' '}
+                  {miEstado ? `${miEstado.publicaciones_activas}/${miEstado.limite} publicaciones` : '—'}
+                </p>
+                <button
+                  type="button"
+                  className="prof-plan-btn"
+                  onClick={() => setShowPremiumModal(true)}
+                >
+                  Actualizar a Premium — $29.900/mes
+                </button>
+              </>
+            )}
+          </div>
+
           {user?.descripcion && <p className="prof-bio">{user.descripcion}</p>}
           <div className="prof-grid">
-            <p>
-              <strong>Correo:</strong> {user?.correo}
-            </p>
-            <p>
-              <strong>Teléfono:</strong> {user?.telefono}
-            </p>
-            {user?.cedula && (
-              <p>
-                <strong>Cédula:</strong> {user.cedula}
-              </p>
-            )}
+            <p><strong>Correo:</strong> {user?.correo}</p>
+            <p><strong>Teléfono:</strong> {user?.telefono}</p>
+            {user?.cedula && <p><strong>Cédula:</strong> {user.cedula}</p>}
           </div>
           <button type="button" className="prof-edit-btn" onClick={() => setEditing(true)}>
             Editar perfil
           </button>
         </div>
+
+        {showPremiumModal && (
+          <PlanPremiumModal
+            onClose={() => setShowPremiumModal(false)}
+            onSuccess={() => {
+              setShowPremiumModal(false);
+              setMiEstado((prev) => ({ ...prev, plan: 'premium', limite: null }));
+            }}
+          />
+        )}
+        </>
       ) : (
         <form className="prof-form" onSubmit={save}>
           <div className="prof-photo-row">

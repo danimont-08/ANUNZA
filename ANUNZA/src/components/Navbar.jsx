@@ -22,7 +22,21 @@ export function Navbar({ user, onLogout, onOpenProfile, noLeidas = 0, onToggleNo
             aria-label={`Notificaciones${noLeidas > 0 ? ` (${noLeidas} nuevas)` : ''}`}
             title="Notificaciones"
           >
-            🔔
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="#8a4eff"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
             {noLeidas > 0 && (
               <span className="anunza-notif-badge">{noLeidas > 9 ? '9+' : noLeidas}</span>
             )}

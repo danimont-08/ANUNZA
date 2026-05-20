@@ -1,22 +1,27 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { PublicationComposer } from './PublicationComposer';
 import { PublicationCard } from './PublicationCard';
 import { FeedFiltersBar } from './FeedFiltersBar';
+import { PlanPremiumModal } from '../PlanPremiumModal';
 import {
   fetchCategorias,
   fetchFeed,
   crearPublicacion,
   toggleLikePost,
 } from '../../models/publicacionModel';
+import { fetchMiEstado } from '../../models/pagosModel';
 import './FeedSection.css';
 
-export function FeedSection({ user, onChatWithUser }) {
+export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHighlightConsumed }) {
   const [items, setItems] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({ categoria_id: '', ciudad: '' });
   const [showComposer, setShowComposer] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [miEstado, setMiEstado] = useState(null);
+  const cardRefs = useRef({});
 
   const loadFeed = useCallback(async () => {
     setError('');
@@ -37,8 +42,9 @@ export function FeedSection({ user, onChatWithUser }) {
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchCategorias();
-        setCategorias(data.categorias || []);
+        const [catData, estadoData] = await Promise.all([fetchCategorias(), fetchMiEstado()]);
+        setCategorias(catData.categorias || []);
+        setMiEstado(estadoData);
       } catch (e) {
         setError(e.message);
       }
@@ -65,10 +71,46 @@ export function FeedSection({ user, onChatWithUser }) {
   };
 
   const handleCreated = async (body) => {
-    const data = await crearPublicacion(body);
-    setItems((prev) => [data.publicacion, ...prev]);
-    setShowComposer(false); // cierra el formulario tras publicar
+    try {
+      const data = await crearPublicacion(body);
+      setItems((prev) => [data.publicacion, ...prev]);
+      setShowComposer(false);
+      // Refrescar estado del plan tras publicar
+      fetchMiEstado().then(setMiEstado).catch(() => {});
+    } catch (e) {
+      if (e.limit_reached) {
+        setShowComposer(false);
+        setShowPremiumModal(true);
+      } else {
+        throw e;
+      }
+    }
   };
+
+  const handleDestacar = (publicacionId, data) => {
+    setItems((prev) =>
+      prev.map((p) =>
+        p.id === publicacionId
+          ? { ...p, destacada: true, destacada_hasta: data.destacada_hasta }
+          : p
+      )
+    );
+  };
+
+  // Scroll y resaltado al publicación desde notificación
+  useEffect(() => {
+    if (!highlightPublicacionId || loading) return;
+    const el = cardRefs.current[highlightPublicacionId];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('feed-card-highlight');
+      const t = setTimeout(() => {
+        el.classList.remove('feed-card-highlight');
+        onHighlightConsumed?.();
+      }, 2500);
+      return () => clearTimeout(t);
+    }
+  }, [highlightPublicacionId, loading, onHighlightConsumed]);
 
   const handleFilterChange = (patch) => {
     setFilters((f) => ({ ...f, ...patch }));
@@ -88,6 +130,11 @@ export function FeedSection({ user, onChatWithUser }) {
     );
   }
 
+  const limitAlcanzado =
+    miEstado?.plan === 'gratuito' &&
+    miEstado?.limite != null &&
+    miEstado?.publicaciones_activas >= miEstado.limite;
+
   return (
     <section className="feed-wrap feed-section">
       <div className="feed-header">
@@ -95,7 +142,40 @@ export function FeedSection({ user, onChatWithUser }) {
         <p className="feed-sub">Servicios y talento en ANUNZA</p>
       </div>
 
+      {/* Banner de límite gratuito */}
+      {miEstado?.plan === 'gratuito' && (
+        <div className={`feed-plan-banner ${limitAlcanzado ? 'feed-plan-limit' : ''}`}>
+          {limitAlcanzado ? (
+            <>
+              <span>Has alcanzado el límite de <strong>{miEstado.limite} publicaciones</strong> del plan gratuito.</span>
+              <button type="button" className="feed-plan-upgrade" onClick={() => setShowPremiumModal(true)}>
+                Actualizar a Premium
+              </button>
+            </>
+          ) : (
+            <>
+              <span>
+                Plan gratuito · {miEstado.publicaciones_activas}/{miEstado.limite} publicaciones usadas
+              </span>
+              <button type="button" className="feed-plan-upgrade" onClick={() => setShowPremiumModal(true)}>
+                Ver Premium
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {error && <div className="feed-error">{error}</div>}
+
+      {showPremiumModal && (
+        <PlanPremiumModal
+          onClose={() => setShowPremiumModal(false)}
+          onSuccess={(data) => {
+            setShowPremiumModal(false);
+            setMiEstado((prev) => ({ ...prev, plan: 'premium', limite: null }));
+          }}
+        />
+      )}
 
       {/* Botón morado oscuro para abrir el formulario */}
       {!showComposer && (
@@ -140,14 +220,16 @@ export function FeedSection({ user, onChatWithUser }) {
           <p className="feed-empty">No hay publicaciones con estos filtros.</p>
         )}
         {items.map((p) => (
-          <PublicationCard
-            key={p.id}
-            p={p}
-            currentUserId={user?.id}
-            onToggleLike={handleToggleLike}
-            onOpenChat={onChatWithUser}
-            onError={setError}
-          />
+          <div key={p.id} ref={(el) => { cardRefs.current[p.id] = el; }}>
+            <PublicationCard
+              p={p}
+              currentUserId={user?.id}
+              onToggleLike={handleToggleLike}
+              onOpenChat={onChatWithUser}
+              onError={setError}
+              onDestacar={handleDestacar}
+            />
+          </div>
         ))}
       </div>
     </section>

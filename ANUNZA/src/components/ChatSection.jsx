@@ -19,7 +19,7 @@ function formatTime(iso) {
   }
 }
 
-export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed }) {
+export function ChatSection({ user, bootstrapOtroUsuarioId, bootstrapConversacionId, onBootstrapConsumed }) {
   const [conversaciones, setConversaciones] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [mensajes, setMensajes] = useState([]);
@@ -62,6 +62,14 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
     loadConversaciones();
   }, [loadConversaciones]);
 
+  // Abrir conversación directamente por ID (desde notificación de mensaje)
+  useEffect(() => {
+    if (!bootstrapConversacionId) return;
+    setActiveId(bootstrapConversacionId);
+    onBootstrapConsumed?.();
+  }, [bootstrapConversacionId, onBootstrapConsumed]);
+
+  // Abrir o crear conversación con un usuario específico (desde feed)
   useEffect(() => {
     if (!bootstrapOtroUsuarioId || !user?.id) return;
     if (bootstrapOtroUsuarioId === user.id) {
