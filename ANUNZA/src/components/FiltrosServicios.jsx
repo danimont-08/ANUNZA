@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { apiFetch } from '../services/api';
 import './FiltrosServicios.css';
 
 /**
@@ -6,7 +7,20 @@ import './FiltrosServicios.css';
  * Recibe los valores actuales y una función para actualizar los filtros.
  */
 const FiltrosServicios = ({ filtros, onChange }) => {
-  const categorias = ['Mascotas', 'Hogar', 'Tecnología', 'Educación', 'Transporte', 'Otros'];
+  const [categorias, setCategorias] = useState([]);
+  const [subcategorias, setSubcategorias] = useState([]);
+
+  useEffect(() => {
+    const loadCategorias = async () => {
+      try {
+        const data = await apiFetch('/feed/categorias');
+        setCategorias(data.categorias || []);
+      } catch (error) {
+        console.error('Error cargando categorías:', error);
+      }
+    };
+    loadCategorias();
+  }, []);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -18,6 +32,24 @@ const FiltrosServicios = ({ filtros, onChange }) => {
     onChange({ ...filtros, [name]: value === '' ? '' : Number(value) });
   };
 
+  const handleCategoriaChange = (event) => {
+    const { value } = event.target;
+    const categoriaId = value ? Number(value) : '';
+    
+    // OBTENER SUBCATEGORÍAS DE LA CATEGORÍA SELECCIONADA
+    const categoria = categorias.find(c => c.id === Number(value));
+    const subs = categoria?.subcategorias || [];
+    setSubcategorias(subs);
+    
+    // RESETEAR SUBCATEGORÍA AL CAMBIAR DE CATEGORÍA
+    onChange({ ...filtros, categoria: categoriaId, subcategoria: '' });
+  };
+
+  const handleSubcategoriaChange = (event) => {
+    const { value } = event.target;
+    onChange({ ...filtros, subcategoria: value === '' ? '' : Number(value) });
+  };
+
   return (
     <section className="filtros-servicios">
       <h2>Filtrar servicios</h2>
@@ -27,17 +59,36 @@ const FiltrosServicios = ({ filtros, onChange }) => {
         <select
           id="categoria"
           name="categoria"
-          value={filtros.categoria}
-          onChange={handleInputChange}
+          value={filtros.categoria || ''}
+          onChange={handleCategoriaChange}
         >
           <option value="">Todas las categorías</option>
           {categorias.map((categoria) => (
-            <option key={categoria} value={categoria}>
-              {categoria}
+            <option key={categoria.id} value={categoria.id}>
+              {categoria.nombre}
             </option>
           ))}
         </select>
       </div>
+
+      {subcategorias.length > 0 && (
+        <div className="filtro-group">
+          <label htmlFor="subcategoria">Subcategoría</label>
+          <select
+            id="subcategoria"
+            name="subcategoria"
+            value={filtros.subcategoria || ''}
+            onChange={handleSubcategoriaChange}
+          >
+            <option value="">Todas las subcategorías</option>
+            {subcategorias.map((subcategoria) => (
+              <option key={subcategoria.id} value={subcategoria.id}>
+                {subcategoria.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="filtro-group">
         <label htmlFor="ciudad">Ciudad</label>

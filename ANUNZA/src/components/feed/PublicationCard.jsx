@@ -139,7 +139,7 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
         <button
           type="button"
           className="pub-btn pub-chat"
-          onClick={() => onOpenChat(p.usuario_id)}
+          onClick={() => onOpenChat(p.usuario_id, p.id)}
           disabled={p.usuario_id === currentUserId}
         >
           Chat

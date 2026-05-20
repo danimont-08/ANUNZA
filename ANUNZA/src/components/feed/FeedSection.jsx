@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { PublicationComposer } from './PublicationComposer';
 import { PublicationCard } from './PublicationCard';
-import { FeedFiltersBar } from './FeedFiltersBar';
+import FiltrosServicios from '../FiltrosServicios';
 import {
   fetchCategorias,
   fetchFeed,
@@ -15,7 +15,14 @@ export function FeedSection({ user, onChatWithUser }) {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState({ categoria_id: '', ciudad: '' });
+  const [filters, setFilters] = useState({ 
+    categoria: '', 
+    subcategoria: '',
+    ciudad: '',
+    precioMin: '',
+    precioMax: '',
+    calificacionMin: ''
+  });
   const [showComposer, setShowComposer] = useState(false);
 
   const loadFeed = useCallback(async () => {
@@ -23,8 +30,12 @@ export function FeedSection({ user, onChatWithUser }) {
     setLoading(true);
     try {
       const data = await fetchFeed({
-        categoria_id: filters.categoria_id || undefined,
+        categoria_id: filters.categoria || undefined,
+        subcategoria_id: filters.subcategoria || undefined,
         ciudad: filters.ciudad || undefined,
+        precio_min: filters.precioMin || undefined,
+        precio_max: filters.precioMax || undefined,
+        calificacion_min: filters.calificacionMin || undefined,
       });
       setItems(data.publicaciones || []);
     } catch (e) {
@@ -32,7 +43,7 @@ export function FeedSection({ user, onChatWithUser }) {
     } finally {
       setLoading(false);
     }
-  }, [filters.categoria_id, filters.ciudad]);
+  }, [filters]);
 
   useEffect(() => {
     (async () => {
@@ -76,7 +87,14 @@ export function FeedSection({ user, onChatWithUser }) {
   };
 
   const clearFilters = () => {
-    setFilters({ categoria_id: '', ciudad: '' });
+    setFilters({ 
+      categoria: '', 
+      subcategoria: '',
+      ciudad: '',
+      precioMin: '',
+      precioMax: '',
+      calificacionMin: ''
+    });
     setLoading(true);
   };
 
@@ -127,12 +145,9 @@ export function FeedSection({ user, onChatWithUser }) {
         </div>
       )}
 
-      <FeedFiltersBar
-        categorias={categorias}
-        categoriaId={filters.categoria_id}
-        ciudad={filters.ciudad}
+      <FiltrosServicios
+        filtros={filters}
         onChange={handleFilterChange}
-        onClear={clearFilters}
       />
 
       <div className="feed-list">
@@ -145,7 +160,7 @@ export function FeedSection({ user, onChatWithUser }) {
             p={p}
             currentUserId={user?.id}
             onToggleLike={handleToggleLike}
-            onOpenChat={onChatWithUser}
+            onOpenChat={(uid, pubId) => onChatWithUser(uid, pubId)}
             onError={setError}
           />
         ))}
