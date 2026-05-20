@@ -26,7 +26,9 @@ export async function apiFetch(path, options = {}) {
     /* vacío */
   }
   if (!res.ok) {
-    throw new Error(data.message || `Error ${res.status}`);
+    const err = new Error(data.message || `Error ${res.status}`);
+    Object.assign(err, data); // adjunta limit_reached, etc.
+    throw err;
   }
   return data;
 }

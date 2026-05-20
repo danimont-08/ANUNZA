@@ -19,10 +19,9 @@ function formatRelTime(iso) {
   return `hace ${Math.floor(diff / 86400)} d`;
 }
 
-export function NotificacionesPanel({ notificaciones, onClose, onRefresh }) {
+export function NotificacionesPanel({ notificaciones, onClose, onRefresh, onNavigate }) {
   const panelRef = useRef(null);
 
-  // Cerrar al hacer click fuera
   useEffect(() => {
     function handleOut(e) {
       if (panelRef.current && !panelRef.current.contains(e.target)) onClose();
@@ -36,6 +35,8 @@ export function NotificacionesPanel({ notificaciones, onClose, onRefresh }) {
       await marcarNotificacionLeida(n.id).catch(() => {});
       onRefresh();
     }
+    // Navegar a la sección/contenido correspondiente
+    if (onNavigate) onNavigate(n);
   };
 
   const handleMarcarTodas = async () => {

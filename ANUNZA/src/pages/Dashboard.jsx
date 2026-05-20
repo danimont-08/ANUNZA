@@ -6,33 +6,40 @@ import { FeedSection } from '../components/feed/FeedSection';
 import { ChatSection } from '../components/ChatSection';
 import { HistorialSection } from '../components/HistorialSection';
 import { ProfileSection } from '../components/ProfileSection';
+import { ModeradorSection } from '../components/ModeradorSection';
 import { NotificacionesPanel } from '../components/NotificacionesPanel';
 import { fetchNotificaciones } from '../models/notificacionModel';
 import './Dashboard.css';
 
-const NAV_ITEMS = [
-  { key: 'inicio',       label: 'Inicio' },
-  { key: 'mensajes',     label: 'Mensajes' },
-  { key: 'historial',   label: 'Mi historial' },
-  { key: 'perfil',      label: 'Perfil' },
+const NAV_BASE = [
+  { key: 'inicio',    label: 'Inicio' },
+  { key: 'mensajes',  label: 'Mensajes' },
+  { key: 'historial', label: 'Mi historial' },
+  { key: 'perfil',    label: 'Perfil' },
 ];
+const NAV_MOD = { key: 'moderacion', label: 'Moderación' };
 
 export const Dashboard = () => {
   const { user, logout, updateProfile } = useAuth();
   const navigate = useNavigate();
 
-  const [activeSection, setActiveSection]       = useState('inicio');
+  const isModerador = user?.rol === 'moderador';
+
+  const navItems = isModerador ? [...NAV_BASE, NAV_MOD] : NAV_BASE;
+
+  const [activeSection, setActiveSection]             = useState('inicio');
   const [chatBootstrapUserId, setChatBootstrapUserId] = useState(null);
   const [chatBootstrapPublicacionId, setChatBootstrapPublicacionId] = useState(null);
-  const [profileError, setProfileError]         = useState('');
-  const [notificaciones, setNotificaciones]     = useState([]);
-  const [noLeidas, setNoLeidas]                 = useState(0);
-  const [showNotifPanel, setShowNotifPanel]     = useState(false);
+  const [chatBootstrapConvId, setChatBootstrapConvId] = useState(null);
+  const [feedHighlightId, setFeedHighlightId] = useState(null);
+  const [profileError, setProfileError] = useState('');
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [noLeidas, setNoLeidas] = useState(0);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
   const pollRef = useRef(null);
 
   useEffect(() => { setProfileError(''); }, [activeSection]);
 
-  // Carga y polling de notificaciones cada 30 s
   const loadNotificaciones = useCallback(async () => {
     try {
       const data = await fetchNotificaciones();
@@ -51,12 +58,34 @@ export const Dashboard = () => {
 
   const handleToggleNotif = () => {
     setShowNotifPanel((v) => !v);
-    if (!showNotifPanel) loadNotificaciones(); // refrescar al abrir
+    if (!showNotifPanel) loadNotificaciones();
   };
+
+  /**
+   * Navega a la sección adecuada según el tipo de notificación:
+   * - nuevo_mensaje  → mensajes, abre la conversación referencia_id
+   * - comentario / me_gusta → inicio, resalta publicación referencia_id
+   * - reporte        → moderación (sólo moderadores)
+   */
+  const handleNotifNavigate = useCallback((notif) => {
+    setShowNotifPanel(false);
+    const { tipo, referencia_id } = notif;
+
+    if (tipo === 'nuevo_mensaje') {
+      setChatBootstrapConvId(referencia_id || null);
+      setChatBootstrapUserId(null);
+      setChatBootstrapPublicacionId(null);
+      setActiveSection('mensajes');
+    } else if (tipo === 'comentario' || tipo === 'me_gusta') {
+      setFeedHighlightId(referencia_id || null);
+      setActiveSection('inicio');
+    } else if (tipo === 'reporte' && isModerador) {
+      setActiveSection('moderacion');
+    }
+  }, [isModerador]);
 
   return (
     <div className="dashboard anunza-dashboard">
-      {/* Navbar fija arriba con la campanita */}
       <Navbar
         user={user}
         onLogout={handleLogout}
@@ -65,23 +94,22 @@ export const Dashboard = () => {
         onToggleNotificaciones={handleToggleNotif}
       />
 
-      {/* Panel de notificaciones (posicionado relativo al navbar) */}
       {showNotifPanel && (
         <div className="notif-panel-wrapper">
           <NotificacionesPanel
             notificaciones={notificaciones}
             onClose={() => setShowNotifPanel(false)}
             onRefresh={loadNotificaciones}
+            onNavigate={handleNotifNavigate}
           />
         </div>
       )}
 
       <div className="dashboard-body">
-        {/* Sidebar lateral fijo */}
         <aside className="sidebar anunza-sidebar">
           <nav className="sidebar-nav">
             <ul>
-              {NAV_ITEMS.map(({ key, label }) => (
+              {navItems.map(({ key, label }) => (
                 <li
                   key={key}
                   className={activeSection === key ? 'active' : ''}
@@ -95,7 +123,6 @@ export const Dashboard = () => {
           </nav>
         </aside>
 
-        {/* Contenido principal con scroll propio */}
         <main className="main-content anunza-main">
           {profileError && activeSection === 'perfil' && (
             <div className="dashboard-inline-err">{profileError}</div>
@@ -103,7 +130,14 @@ export const Dashboard = () => {
           {activeSection === 'inicio' && (
             <FeedSection
               user={user}
-              onChatWithUser={(uid, pubId) => { setChatBootstrapUserId(uid); setChatBootstrapPublicacionId(pubId); setActiveSection('mensajes'); }}
+              highlightPublicacionId={feedHighlightId}
+              onHighlightConsumed={() => setFeedHighlightId(null)}
+              onChatWithUser={(uid, pubId) => {
+                setChatBootstrapUserId(uid);
+                setChatBootstrapPublicacionId(pubId ?? null);
+                setChatBootstrapConvId(null);
+                setActiveSection('mensajes');
+              }}
             />
           )}
           {activeSection === 'mensajes' && (
@@ -111,13 +145,19 @@ export const Dashboard = () => {
               user={user}
               bootstrapOtroUsuarioId={chatBootstrapUserId}
               bootstrapPublicacionId={chatBootstrapPublicacionId}
-              onBootstrapConsumed={() => { setChatBootstrapUserId(null); setChatBootstrapPublicacionId(null); }}
+              bootstrapConversacionId={chatBootstrapConvId}
+              onBootstrapConsumed={() => {
+                setChatBootstrapUserId(null);
+                setChatBootstrapPublicacionId(null);
+                setChatBootstrapConvId(null);
+              }}
             />
           )}
           {activeSection === 'historial' && <HistorialSection />}
           {activeSection === 'perfil' && (
             <ProfileSection user={user} updateProfile={updateProfile} onError={setProfileError} />
           )}
+          {activeSection === 'moderacion' && isModerador && <ModeradorSection />}
         </main>
       </div>
     </div>

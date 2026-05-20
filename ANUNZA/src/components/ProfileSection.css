@@ -3,6 +3,55 @@
   margin-bottom: 1rem;
 }
 
+/* ── Badges de perfil ── */
+.prof-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+.prof-badge-verificado { background: #5b35d5; color: #fff; }
+.prof-badge-premium    { background: linear-gradient(90deg,#8a4eff,#c44eff); color:#fff; }
+
+/* ── Panel de plan ── */
+.prof-plan-box {
+  background: #f7f3ff;
+  border: 1px solid #d6caff;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.prof-plan-premium {
+  background: linear-gradient(90deg, #f5f0ff, #ede8ff);
+  border-color: #c4b0ff;
+}
+.prof-plan-txt {
+  font-size: 0.88rem;
+  color: #5b35d5;
+  margin: 0;
+}
+.prof-plan-btn {
+  background: #8a4eff;
+  color: #fff;
+  border: none;
+  padding: 0.38rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.15s;
+}
+.prof-plan-btn:hover { filter: brightness(1.1); }
+
 .prof-card {
   background: #fff;
   border-radius: 16px;
@@ -136,3 +185,4 @@
   border-radius: 10px;
   cursor: pointer;
 }
+

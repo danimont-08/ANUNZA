@@ -1,0 +1,212 @@
+/* Compartido por DestacarModal y PlanPremiumModal */
+.pago-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 10, 60, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 700;
+  padding: 1rem;
+}
+
+.pago-modal {
+  background: #fff;
+  border-radius: 18px;
+  padding: 2rem 1.75rem 1.75rem;
+  width: min(420px, 100%);
+  position: relative;
+  box-shadow: 0 16px 60px rgba(47, 8, 109, 0.25);
+  border: 1.5px solid #ede8ff;
+  text-align: center;
+  animation: pago-in 0.2s ease;
+}
+
+@keyframes pago-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.pago-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #9a8fbb;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.pago-close:hover { background: #f0ebff; color: #5b35d5; }
+
+.pago-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.pago-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2d1b69;
+  margin: 0 0 0.35rem;
+}
+
+.pago-pub-name {
+  font-size: 0.9rem;
+  color: #6b5b9e;
+  margin: 0 0 1rem;
+  font-style: italic;
+}
+
+.pago-benefits {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  text-align: left;
+  background: #f7f3ff;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+.pago-benefits li {
+  font-size: 0.88rem;
+  color: #2d1b69;
+  padding: 0.2rem 0;
+}
+
+.pago-price-box {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.pago-price {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #5b35d5;
+}
+
+.pago-period {
+  font-size: 0.85rem;
+  color: #9a8fbb;
+}
+
+.pago-simulated-note {
+  font-size: 0.78rem;
+  color: #9a8fbb;
+  background: #f7f3ff;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  margin-bottom: 1.1rem;
+}
+
+.pago-error {
+  font-size: 0.85rem;
+  color: #dc3545;
+  background: #f8d7da;
+  border-radius: 7px;
+  padding: 0.4rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.pago-actions {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: center;
+}
+
+.pago-btn-primary {
+  background: #8a4eff;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 9px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.pago-btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+.pago-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.pago-btn-ghost {
+  background: #f0ebff;
+  color: #5b35d5;
+  border: 1px solid #d6caff;
+  padding: 0.6rem 1.1rem;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+.pago-btn-ghost:hover { background: #e8e0ff; }
+
+/* Success state */
+.pago-success { padding: 1rem 0 0.5rem; }
+.pago-success-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+.pago-success h3 { color: #2d1b69; font-size: 1.15rem; margin: 0 0 0.5rem; }
+.pago-success p  { color: #6b5b9e; font-size: 0.9rem; margin-bottom: 1.25rem; }
+
+/* Badge "Destacado" en tarjeta */
+.pub-card-featured {
+  border: 2px solid #f0a500 !important;
+  box-shadow: 0 8px 32px rgba(240, 165, 0, 0.18) !important;
+}
+
+.pub-badge-destacado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: linear-gradient(90deg, #f0a500, #ffd700);
+  color: #2d1b00;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  margin-bottom: 0.5rem;
+}
+
+/* Badge "Verificado" junto al nombre de autor */
+.pub-badge-verificado {
+  display: inline-flex;
+  align-items: center;
+  background: #5b35d5;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
+/* Badge "Premium" en perfil */
+.pub-badge-premium {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(90deg, #8a4eff, #c44eff);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
+/* Botón "Destacar" en pie de tarjeta */
+.pub-btn-destacar {
+  background: linear-gradient(90deg, #f0a500, #ffd700);
+  color: #2d1b00;
+  border: none;
+  padding: 0.28rem 0.75rem;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.pub-btn-destacar:hover { filter: brightness(1.08); }

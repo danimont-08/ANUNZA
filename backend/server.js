@@ -10,6 +10,8 @@ import historialRoutes from './routes/historialRoutes.js';
 import notificacionesRoutes from './routes/notificacionesRoutes.js';
 import reportesRoutes from './routes/reportesRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import moderadorRoutes from './routes/moderadorRoutes.js';
+import pagosRoutes from './routes/pagosRoutes.js';
 
 dotenv.config();
 
@@ -29,6 +31,8 @@ app.use('/api/historial', historialRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/reportes', reportesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/moderador', moderadorRoutes);
+app.use('/api/pagos', pagosRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {

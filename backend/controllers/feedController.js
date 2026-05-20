@@ -74,9 +74,13 @@ try {
           p.usuario_id,
           p.categoria_id,
           p.subcategoria_id,
+          p.destacada,
+          p.destacada_hasta,
           u.nombre AS autor_nombre,
           u.foto_perfil AS autor_foto,
           u.ciudad AS autor_ciudad,
+          u.verificado AS autor_verificado,
+          u.plan AS autor_plan,
           cat.nombre AS categoria_nombre,
           subcat.nombre AS subcategoria_nombre,
           COALESCE(ic.cnt, 0)::int AS interacciones_count,
@@ -120,7 +124,11 @@ try {
           AND ($5::numeric IS NULL OR p.precio >= $5)
           AND ($6::numeric IS NULL OR p.precio <= $6)
           AND ($7::float IS NULL OR COALESCE(rc.prom, 0) >= $7)
-        ORDER BY p.created_at DESC NULLS LAST
+        ORDER BY
+          CASE WHEN p.destacada = true
+                    AND (p.destacada_hasta IS NULL OR p.destacada_hasta > NOW())
+               THEN 0 ELSE 1 END,
+          p.created_at DESC NULLS LAST
         LIMIT 80`,
       [userId, categoriaId, subcategoriaId, ciudad, precioMin, precioMax, calificacionMin]
     );
@@ -165,9 +173,31 @@ export const getCategorias = async (req, res) => {
   }
 };
 
+const LIMITE_GRATUITO = 3;
+
 export const createPublication = async (req, res) => {
   const userId = req.userId;
   try {
+    // Verificar límite de publicaciones para plan gratuito
+    const planRow = await pool.query(
+      `SELECT COALESCE(plan, 'gratuito') AS plan FROM usuarios WHERE id = $1`,
+      [userId]
+    );
+    const plan = planRow.rows[0]?.plan || 'gratuito';
+    if (plan === 'gratuito') {
+      const cnt = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM publicaciones
+         WHERE usuario_id = $1 AND COALESCE(estado, 'activo') = 'activo'`,
+        [userId]
+      );
+      if ((cnt.rows[0]?.total ?? 0) >= LIMITE_GRATUITO) {
+        return res.status(403).json({
+          message: `Has alcanzado el límite de ${LIMITE_GRATUITO} publicaciones activas del plan gratuito.`,
+          limit_reached: true,
+        });
+      }
+    }
+
     const {
       titulo,
       descripcion: descInput,

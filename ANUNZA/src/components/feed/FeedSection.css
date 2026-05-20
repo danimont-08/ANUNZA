@@ -90,3 +90,49 @@
   background: #f0eaff;
   color: var(--anunza-midnight);
 }
+
+/* Banner de plan gratuito */
+.feed-plan-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: #f0ebff;
+  border: 1px solid #d6caff;
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+  color: #5b35d5;
+  flex-wrap: wrap;
+}
+.feed-plan-limit {
+  background: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
+}
+.feed-plan-upgrade {
+  background: #8a4eff;
+  color: #fff;
+  border: none;
+  padding: 0.32rem 0.85rem;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.15s;
+}
+.feed-plan-upgrade:hover { filter: brightness(1.1); }
+
+/* Resaltado de card al navegar desde notificación */
+@keyframes feed-highlight-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(138, 78, 255, 0.55); }
+  50%  { box-shadow: 0 0 0 10px rgba(138, 78, 255, 0.15); }
+  100% { box-shadow: 0 0 0 0 rgba(138, 78, 255, 0); }
+}
+
+.feed-card-highlight {
+  animation: feed-highlight-pulse 0.8s ease 2;
+  border-radius: 14px;
+}
