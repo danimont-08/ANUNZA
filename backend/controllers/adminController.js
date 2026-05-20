@@ -77,7 +77,7 @@ export const patchUserEstado = async (req, res) => {
 export const listReportes = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT r.id, r.tipo, r.objeto_id, r.motivo, r.detalles, r.created_at,
+      `SELECT r.id, r.tipo, r.objeto_id, r.motivo, r.detalles, r.estado, r.created_at,
               u_rep.nombre AS reportante_nombre,
               p.titulo     AS publicacion_titulo,
               p.estado     AS publicacion_estado,
@@ -94,6 +94,22 @@ export const listReportes = async (req, res) => {
     res.json({ reportes: rows });
   } catch (error) {
     console.error('listReportes:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/** PATCH /api/admin/reportes/:id/estado — marca el reporte como revisado */
+export const marcarReporteRevisado = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rowCount } = await pool.query(
+      `UPDATE reportes SET estado = 'revisado' WHERE id = $1`,
+      [id]
+    );
+    if (!rowCount) return res.status(404).json({ message: 'Reporte no encontrado' });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('marcarReporteRevisado:', error);
     res.status(500).json({ message: error.message });
   }
 };

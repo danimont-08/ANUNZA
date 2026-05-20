@@ -310,6 +310,17 @@
   background: var(--c50);
 }
 
+/* ─── Registro: página fija, isla con scroll propio ──── */
+.auth-container--register {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.auth-panel-form--register {
+  overflow-y: auto;
+  align-items: flex-start;
+}
+
 /* ─── Mobile ────────────────────────────────────────── */
 @media (max-width: 480px) {
   .auth-panel-form { padding: 2rem 1.25rem; }

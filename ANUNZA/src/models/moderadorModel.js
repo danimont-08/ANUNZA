@@ -11,6 +11,9 @@ export const fetchReportes = fetchModReportes;
 export const resolverReporte = (id) =>
   apiFetch(`/moderador/reportes/${id}/resolver`, { method: 'DELETE' });
 
+export const marcarModReporteRevisado = (id) =>
+  apiFetch(`/moderador/reportes/${id}/estado`, { method: 'PATCH' });
+
 export const ocultarPublicacion = (id) =>
   apiFetch(`/moderador/publicaciones/${id}/ocultar`, { method: 'PATCH' });
 

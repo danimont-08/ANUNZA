@@ -9,6 +9,7 @@ import {
   levantarSuspension,
   getUsuarios,
   resolverReporte,
+  marcarReporteRevisado,
   getMensajesConversacion,
   getPublicacionesOcultas,
   getStats,
@@ -22,6 +23,7 @@ router.use(verifyToken, isModerador);
 
 router.get('/stats',                               getStats);
 router.get('/reportes',                            getReportes);
+router.patch('/reportes/:id/estado',               marcarReporteRevisado);
 router.delete('/reportes/:id/resolver',            resolverReporte);
 
 router.get('/publicaciones/ocultas',               getPublicacionesOcultas);

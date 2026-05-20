@@ -6,6 +6,7 @@ import {
   patchUserEstado,
   listReportes,
   patchReporteEstado,
+  marcarReporteRevisado,
   getPublicacionDetalle,
   patchPublicacionEstado,
 } from '../controllers/adminController.js';
@@ -18,6 +19,7 @@ router.get('/stats', getStats);
 router.get('/users', listUsers);
 router.patch('/users/:id/estado', patchUserEstado);
 router.get('/reportes', listReportes);
+router.patch('/reportes/:id/estado', marcarReporteRevisado);
 router.delete('/reportes/:id', patchReporteEstado);
 router.get('/publicaciones/:id', getPublicacionDetalle);
 router.patch('/publicaciones/:id', patchPublicacionEstado);

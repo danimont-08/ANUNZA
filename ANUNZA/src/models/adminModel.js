@@ -27,6 +27,10 @@ export async function patchReporteEstado(reporteId) {
   return apiFetch(`/admin/reportes/${reporteId}`, { method: 'DELETE' });
 }
 
+export async function marcarReporteRevisado(reporteId) {
+  return apiFetch(`/admin/reportes/${reporteId}/estado`, { method: 'PATCH' });
+}
+
 export async function fetchAdminPublicacion(publicacionId) {
   return apiFetch(`/admin/publicaciones/${publicacionId}`);
 }

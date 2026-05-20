@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import {
   fetchAdminReportes,
   patchReporteEstado,
+  marcarReporteRevisado,
   fetchAdminPublicacion,
   patchPublicacionEstado,
 } from '../../models/adminModel';
@@ -39,6 +40,7 @@ export function AdminReports() {
   const pc = ctx?.panelConfig ?? {};
   const apiFetchReportes    = pc.fetchReportes     ?? fetchAdminReportes;
   const apiDescartarReporte = pc.descartarReporte  ?? patchReporteEstado;
+  const apiMarcarRevisado   = pc.marcarRevisado    ?? marcarReporteRevisado;
   const apiFetchPublicacion = pc.fetchPublicacion  ?? fetchAdminPublicacion;
   const apiPatchPublicacion = pc.patchPublicacion  ?? patchPublicacionEstado;
   const puedeEliminar       = pc.puedeEliminar     ?? true;
@@ -65,6 +67,18 @@ export function AdminReports() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const openReview = async (r) => {
+    setReviewReporte(r);
+    if (r.estado !== 'revisado') {
+      try {
+        await apiMarcarRevisado(r.id);
+        setReportes((prev) =>
+          prev.map((rep) => rep.id === r.id ? { ...rep, estado: 'revisado' } : rep)
+        );
+      } catch { /* no bloquear la apertura del modal si falla */ }
+    }
+  };
 
   const handleDescartarReporte = async (id, { closeModal } = {}) => {
     setBusyId(`r-${id}`);
@@ -137,6 +151,7 @@ export function AdminReports() {
                 <th>Motivo</th>
                 <th>Detalles</th>
                 <th>Reportó</th>
+                <th>Estado</th>
                 <th>Estado pub.</th>
                 <th>Fecha</th>
                 <th>Acciones</th>
@@ -156,7 +171,7 @@ export function AdminReports() {
                       <button
                         type="button"
                         className="admin-link-btn"
-                        onClick={() => setReviewReporte(r)}
+                        onClick={() => openReview(r)}
                         title="Ver detalle"
                       >
                         {titulo}
@@ -171,6 +186,13 @@ export function AdminReports() {
                       )}
                     </td>
                     <td>{r.reportante_nombre}</td>
+                    <td>
+                      {r.estado === 'revisado' ? (
+                        <span className="admin-badge admin-badge--revisado">Revisado</span>
+                      ) : (
+                        <span className="admin-badge admin-badge--pendiente">Pendiente</span>
+                      )}
+                    </td>
                     <td>
                       {r.tipo === 'publicacion' ? (
                         <Badge estado={r.publicacion_estado} />
@@ -193,7 +215,7 @@ export function AdminReports() {
                             type="button"
                             className="admin-btn-review"
                             disabled={busyId === `r-${r.id}`}
-                            onClick={() => setReviewReporte(r)}
+                            onClick={() => openReview(r)}
                           >
                             Revisar
                           </button>

@@ -11,6 +11,7 @@ export const getReportes = async (req, res) => {
          r.objeto_id,
          r.motivo,
          r.detalles,
+         r.estado,
          r.created_at,
          u_rep.nombre      AS reportado_por,
          -- Cuando tipo = 'publicacion'
@@ -126,6 +127,22 @@ export const getUsuarios = async (req, res) => {
     res.json({ usuarios: rows });
   } catch (error) {
     console.error('getUsuarios:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/** PATCH /api/moderador/reportes/:id/estado — marca el reporte como revisado */
+export const marcarReporteRevisado = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query(
+      `UPDATE reportes SET estado = 'revisado' WHERE id = $1`,
+      [id]
+    );
+    if (!rowCount) return res.status(404).json({ message: 'Reporte no encontrado' });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('marcarReporteRevisado (mod):', error);
     res.status(500).json({ message: error.message });
   }
 };
