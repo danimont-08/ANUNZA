@@ -196,29 +196,16 @@ export function PublicationReviewModal({
         </div>
 
         <footer className="admin-review-foot">
-          <button type="button" className="admin-btn admin-btn--secondary" onClick={onClose} disabled={busy}>
-            Cerrar
-          </button>
           <div className="admin-review-foot-actions">
-            {reporte.estado === 'pendiente' && onPatchReporte && (
-              <>
-                <button
-                  type="button"
-                  className="admin-btn admin-btn--secondary"
-                  disabled={busy}
-                  onClick={() => onPatchReporte(reporte.id, 'revisado')}
-                >
-                  Marcar revisado
-                </button>
-                <button
-                  type="button"
-                  className="admin-btn admin-btn--secondary"
-                  disabled={busy}
-                  onClick={() => onPatchReporte(reporte.id, 'desestimado')}
-                >
-                  Rechazar reporte
-                </button>
-              </>
+            {onPatchReporte && (
+              <button
+                type="button"
+                className="admin-btn admin-btn--secondary"
+                disabled={busy}
+                onClick={() => onPatchReporte(reporte.id, 'rechazado')}
+              >
+                Rechazar reporte
+              </button>
             )}
             {publicacion && onPatchPublicacion && (
               <>
@@ -229,7 +216,7 @@ export function PublicationReviewModal({
                     disabled={busy}
                     onClick={() => onPatchPublicacion(publicacion.id, 'oculto')}
                   >
-                    Ocultar
+                    Ocultar publicación
                   </button>
                 )}
                 {pubEstado !== 'eliminado' && (
@@ -239,7 +226,7 @@ export function PublicationReviewModal({
                     disabled={busy}
                     onClick={() => onPatchPublicacion(publicacion.id, 'eliminado')}
                   >
-                    Eliminar
+                    Eliminar permanentemente
                   </button>
                 )}
                 {pubEstado !== 'activo' && (

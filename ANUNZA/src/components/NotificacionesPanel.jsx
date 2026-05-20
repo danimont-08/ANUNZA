@@ -5,6 +5,7 @@ import './NotificacionesPanel.css';
 const TIPO_ICONO = {
   nuevo_mensaje: '💬',
   comentario: '🗨️',
+  resena: '⭐',
   me_gusta: '❤️',
   reporte: '🚨',
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MediaCarousel } from './MediaCarousel';
+import { ResenaPanel } from './ResenaPanel';
 import {
   fetchComentarios,
   addComentarioApi,
@@ -22,15 +23,13 @@ function formatDate(iso) {
 
 export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError }) {
   const [openComments, setOpenComments] = useState(false);
-  const [openResena, setOpenResena] = useState(false);
+  const [openResenas, setOpenResenas] = useState(false);
   const [openReport, setOpenReport] = useState(false);
   const [comments, setComments] = useState([]);
-  // Tomar comentarios_count del servidor (count real de todos los comentarios)
   const [commentCount, setCommentCount] = useState(p.comentarios_count ?? 0);
+  const [resenasCount, setResenasCount] = useState(p.resenas_count ?? 0);
+  const [promedioResenas, setPromedioResenas] = useState(p.promedio_resenas ?? null);
   const [draft, setDraft] = useState('');
-  const [resenaDraft, setResenaDraft] = useState('');
-  const [rating, setRating] = useState(5);
-
   const media = p.media_items?.length ? p.media_items : [];
   const texto = p.texto_plano ?? p.descripcion ?? '';
   const tags = p.hashtags || [];
@@ -40,7 +39,6 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
     try {
       const data = await fetchComentarios(p.id);
       setComments(data.comentarios || []);
-      // Sincronizar el contador con la respuesta real del servidor
       setCommentCount(data.comentarios?.length ?? commentCount);
     } catch (e) { onError(e.message); }
   };
@@ -48,7 +46,16 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
   const toggleComments = () => {
     const next = !openComments;
     setOpenComments(next);
-    if (next) loadComments();
+    if (next) {
+      setOpenResenas(false);
+      loadComments();
+    }
+  };
+
+  const toggleResenas = () => {
+    const next = !openResenas;
+    setOpenResenas(next);
+    if (next) setOpenComments(false);
   };
 
   const sendComment = async () => {
@@ -62,26 +69,17 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
     } catch (e) { onError(e.message); }
   };
 
-  const sendResena = async () => {
-    const text = resenaDraft.trim();
-    if (!text) return;
-    const prefix = `[Reseña ${rating}/5] `;
-    try {
-      const data = await addComentarioApi(p.id, `${prefix}${text}`);
-      setResenaDraft('');
-      setOpenResena(false);
-      setOpenComments(true);
-      setComments((c) => [...c, data.comentario]);
-      setCommentCount((n) => n + 1);
-    } catch (e) { onError(e.message); }
-  };
-
   const shareLink = async () => {
     const url = `${window.location.origin}/dashboard?post=${p.id}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch { onError('No se pudo copiar el enlace'); }
   };
+
+  const resenasLabel =
+    resenasCount > 0 && promedioResenas != null
+      ? `Reseñas · ${promedioResenas}★ (${resenasCount})`
+      : `Reseñas · ${resenasCount}`;
 
   return (
     <article className="pub-card">
@@ -131,7 +129,13 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
           {p.user_liked ? 'Te gusta' : 'Me gusta'} · {p.interacciones_count ?? 0}
         </button>
         <button type="button" className="pub-btn" onClick={shareLink}>Reenviar</button>
-        <button type="button" className="pub-btn" onClick={() => setOpenResena((v) => !v)}>Reseñar</button>
+        <button
+          type="button"
+          className={`pub-btn pub-resenas ${resenasCount > 0 ? 'has-rating' : ''}`}
+          onClick={toggleResenas}
+        >
+          {resenasLabel}
+        </button>
         <button
           type="button"
           className="pub-btn pub-chat"
@@ -152,33 +156,24 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
         </button>
       </footer>
 
-      {openResena && (
-        <div className="pub-panel pub-panel-reveal">
-          <p className="pub-panel-title">Reseña del servicio</p>
-          <div className="pub-stars">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                type="button"
-                className={n <= rating ? 'is-on' : ''}
-                onClick={() => setRating(n)}
-              >★</button>
-            ))}
-          </div>
-          <textarea
-            rows={3}
-            placeholder="Cuéntanos tu experiencia…"
-            value={resenaDraft}
-            onChange={(e) => setResenaDraft(e.target.value)}
+      {openResenas && (
+        <div className="pub-panel pub-panel-reveal pub-panel-resenas">
+          <ResenaPanel
+            publicacionId={p.id}
+            resenasCountInicial={resenasCount}
+            promedioInicial={promedioResenas}
+            onResenasChange={({ count, promedio }) => {
+              setResenasCount(count);
+              setPromedioResenas(promedio);
+            }}
+            onError={onError}
           />
-          <button type="button" className="pub-send" onClick={sendResena}>
-            Publicar reseña
-          </button>
         </div>
       )}
 
       {openComments && (
         <div className="pub-panel pub-panel-reveal">
+          <p className="pub-panel-title">Comentarios</p>
           <ul className="pub-comment-list">
             {comments.map((c) => (
               <li key={c.id} className="pub-comment">

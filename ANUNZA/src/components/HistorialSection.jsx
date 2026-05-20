@@ -79,6 +79,12 @@ export function HistorialSection() {
               <li key={c.id}>
                 <strong>{'★'.repeat(c.puntuacion ?? c.puntos ?? 0)} {c.puntuacion ?? c.puntos ?? '—'}/5</strong>
                 {c.comentario && <p>{c.comentario}</p>}
+                {c.imagen_url && (
+                  <img src={c.imagen_url} alt="Imagen de reseña" className="hist-resena-img" />
+                )}
+                {c.video_url && (
+                  <video src={c.video_url} controls playsInline className="hist-resena-video" />
+                )}
               </li>
             ))}
           </ul>

@@ -104,3 +104,18 @@
   flex-direction: column;
   gap: 2px;
 }
+
+.hist-resena-img {
+  max-width: 100%;
+  max-height: 120px;
+  border-radius: 8px;
+  margin-top: 0.35rem;
+  object-fit: cover;
+}
+
+.hist-resena-video {
+  max-width: 100%;
+  max-height: 140px;
+  border-radius: 8px;
+  margin-top: 0.35rem;
+}

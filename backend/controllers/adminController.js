@@ -3,7 +3,7 @@ import { User } from '../models/User.js';
 import { enrichPublicacionRow } from '../utils/publicacionPayload.js';
 
 const ESTADOS_USUARIO = ['activo', 'suspendido'];
-const ESTADOS_REPORTE = ['pendiente', 'revisado', 'desestimado'];
+const ESTADOS_REPORTE = ['pendiente', 'revisado', 'rechazado'];
 const ESTADOS_PUBLICACION = ['activo', 'oculto', 'eliminado'];
 
 /** GET /api/admin/stats */
@@ -77,7 +77,8 @@ export const patchUserEstado = async (req, res) => {
 /** GET /api/admin/reportes?estado= */
 export const listReportes = async (req, res) => {
   try {
-    const estado = req.query.estado || null;
+    let estado = req.query.estado || null;
+    if (estado === 'desestimado') estado = 'rechazado';
     const params = [];
     let where = '';
     if (estado) {
@@ -112,7 +113,8 @@ export const listReportes = async (req, res) => {
 export const patchReporteEstado = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado } = req.body;
+    let { estado } = req.body;
+    if (estado === 'desestimado') estado = 'rechazado';
 
     if (!estado || !ESTADOS_REPORTE.includes(estado)) {
       return res.status(400).json({
@@ -161,6 +163,43 @@ export const getPublicacionDetalle = async (req, res) => {
   }
 };
 
+/** Elimina publicación y registros dependientes (orden respetando FKs). */
+async function deletePublicacionPermanentemente(publicacionId) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    await client.query(
+      `DELETE FROM calificaciones
+       WHERE trabajo_id IN (SELECT id FROM trabajos WHERE publicacion_id = $1)`,
+      [publicacionId]
+    );
+    await client.query(`DELETE FROM trabajos WHERE publicacion_id = $1`, [publicacionId]);
+    await client.query(`DELETE FROM comentarios WHERE publicacion_id = $1`, [publicacionId]);
+    await client.query(`DELETE FROM interacciones WHERE publicacion_id = $1`, [publicacionId]);
+    await client.query(`DELETE FROM reportes WHERE publicacion_id = $1`, [publicacionId]);
+
+    const { rowCount, rows } = await client.query(
+      `DELETE FROM publicaciones WHERE id = $1
+       RETURNING id, titulo, usuario_id`,
+      [publicacionId]
+    );
+
+    if (!rowCount) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    await client.query('COMMIT');
+    return rows[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 /** PATCH /api/admin/publicaciones/:id  body: { estado } */
 export const patchPublicacionEstado = async (req, res) => {
   try {
@@ -170,6 +209,18 @@ export const patchPublicacionEstado = async (req, res) => {
     if (!estado || !ESTADOS_PUBLICACION.includes(estado)) {
       return res.status(400).json({
         message: `Estado inválido. Opciones: ${ESTADOS_PUBLICACION.join(', ')}`,
+      });
+    }
+
+    if (estado === 'eliminado') {
+      const deleted = await deletePublicacionPermanentemente(id);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Publicación no encontrada' });
+      }
+      return res.json({
+        message: 'Publicación eliminada permanentemente',
+        eliminada: true,
+        publicacion: { ...deleted, estado: 'eliminado' },
       });
     }
 
@@ -183,11 +234,7 @@ export const patchPublicacionEstado = async (req, res) => {
     }
     res.json({
       message:
-        estado === 'activo'
-          ? 'Publicación visible de nuevo'
-          : estado === 'oculto'
-            ? 'Publicación oculta'
-            : 'Publicación eliminada',
+        estado === 'activo' ? 'Publicación visible de nuevo' : 'Publicación oculta',
       publicacion: rows[0],
     });
   } catch (error) {

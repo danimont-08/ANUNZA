@@ -8,6 +8,11 @@ import {
   getComentarios,
   addComentario,
 } from '../controllers/feedController.js';
+import {
+  getResenas,
+  addResena,
+  getResenaEligibilidad,
+} from '../controllers/resenasController.js';
 
 const router = express.Router();
 
@@ -17,5 +22,8 @@ router.get('/', verifyToken, verifyActiveAccount, getFeed);
 router.post('/publicaciones/:publicacionId/like', verifyToken, verifyActiveAccount, toggleLike);
 router.get('/publicaciones/:publicacionId/comentarios', verifyToken, verifyActiveAccount, getComentarios);
 router.post('/publicaciones/:publicacionId/comentarios', verifyToken, verifyActiveAccount, addComentario);
+router.get('/publicaciones/:publicacionId/resenas/eligibilidad', verifyToken, verifyActiveAccount, getResenaEligibilidad);
+router.get('/publicaciones/:publicacionId/resenas', verifyToken, verifyActiveAccount, getResenas);
+router.post('/publicaciones/:publicacionId/resenas', verifyToken, verifyActiveAccount, addResena);
 
 export default router;

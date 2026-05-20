@@ -41,6 +41,8 @@ export const getFeed = async (req, res) => {
          cat.nombre AS categoria_nombre,
          COALESCE(ic.cnt, 0)::int AS interacciones_count,
          COALESCE(cc.cnt, 0)::int AS comentarios_count,
+         COALESCE(rc.cnt, 0)::int AS resenas_count,
+         rc.prom AS promedio_resenas,
          EXISTS (
            SELECT 1 FROM interacciones i2
            WHERE i2.publicacion_id = p.id
@@ -61,6 +63,14 @@ export const getFeed = async (req, res) => {
          FROM comentarios
          GROUP BY publicacion_id
        ) cc ON cc.publicacion_id = p.id
+       LEFT JOIN (
+         SELECT t.publicacion_id,
+                COUNT(*)::int AS cnt,
+                ROUND(AVG(c.puntuacion)::numeric, 1) AS prom
+         FROM calificaciones c
+         INNER JOIN trabajos t ON t.id = c.trabajo_id
+         GROUP BY t.publicacion_id
+       ) rc ON rc.publicacion_id = p.id
        WHERE COALESCE(p.estado, 'activo') = 'activo'
          AND ($2::integer IS NULL OR p.categoria_id = $2)
          AND ($3::text IS NULL OR TRIM(COALESCE(u.ciudad, '')) ILIKE '%' || $3 || '%')
@@ -69,7 +79,17 @@ export const getFeed = async (req, res) => {
       [userId, categoriaId, ciudad]
     );
 
-    res.json({ publicaciones: rows.map((r) => enrichPublicacionRow(r)) });
+    res.json({
+      publicaciones: rows.map((r) => {
+        const pub = enrichPublicacionRow(r);
+        return {
+          ...pub,
+          resenas_count: r.resenas_count ?? 0,
+          promedio_resenas:
+            r.promedio_resenas != null ? Number(r.promedio_resenas) : null,
+        };
+      }),
+    });
   } catch (error) {
     console.error('getFeed:', error);
     res.status(500).json({ message: error.message });

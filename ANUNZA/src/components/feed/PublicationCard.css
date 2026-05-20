@@ -237,3 +237,27 @@
 .pub-btn.pub-report:hover {
   background: rgba(192, 57, 43, 0.08);
 }
+
+.pub-card--finalizada {
+  border-color: rgba(46, 125, 50, 0.25);
+}
+
+.pub-author-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pub-estado-chip {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(46, 125, 50, 0.12);
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.pub-panel-resenas {
+  background: #fffef8;
+}

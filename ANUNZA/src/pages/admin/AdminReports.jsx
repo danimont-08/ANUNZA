@@ -17,14 +17,13 @@ const MOTIVO_LABEL = {
 const REPORTE_ESTADO_LABEL = {
   pendiente: 'Pendiente',
   revisado: 'Revisado',
-  desestimado: 'Rechazado',
   rechazado: 'Rechazado',
 };
 
 function Badge({ estado }) {
   const raw = (estado || 'pendiente').toLowerCase();
   const badgeKey = raw === 'desestimado' ? 'rechazado' : raw;
-  const label = REPORTE_ESTADO_LABEL[raw] || estado || 'pendiente';
+  const label = REPORTE_ESTADO_LABEL[badgeKey] || REPORTE_ESTADO_LABEL[raw] || estado || 'pendiente';
   return <span className={`admin-badge admin-badge--${badgeKey}`}>{label}</span>;
 }
 
@@ -79,19 +78,52 @@ export function AdminReports() {
     }
   };
 
+  const openReview = async (r) => {
+    if (r.estado === 'pendiente') {
+      setBusyId(`r-${r.id}`);
+      try {
+        await patchReporteEstado(r.id, 'revisado');
+        const actualizado = { ...r, estado: 'revisado' };
+        setReportes((prev) =>
+          prev.map((item) => (item.id === r.id ? actualizado : item))
+        );
+        setReviewReporte(actualizado);
+      } catch (e) {
+        setError(e.message || 'Error al marcar reporte como revisado');
+        setReviewReporte(r);
+      } finally {
+        setBusyId(null);
+      }
+    } else {
+      setReviewReporte(r);
+    }
+  };
+
   const handlePublicacion = async (publicacionId, estado) => {
-    const labels = { oculto: 'ocultar', eliminado: 'eliminar', activo: 'restaurar' };
-    if (!window.confirm(`¿${labels[estado] || estado} esta publicación?`)) return;
+    const confirmMsg =
+      estado === 'eliminado'
+        ? '¿Eliminar permanentemente esta publicación? Esta acción no se puede deshacer.'
+        : estado === 'oculto'
+          ? '¿Ocultar esta publicación?'
+          : estado === 'activo'
+            ? '¿Restaurar esta publicación?'
+            : `¿Aplicar "${estado}" a esta publicación?`;
+    if (!window.confirm(confirmMsg)) return;
 
     setBusyId(`p-${publicacionId}`);
     try {
       await patchPublicacionEstado(publicacionId, estado);
-      await load();
-      setReviewReporte((prev) =>
-        prev && prev.publicacion_id === publicacionId
-          ? { ...prev, publicacion_estado: estado }
-          : prev
-      );
+      if (estado === 'eliminado') {
+        setReviewReporte(null);
+        await load();
+      } else {
+        await load();
+        setReviewReporte((prev) =>
+          prev && prev.publicacion_id === publicacionId
+            ? { ...prev, publicacion_estado: estado }
+            : prev
+        );
+      }
     } catch (e) {
       setError(e.message || 'Error al moderar publicación');
     } finally {
@@ -111,7 +143,7 @@ export function AdminReports() {
           <option value="">Todos</option>
           <option value="pendiente">Pendientes</option>
           <option value="revisado">Revisados</option>
-          <option value="desestimado">Rechazados</option>
+          <option value="rechazado">Rechazados</option>
         </select>
         <button type="button" className="admin-btn admin-btn--primary" onClick={load}>
           Actualizar
@@ -147,7 +179,7 @@ export function AdminReports() {
                       <button
                         type="button"
                         className="admin-link-btn"
-                        onClick={() => setReviewReporte(r)}
+                        onClick={() => openReview(r)}
                         title="Ver publicación completa"
                       >
                         {r.publicacion_titulo || 'Sin título'}
@@ -158,7 +190,7 @@ export function AdminReports() {
                         <button
                           type="button"
                           className="admin-desc-preview"
-                          onClick={() => setReviewReporte(r)}
+                          onClick={() => openReview(r)}
                           title={desc}
                         >
                           {truncate(desc, 48)}
@@ -189,57 +221,11 @@ export function AdminReports() {
                         <button
                           type="button"
                           className="admin-btn-review"
-                          onClick={() => setReviewReporte(r)}
+                          disabled={busyId === `r-${r.id}`}
+                          onClick={() => openReview(r)}
                         >
                           Revisar
                         </button>
-                        {r.estado === 'pendiente' && (
-                          <>
-                            <button
-                              type="button"
-                              disabled={!!busyId}
-                              onClick={() => handleReporte(r.id, 'revisado')}
-                            >
-                              Revisado
-                            </button>
-                            <button
-                              type="button"
-                              disabled={!!busyId}
-                              onClick={() => handleReporte(r.id, 'desestimado')}
-                            >
-                              Rechazar
-                            </button>
-                          </>
-                        )}
-                        {r.publicacion_estado !== 'oculto' && (
-                          <button
-                            type="button"
-                            className="danger"
-                            disabled={busyId === `p-${r.publicacion_id}`}
-                            onClick={() => handlePublicacion(r.publicacion_id, 'oculto')}
-                          >
-                            Ocultar
-                          </button>
-                        )}
-                        {r.publicacion_estado !== 'eliminado' && (
-                          <button
-                            type="button"
-                            className="danger"
-                            disabled={busyId === `p-${r.publicacion_id}`}
-                            onClick={() => handlePublicacion(r.publicacion_id, 'eliminado')}
-                          >
-                            Eliminar
-                          </button>
-                        )}
-                        {r.publicacion_estado !== 'activo' && (
-                          <button
-                            type="button"
-                            disabled={busyId === `p-${r.publicacion_id}`}
-                            onClick={() => handlePublicacion(r.publicacion_id, 'activo')}
-                          >
-                            Restaurar
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>
