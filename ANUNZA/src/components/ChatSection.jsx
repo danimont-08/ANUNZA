@@ -3,15 +3,13 @@ import { apiFetch } from '../services/api';
 import { supabase } from '../services/supabaseClient';
 import './ChatSection.css';
 
-// Avatar por defecto: silueta de persona (sin dependencia externa)
+// AVATAR POR DEFECTO
 const DEFAULT_AVATAR =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0aac8'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 20c0-4 3.6-7 8-7s8 3 8 7'/%3E%3C/svg%3E";
 
 function formatTime(iso) {
   if (!iso) return '';
   try {
-    // Los timestamps de PostgreSQL 'without time zone' llegan sin sufijo Z.
-    // Forzamos la interpretación UTC para que toLocaleTimeString use la zona local del navegador.
     const str = /Z$|[+-]\d{2}:\d{2}$/.test(String(iso)) ? iso : iso + 'Z';
     return new Date(str).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   } catch {
@@ -19,17 +17,26 @@ function formatTime(iso) {
   }
 }
 
-export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed }) {
+export function ChatSection({ user, bootstrapOtroUsuarioId, bootstrapPublicacionId, onBootstrapConsumed }) {
   const [conversaciones, setConversaciones] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [mensajes, setMensajes] = useState([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [users, setUsers] = useState([]);
-  const [newChatOpen, setNewChatOpen] = useState(false);
-  const [pickUser, setPickUser] = useState('');
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [blockMotivo, setBlockMotivo] = useState('');
+  const [bloqueados, setBloqueados] = useState([]);
   const listEndRef = useRef(null);
+
+  const motivosBloqueo = [
+    'Acoso o intimidación',
+    'Spam',
+    'Publicidad masiva',
+    'Comportamiento sospechoso',
+    'Lenguaje ofensivo',
+    'Otro'
+  ];
 
   const scrollToBottom = () => {
     listEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -58,9 +65,19 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
     }
   }, []);
 
+  const loadBloqueados = useCallback(async () => {
+    try {
+      const data = await apiFetch('/chat/bloqueos/mis-bloqueados');
+      setBloqueados(data.bloqueados || []);
+    } catch (e) {
+      console.error('Error cargando bloqueados:', e);
+    }
+  }, []);
+
   useEffect(() => {
     loadConversaciones();
-  }, [loadConversaciones]);
+    loadBloqueados();
+  }, [loadConversaciones, loadBloqueados]);
 
   useEffect(() => {
     if (!bootstrapOtroUsuarioId || !user?.id) return;
@@ -73,7 +90,10 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
       try {
         const data = await apiFetch('/chat/conversaciones', {
           method: 'POST',
-          body: JSON.stringify({ otro_usuario_id: bootstrapOtroUsuarioId }),
+          body: JSON.stringify({ 
+            otro_usuario_id: bootstrapOtroUsuarioId,
+            publicacion_id: bootstrapPublicacionId || null
+          }),
         });
         if (cancelled) return;
         await loadConversaciones();
@@ -87,7 +107,7 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
     return () => {
       cancelled = true;
     };
-  }, [bootstrapOtroUsuarioId, user?.id, loadConversaciones, onBootstrapConsumed]);
+  }, [bootstrapOtroUsuarioId, bootstrapPublicacionId, user?.id, loadConversaciones, onBootstrapConsumed]);
 
   useEffect(() => {
     if (!activeId) return;
@@ -141,27 +161,41 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
     }
   };
 
-  const loadUsers = async () => {
+  const handleBloquear = async () => {
+    if (!blockMotivo) {
+      setError('Selecciona un motivo de bloqueo');
+      return;
+    }
+
+    const activeConv = conversaciones.find((c) => c.id === activeId);
+    if (!activeConv?.peer?.id) return;
+
     try {
-      const data = await apiFetch('/users');
-      const list = (data.users || []).filter((u) => u.id !== user?.id);
-      setUsers(list);
+      await apiFetch('/chat/bloqueos', {
+        method: 'POST',
+        body: JSON.stringify({
+          conversacion_id: activeId,
+          usuario_a_bloquear_id: activeConv.peer.id,
+          motivo: blockMotivo,
+        }),
+      });
+      setBlockOpen(false);
+      setBlockMotivo('');
+      await loadBloqueados();
+      setError('Usuario bloqueado exitosamente');
     } catch (e) {
       setError(e.message);
     }
   };
 
-  const startNewChat = async () => {
-    if (!pickUser) return;
+  const handleDesbloquear = async (usuarioId) => {
     try {
-      const data = await apiFetch('/chat/conversaciones', {
+      await apiFetch('/chat/bloqueos/desbloquear', {
         method: 'POST',
-        body: JSON.stringify({ otro_usuario_id: pickUser }),
+        body: JSON.stringify({ usuario_a_desbloquear_id: usuarioId }),
       });
-      setNewChatOpen(false);
-      setPickUser('');
-      await loadConversaciones();
-      setActiveId(data.conversacion_id);
+      await loadBloqueados();
+      setError('Usuario desbloqueado');
     } catch (e) {
       setError(e.message);
     }
@@ -169,6 +203,7 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
 
   const activeConv = conversaciones.find((c) => c.id === activeId);
   const peer = activeConv?.peer;
+  const estiaBloqueado = bloqueados.some(b => b.usuario_bloqueado === peer?.id);
 
   return (
     <section className="chat-section">
@@ -176,16 +211,16 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
         <aside className="chat-sidebar">
           <div className="chat-sidebar-head">
             <h2>Mensajes</h2>
-            <button
-              type="button"
-              className="chat-new"
-              onClick={() => {
-                setNewChatOpen(true);
-                loadUsers();
-              }}
-            >
-              Nuevo chat
-            </button>
+            {bloqueados.length > 0 && (
+              <button
+                type="button"
+                className="chat-bloqueados"
+                onClick={() => setBlockOpen('ver-bloqueados')}
+                title={`${bloqueados.length} usuario(s) bloqueado(s)`}
+              >
+                🚫 {bloqueados.length}
+              </button>
+            )}
           </div>
           {loading && <p className="chat-muted">Cargando…</p>}
           {error && <div className="chat-error">{error}</div>}
@@ -203,6 +238,9 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
                   />
                   <div className="chat-conv-text">
                     <span className="chat-conv-name">{c.peer?.nombre || 'Chat'}</span>
+                    {c.publicacion_titulo && (
+                      <span className="chat-conv-pub">📌 {c.publicacion_titulo}</span>
+                    )}
                     <span className="chat-conv-preview">{c.ultimo_mensaje || 'Sin mensajes'}</span>
                   </div>
                 </button>
@@ -214,7 +252,8 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
         <div className="chat-main">
           {!activeId && (
             <div className="chat-placeholder">
-              <p>Selecciona una conversación o inicia una nueva.</p>
+              <p>Selecciona una conversación para comenzar.</p>
+              <p className="chat-hint">💡 Inicia chats desde el botón "Chat" en las publicaciones.</p>
             </div>
           )}
           {activeId && (
@@ -227,7 +266,18 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
                 <div>
                   <strong>{peer?.nombre || 'Usuario'}</strong>
                   <div className="chat-peer-sub">En línea en ANUNZA</div>
+                  {activeConv?.publicacion_titulo && (
+                    <div className="chat-peer-pub">📌 {activeConv.publicacion_titulo}</div>
+                  )}
                 </div>
+                <button
+                  type="button"
+                  className="chat-block-btn"
+                  onClick={() => setBlockOpen(true)}
+                  title="Bloquear usuario"
+                >
+                  🚫
+                </button>
               </header>
               <div className="chat-messages">
                 {mensajes.map((m) => {
@@ -256,8 +306,9 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && send()}
+                  disabled={estiaBloqueado}
                 />
-                <button type="button" onClick={send}>
+                <button type="button" onClick={send} disabled={estiaBloqueado}>
                   Enviar
                 </button>
               </footer>
@@ -266,25 +317,56 @@ export function ChatSection({ user, bootstrapOtroUsuarioId, onBootstrapConsumed 
         </div>
       </div>
 
-      {newChatOpen && (
-        <div className="chat-modal-backdrop" role="presentation" onClick={() => setNewChatOpen(false)}>
+      {blockOpen && blockOpen === 'ver-bloqueados' && (
+        <div className="chat-modal-backdrop" role="presentation" onClick={() => setBlockOpen(false)}>
           <div className="chat-modal" role="dialog" onClick={(e) => e.stopPropagation()}>
-            <h3>Nuevo chat</h3>
-            <p className="chat-muted">Elige un usuario de la red.</p>
-            <select value={pickUser} onChange={(e) => setPickUser(e.target.value)}>
-              <option value="">— Seleccionar —</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.nombre} ({u.correo})
-                </option>
+            <h3>Usuarios Bloqueados</h3>
+            <ul className="bloqueados-list">
+              {bloqueados.map((b) => (
+                <li key={b.usuario_bloqueado} className="bloqueado-item">
+                  <div>
+                    <strong>{b.nombre}</strong>
+                    <p>{b.motivo}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDesbloquear(b.usuario_bloqueado)}
+                  >
+                    Desbloquear
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button type="button" onClick={() => setBlockOpen(false)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+
+      {blockOpen && blockOpen !== 'ver-bloqueados' && (
+        <div className="chat-modal-backdrop" role="presentation" onClick={() => setBlockOpen(false)}>
+          <div className="chat-modal" role="dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Bloquear Usuario</h3>
+            <p>¿Estás seguro de que deseas bloquear a <strong>{peer?.nombre}</strong>?</p>
+            <p className="chat-muted">No podrán contactarte ni verá tu actividad.</p>
+            
+            <select value={blockMotivo} onChange={(e) => setBlockMotivo(e.target.value)}>
+              <option value="">— Selecciona un motivo —</option>
+              {motivosBloqueo.map((m) => (
+                <option key={m} value={m}>{m}</option>
               ))}
             </select>
+
             <div className="chat-modal-actions">
-              <button type="button" onClick={() => setNewChatOpen(false)}>
+              <button type="button" onClick={() => setBlockOpen(false)}>
                 Cancelar
               </button>
-              <button type="button" className="primary" onClick={startNewChat} disabled={!pickUser}>
-                Abrir chat
+              <button
+                type="button"
+                className="primary danger"
+                onClick={handleBloquear}
+                disabled={!blockMotivo}
+              >
+                Bloquear
               </button>
             </div>
           </div>

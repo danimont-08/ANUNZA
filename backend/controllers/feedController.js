@@ -6,10 +6,11 @@ import {
 } from '../utils/publicacionPayload.js';
 
 /**
- * Feed con filtros opcionales: ?categoria_id=&ciudad=
+ * FEED CON FILTROS OPCIONALES
  */
 export const getFeed = async (req, res) => {
   const userId = req.userId;
+  
   let categoriaId = null;
   if (req.query.categoria_id != null && req.query.categoria_id !== '') {
     const n = parseInt(String(req.query.categoria_id), 10);
@@ -18,10 +19,47 @@ export const getFeed = async (req, res) => {
     }
     categoriaId = n;
   }
+
+  let subcategoriaId = null;
+  if (req.query.subcategoria_id != null && req.query.subcategoria_id !== '') {
+    const n = parseInt(String(req.query.subcategoria_id), 10);
+    if (Number.isNaN(n)) {
+      return res.status(400).json({ message: 'subcategoria_id inválido' });
+    }
+    subcategoriaId = n;
+  }
+
   const ciudad =
     req.query.ciudad != null && String(req.query.ciudad).trim()
       ? String(req.query.ciudad).trim()
       : null;
+
+  let precioMin = null;
+  if (req.query.precio_min != null && req.query.precio_min !== '') {
+    const n = parseFloat(String(req.query.precio_min));
+    if (Number.isNaN(n)) {
+      return res.status(400).json({ message: 'precio_min inválido' });
+    }
+    precioMin = n;
+  }
+
+  let precioMax = null;
+  if (req.query.precio_max != null && req.query.precio_max !== '') {
+    const n = parseFloat(String(req.query.precio_max));
+    if (Number.isNaN(n)) {
+      return res.status(400).json({ message: 'precio_max inválido' });
+    }
+    precioMax = n;
+  }
+
+  let calificacionMin = null;
+  if (req.query.calificacion_min != null && req.query.calificacion_min !== '') {
+    const n = parseFloat(String(req.query.calificacion_min));
+    if (Number.isNaN(n) || n < 1 || n > 5) {
+      return res.status(400).json({ message: 'calificacion_min debe estar entre 1 y 5' });
+    }
+    calificacionMin = n;
+  }
 
   try {
     const { rows } = await pool.query(
@@ -35,12 +73,15 @@ export const getFeed = async (req, res) => {
          p.created_at,
          p.usuario_id,
          p.categoria_id,
+         p.subcategoria_id,
          u.nombre AS autor_nombre,
          u.foto_perfil AS autor_foto,
          u.ciudad AS autor_ciudad,
          cat.nombre AS categoria_nombre,
+         subcat.nombre AS subcategoria_nombre,
          COALESCE(ic.cnt, 0)::int AS interacciones_count,
          COALESCE(cc.cnt, 0)::int AS comentarios_count,
+         COALESCE(cal.avg_puntuacion, 0)::float AS calificacion_promedio,
          EXISTS (
            SELECT 1 FROM interacciones i2
            WHERE i2.publicacion_id = p.id
@@ -50,6 +91,7 @@ export const getFeed = async (req, res) => {
        FROM publicaciones p
        INNER JOIN usuarios u ON u.id = p.usuario_id
        LEFT JOIN categorias cat ON cat.id = p.categoria_id
+       LEFT JOIN subcategorias subcat ON subcat.id = p.subcategoria_id
        LEFT JOIN (
          SELECT publicacion_id, COUNT(*)::int AS cnt
          FROM interacciones
@@ -61,12 +103,21 @@ export const getFeed = async (req, res) => {
          FROM comentarios
          GROUP BY publicacion_id
        ) cc ON cc.publicacion_id = p.id
+       LEFT JOIN (
+         SELECT trabajo_id, AVG(puntuacion)::float AS avg_puntuacion
+         FROM calificaciones
+         GROUP BY trabajo_id
+       ) cal ON cal.trabajo_id = p.id
        WHERE COALESCE(p.estado, 'activo') = 'activo'
          AND ($2::integer IS NULL OR p.categoria_id = $2)
-         AND ($3::text IS NULL OR TRIM(COALESCE(u.ciudad, '')) ILIKE '%' || $3 || '%')
+         AND ($3::integer IS NULL OR p.subcategoria_id = $3)
+         AND ($4::text IS NULL OR TRIM(COALESCE(u.ciudad, '')) ILIKE '%' || $4 || '%')
+         AND ($5::numeric IS NULL OR p.precio >= $5)
+         AND ($6::numeric IS NULL OR p.precio <= $6)
+         AND ($7::float IS NULL OR COALESCE(cal.avg_puntuacion, 0) >= $7)
        ORDER BY p.created_at DESC NULLS LAST
        LIMIT 80`,
-      [userId, categoriaId, ciudad]
+      [userId, categoriaId, subcategoriaId, ciudad, precioMin, precioMax, calificacionMin]
     );
 
     res.json({ publicaciones: rows.map((r) => enrichPublicacionRow(r)) });
@@ -78,8 +129,21 @@ export const getFeed = async (req, res) => {
 
 export const getCategorias = async (req, res) => {
   try {
-    const { rows } = await pool.query(`SELECT id, nombre FROM categorias ORDER BY nombre ASC`);
-    res.json({ categorias: rows });
+    const { rows: categorias } = await pool.query(
+      `SELECT id, nombre FROM categorias ORDER BY nombre ASC`
+    );
+
+    const { rows: subcategorias } = await pool.query(
+      `SELECT id, categoria_id, nombre FROM subcategorias ORDER BY categoria_id, nombre ASC`
+    );
+
+    // Agrupar subcategorías por categoría
+    const categoriasConSubcat = categorias.map((cat) => ({
+      ...cat,
+      subcategorias: subcategorias.filter((sub) => sub.categoria_id === cat.id),
+    }));
+
+    res.json({ categorias: categoriasConSubcat, subcategorias });
   } catch (error) {
     console.error('getCategorias:', error);
     res.status(500).json({ message: error.message });

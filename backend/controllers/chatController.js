@@ -27,17 +27,20 @@ export const listConversations = async (req, res) => {
       `SELECT
          c.id,
          c.created_at,
+         c.publicacion_id,
          u.id          AS peer_id,
          u.nombre      AS peer_nombre,
          u.foto_perfil AS peer_foto,
          m.contenido   AS ultimo_mensaje,
-         m.created_at  AS ultimo_mensaje_at
+         m.created_at  AS ultimo_mensaje_at,
+         p.titulo      AS publicacion_titulo
        FROM conversaciones c
        INNER JOIN participantes_conversacion pc
          ON pc.conversacion_id = c.id AND pc.usuario_id = $1
        LEFT JOIN participantes_conversacion pcp
          ON pcp.conversacion_id = c.id AND pcp.usuario_id <> $1
        LEFT JOIN usuarios u ON u.id = pcp.usuario_id
+       LEFT JOIN publicaciones p ON p.id = c.publicacion_id
        LEFT JOIN LATERAL (
          SELECT contenido, created_at
          FROM mensajes
@@ -55,6 +58,8 @@ export const listConversations = async (req, res) => {
     const conversaciones = rows.map((r) => ({
       id: r.id,
       created_at: r.created_at,
+      publicacion_id: r.publicacion_id,
+      publicacion_titulo: r.publicacion_titulo,
       peer: r.peer_id ? { id: r.peer_id, nombre: r.peer_nombre, foto_perfil: r.peer_foto } : null,
       ultimo_mensaje: r.ultimo_mensaje || null,
       ultimo_mensaje_at: r.ultimo_mensaje_at || null,
@@ -70,7 +75,7 @@ export const listConversations = async (req, res) => {
 
 export const getOrCreateConversation = async (req, res) => {
   const userId = req.userId;
-  const { otro_usuario_id: otroUsuarioId } = req.body;
+  const { otro_usuario_id: otroUsuarioId, publicacion_id: publicacionId } = req.body;
 
   if (!otroUsuarioId || otroUsuarioId === userId) {
     return res.status(400).json({ message: 'Usuario destinatario inválido' });
@@ -82,14 +87,54 @@ export const getOrCreateConversation = async (req, res) => {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
+    // Verificar si hay bloqueo mutuo
+    const bloqueo = await pool.query(
+      `SELECT 1 FROM bloqueos_usuarios 
+       WHERE (usuario_que_bloquea = $1 AND usuario_bloqueado = $2)
+          OR (usuario_que_bloquea = $2 AND usuario_bloqueado = $1)`,
+      [userId, otroUsuarioId]
+    );
+
+    if (bloqueo.rows.length) {
+      return res.status(403).json({ message: 'No puedes iniciar una conversación con este usuario porque está bloqueado' });
+    }
+
+    // VALIDAR LÍMITE DE 20 CHATS NUEVOS POR DÍA
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const chatsHoy = await pool.query(
+      `SELECT COUNT(*) as cnt FROM conversaciones c
+       INNER JOIN participantes_conversacion pc ON pc.conversacion_id = c.id
+       WHERE pc.usuario_id = $1 
+         AND c.created_at >= $2
+         AND NOT EXISTS (
+           SELECT 1 FROM mensajes WHERE conversacion_id = c.id
+         )
+       GROUP BY pc.usuario_id`,
+      [userId, today.toISOString()]
+    );
+
+    const chatCount = chatsHoy.rows[0]?.cnt || 0;
+    if (chatCount >= 20) {
+      return res.status(429).json({ 
+        message: 'Has alcanzado el límite de 20 chats nuevos por día. Intenta mañana.',
+        limite_alcanzado: true 
+      });
+    }
+
     let convId = await findExistingDmConversation(userId, otroUsuarioId);
     if (!convId) {
       let ins;
       try {
-        ins = await pool.query(`INSERT INTO conversaciones DEFAULT VALUES RETURNING id`);
+        ins = await pool.query(
+          `INSERT INTO conversaciones (publicacion_id) VALUES ($1) RETURNING id`,
+          [publicacionId || null]
+        );
       } catch {
         ins = await pool.query(
-          `INSERT INTO conversaciones (id, created_at) VALUES (gen_random_uuid(), NOW()) RETURNING id`
+          `INSERT INTO conversaciones (id, created_at, publicacion_id) VALUES (gen_random_uuid(), NOW(), $1) RETURNING id`,
+          [publicacionId || null]
         );
       }
       convId = ins.rows[0].id;
@@ -146,6 +191,36 @@ export const sendMessage = async (req, res) => {
     const ok = await assertParticipant(conversacionId, userId);
     if (!ok) {
       return res.status(403).json({ message: 'No participas en esta conversación' });
+    }
+
+    // Verificar bloqueos
+    const otro = await pool.query(
+      `SELECT usuario_id FROM participantes_conversacion
+       WHERE conversacion_id = $1 AND usuario_id <> $2`,
+      [conversacionId, userId]
+    );
+
+    if (otro.rows.length) {
+      const otroUsuarioId = otro.rows[0].usuario_id;
+      const bloqueado = await pool.query(
+        `SELECT 1 FROM bloqueos_usuarios 
+         WHERE usuario_que_bloquea = $1 AND usuario_bloqueado = $2`,
+        [userId, otroUsuarioId]
+      );
+
+      if (bloqueado.rows.length) {
+        return res.status(403).json({ message: 'No puedes enviar mensajes a este usuario porque está bloqueado' });
+      }
+
+      const teBloqueo = await pool.query(
+        `SELECT 1 FROM bloqueos_usuarios 
+         WHERE usuario_que_bloquea = $1 AND usuario_bloqueado = $2`,
+        [otroUsuarioId, userId]
+      );
+
+      if (teBloqueo.rows.length) {
+        return res.status(403).json({ message: 'Este usuario te ha bloqueado' });
+      }
     }
 
     const { rows } = await pool.query(

@@ -23,6 +23,7 @@ export const Dashboard = () => {
 
   const [activeSection, setActiveSection]       = useState('inicio');
   const [chatBootstrapUserId, setChatBootstrapUserId] = useState(null);
+  const [chatBootstrapPublicacionId, setChatBootstrapPublicacionId] = useState(null);
   const [profileError, setProfileError]         = useState('');
   const [notificaciones, setNotificaciones]     = useState([]);
   const [noLeidas, setNoLeidas]                 = useState(0);
@@ -102,14 +103,15 @@ export const Dashboard = () => {
           {activeSection === 'inicio' && (
             <FeedSection
               user={user}
-              onChatWithUser={(uid) => { setChatBootstrapUserId(uid); setActiveSection('mensajes'); }}
+              onChatWithUser={(uid, pubId) => { setChatBootstrapUserId(uid); setChatBootstrapPublicacionId(pubId); setActiveSection('mensajes'); }}
             />
           )}
           {activeSection === 'mensajes' && (
             <ChatSection
               user={user}
               bootstrapOtroUsuarioId={chatBootstrapUserId}
-              onBootstrapConsumed={() => setChatBootstrapUserId(null)}
+              bootstrapPublicacionId={chatBootstrapPublicacionId}
+              onBootstrapConsumed={() => { setChatBootstrapUserId(null); setChatBootstrapPublicacionId(null); }}
             />
           )}
           {activeSection === 'historial' && <HistorialSection />}

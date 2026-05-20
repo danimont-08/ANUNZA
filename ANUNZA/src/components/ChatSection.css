@@ -292,6 +292,138 @@
   border-color: var(--anunza-violet);
 }
 
+.chat-modal-actions .primary.danger {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.chat-modal-actions .primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chat-compose button:disabled,
+.chat-compose input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chat-peer-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: var(--anunza-lavender);
+  border-bottom: 1px solid rgba(47, 8, 109, 0.08);
+  justify-content: space-between;
+}
+
+.chat-peer-bar > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.chat-peer-bar > div:nth-child(2) {
+  flex: 1;
+}
+
+.chat-block-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.chat-block-btn:hover {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.chat-peer-pub {
+  font-size: 0.75rem;
+  color: #5c5c7a;
+  margin-top: 0.2rem;
+}
+
+.chat-conv-pub {
+  font-size: 0.75rem;
+  color: var(--anunza-violet);
+  font-weight: 500;
+  display: block;
+  margin-top: 0.15rem;
+}
+
+.chat-bloqueados {
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chat-bloqueados:hover {
+  background: rgba(220, 38, 38, 0.25);
+}
+
+.bloqueados-list {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.bloqueado-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  background: #f9fafb;
+}
+
+.bloqueado-item > div {
+  flex: 1;
+}
+
+.bloqueado-item strong {
+  display: block;
+  color: var(--anunza-midnight);
+}
+
+.bloqueado-item p {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.bloqueado-item button {
+  background: var(--anunza-violet);
+  color: #fff;
+  border: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chat-placeholder .chat-hint {
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: #8b5cf6;
+}
+
 @media (max-width: 768px) {
   .chat-layout {
     grid-template-columns: 1fr;
