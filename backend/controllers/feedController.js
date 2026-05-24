@@ -92,8 +92,13 @@ try {
             SELECT 1 FROM interacciones i2
             WHERE i2.publicacion_id = p.id
               AND i2.usuario_id = $1
-              AND i2.tipo = 'me_gusta'
-          ) AS user_liked
+              AND i2.tipo IN ('me_gusta', 'like')
+          ) AS user_liked,
+           EXISTS (
+           SELECT 1 FROM favoritos fav
+           WHERE fav.publicacion_id = p.id
+             AND fav.usuario_id = $1
+         ) AS user_saved
         FROM publicaciones p
         INNER JOIN usuarios u ON u.id = p.usuario_id
         LEFT JOIN categorias cat ON cat.id = p.categoria_id
@@ -101,7 +106,7 @@ try {
         LEFT JOIN (
           SELECT publicacion_id, COUNT(*)::int AS cnt
           FROM interacciones
-          WHERE tipo = 'me_gusta'
+          WHERE tipo IN ('me_gusta', 'like')
           GROUP BY publicacion_id
         ) ic ON ic.publicacion_id = p.id
         LEFT JOIN (
@@ -220,6 +225,11 @@ export const createPublication = async (req, res) => {
       return res.status(400).json({ message: 'La categoría no existe' });
     }
 
+    const tituloVal = String(titulo || '').trim();
+    if (!tituloVal) {
+      return res.status(400).json({ message: 'El título es obligatorio' });
+    }
+
     const text = String(descInput || '').trim();
     if (!text) {
       return res.status(400).json({ message: 'La descripción es obligatoria' });
@@ -242,7 +252,6 @@ export const createPublication = async (req, res) => {
       if (!Number.isNaN(n)) precioVal = n;
     }
 
-    const tituloVal = String(titulo || '').trim() || text.slice(0, 120) || 'Publicación';
     const tipoVal = tipo === 'busco' ? 'busco' : 'ofrezco';
     const imagenVal = serializeMediaItems(media);
 
@@ -268,11 +277,66 @@ export const createPublication = async (req, res) => {
       interacciones_count: 0,
       comentarios_count: 0,
       user_liked: false,
+      user_saved: false,
     };
 
     res.status(201).json({ publicacion: enrichPublicacionRow(merged) });
   } catch (error) {
     console.error('createPublication:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const toggleFavorito = async (req, res) => {
+  const userId = req.userId;
+  const { publicacionId } = req.params;
+  try {
+    const existing = await pool.query(
+      `SELECT id FROM favoritos WHERE usuario_id = $1 AND publicacion_id = $2`,
+      [userId, publicacionId]
+    );
+    if (existing.rows.length > 0) {
+      await pool.query(`DELETE FROM favoritos WHERE id = $1`, [existing.rows[0].id]);
+      return res.json({ saved: false });
+    }
+    await pool.query(
+      `INSERT INTO favoritos (usuario_id, publicacion_id) VALUES ($1, $2)`,
+      [userId, publicacionId]
+    );
+    res.json({ saved: true });
+  } catch (error) {
+    console.error('toggleFavorito:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deletePublicacion = async (req, res) => {
+  const userId = req.userId;
+  const { publicacionId } = req.params;
+  try {
+    const check = await pool.query(
+      `SELECT usuario_id FROM publicaciones WHERE id = $1`,
+      [publicacionId]
+    );
+    if (!check.rows.length) {
+      return res.status(404).json({ message: 'Publicación no encontrada' });
+    }
+    if (String(check.rows[0].usuario_id) !== String(userId)) {
+      return res.status(403).json({ message: 'No tienes permiso para eliminar esta publicación' });
+    }
+    /* Nulificar FK en trabajos antes de borrar (requiere que la columna sea nullable).
+       Si aún no lo es, ejecuta el SQL indicado en Supabase y esto funcionará. */
+    try {
+      await pool.query(
+        `UPDATE trabajos SET publicacion_id = NULL WHERE publicacion_id = $1`,
+        [publicacionId]
+      );
+    } catch { /* columna aún NOT NULL — ignorar, el DELETE fallará con el mensaje correcto */ }
+
+    await pool.query(`DELETE FROM publicaciones WHERE id = $1`, [publicacionId]);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('deletePublicacion:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -329,20 +393,95 @@ export const toggleLike = async (req, res) => {
 };
 
 export const getComentarios = async (req, res) => {
+  const userId = req.userId;
   const { publicacionId } = req.params;
   try {
-    const { rows } = await pool.query(
-      `SELECT c.id, c.contenido, c.created_at, c.usuario_id,
-              u.nombre AS autor_nombre, u.foto_perfil AS autor_foto
-       FROM comentarios c
-       INNER JOIN usuarios u ON u.id = c.usuario_id
-       WHERE c.publicacion_id = $1
-       ORDER BY c.created_at ASC`,
-      [publicacionId]
-    );
+    let rows;
+    try {
+      const result = await pool.query(
+        `SELECT c.id, c.contenido, c.created_at, c.usuario_id,
+                u.nombre AS autor_nombre, u.foto_perfil AS autor_foto,
+                COALESCE(cl.cnt, 0)::int AS likes_count,
+                EXISTS (
+                  SELECT 1 FROM comentario_likes cl2
+                  WHERE cl2.comentario_id = c.id AND cl2.usuario_id = $2
+                ) AS user_liked
+         FROM comentarios c
+         INNER JOIN usuarios u ON u.id = c.usuario_id
+         LEFT JOIN (
+           SELECT comentario_id, COUNT(*)::int AS cnt
+           FROM comentario_likes GROUP BY comentario_id
+         ) cl ON cl.comentario_id = c.id
+         WHERE c.publicacion_id = $1
+         ORDER BY c.created_at ASC`,
+        [publicacionId, userId]
+      );
+      rows = result.rows;
+    } catch {
+      const result = await pool.query(
+        `SELECT c.id, c.contenido, c.created_at, c.usuario_id,
+                u.nombre AS autor_nombre, u.foto_perfil AS autor_foto,
+                0 AS likes_count, false AS user_liked
+         FROM comentarios c
+         INNER JOIN usuarios u ON u.id = c.usuario_id
+         WHERE c.publicacion_id = $1
+         ORDER BY c.created_at ASC`,
+        [publicacionId]
+      );
+      rows = result.rows;
+    }
     res.json({ comentarios: rows });
   } catch (error) {
     console.error('getComentarios:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteComentario = async (req, res) => {
+  const userId = req.userId;
+  const { comentarioId } = req.params;
+  try {
+    const check = await pool.query(
+      `SELECT usuario_id FROM comentarios WHERE id = $1`,
+      [comentarioId]
+    );
+    if (!check.rows.length) return res.status(404).json({ message: 'Comentario no encontrado' });
+    if (String(check.rows[0].usuario_id) !== String(userId)) {
+      return res.status(403).json({ message: 'No tienes permiso para eliminar este comentario' });
+    }
+    await pool.query(`DELETE FROM comentarios WHERE id = $1`, [comentarioId]);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('deleteComentario:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const toggleLikeComentario = async (req, res) => {
+  const userId = req.userId;
+  const { comentarioId } = req.params;
+  try {
+    const existing = await pool.query(
+      `SELECT id FROM comentario_likes WHERE usuario_id = $1 AND comentario_id = $2`,
+      [userId, comentarioId]
+    );
+    if (existing.rows.length > 0) {
+      await pool.query(`DELETE FROM comentario_likes WHERE id = $1`, [existing.rows[0].id]);
+      const { rows } = await pool.query(
+        `SELECT COUNT(*)::int AS c FROM comentario_likes WHERE comentario_id = $1`, [comentarioId]
+      );
+      return res.json({ liked: false, likes_count: rows[0].c });
+    }
+    await pool.query(
+      `INSERT INTO comentario_likes (usuario_id, comentario_id) VALUES ($1, $2)`,
+      [userId, comentarioId]
+    );
+    const { rows } = await pool.query(
+      `SELECT COUNT(*)::int AS c FROM comentario_likes WHERE comentario_id = $1`, [comentarioId]
+    );
+    res.json({ liked: true, likes_count: rows[0].c });
+  } catch (error) {
+    console.error('toggleLikeComentario:', error);
     res.status(500).json({ message: error.message });
   }
 };

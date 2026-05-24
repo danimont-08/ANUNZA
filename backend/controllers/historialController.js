@@ -1,8 +1,5 @@
 import { pool } from '../config/database.js';
 
-/**
- * Parsea la descripción que puede ser texto plano o JSON {"text":"..."}.
- */
 function extractTextPlano(raw) {
   if (!raw) return '';
   const s = String(raw).trim();
@@ -12,15 +9,11 @@ function extractTextPlano(raw) {
   return s;
 }
 
-/**
- * Resumen de historial del usuario autenticado.
- * Se ejecutan en paralelo con Promise.all (seguro con max:10 en Transaction Pooler).
- */
 export const getMiHistorial = async (req, res) => {
   const userId = req.userId;
   try {
-    // Queries base en paralelo (no dependen entre sí)
-    const [publicacionesRes, interaccionesRes, historialRes] = await Promise.all([
+    // Queries base en paralelo
+    const [publicacionesRes, interaccionesRes, historialRes, favoritosRes] = await Promise.all([
       pool.query(
         `SELECT * FROM publicaciones WHERE usuario_id = $1 ORDER BY created_at DESC NULLS LAST`,
         [userId]
@@ -38,9 +31,17 @@ export const getMiHistorial = async (req, res) => {
         `SELECT * FROM historial WHERE usuario_id = $1 ORDER BY created_at DESC NULLS LAST LIMIT 200`,
         [userId]
       ),
+      pool.query(
+        `SELECT p.*, f.created_at AS saved_at
+         FROM favoritos f
+         INNER JOIN publicaciones p ON p.id = f.publicacion_id
+         WHERE f.usuario_id = $1
+         ORDER BY f.created_at DESC NULLS LAST`,
+        [userId]
+      ),
     ]);
 
-    // Trabajos: columnas reales del schema (trabajador_id / contratante_id)
+    // Trabajos
     let trabajos = [];
     try {
       const { rows } = await pool.query(
@@ -56,7 +57,7 @@ export const getMiHistorial = async (req, res) => {
       trabajos = [];
     }
 
-    // Calificaciones en paralelo: lista + promedio al mismo tiempo
+    // Calificaciones
     let calificaciones = [];
     let promedio = null;
     try {
@@ -83,6 +84,7 @@ export const getMiHistorial = async (req, res) => {
       historial: historialRes.rows,
       trabajos,
       calificaciones,
+      favoritos: favoritosRes.rows,
       promedio_calificacion: promedio != null ? Number(Number(promedio).toFixed(2)) : null,
     });
   } catch (error) {

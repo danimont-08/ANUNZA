@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../services/api';
+import { deletePublicacionApi } from '../models/publicacionModel';
 import './HistorialSection.css';
 
-/** Parsea la descripción que puede ser texto plano o JSON {"text":"..."}. */
 function parseTitulo(raw) {
   if (!raw) return '';
   const s = String(raw).trim();
@@ -10,6 +10,21 @@ function parseTitulo(raw) {
     try { return JSON.parse(s).text?.slice(0, 80) || s.slice(0, 80); } catch { return s.slice(0, 80); }
   }
   return s.slice(0, 80);
+}
+
+function parseDesc(raw) {
+  if (!raw) return { text: '', hashtags: [] };
+  const s = String(raw).trim();
+  if (!s.startsWith('{')) return { text: s, hashtags: [] };
+  try {
+    const j = JSON.parse(s);
+    return {
+      text: j.text != null ? String(j.text) : '',
+      hashtags: Array.isArray(j.hashtags) ? j.hashtags : [],
+    };
+  } catch {
+    return { text: s, hashtags: [] };
+  }
 }
 
 const TIPO_ICONO = {
@@ -23,8 +38,9 @@ export function HistorialSection({ onNavigateToPost }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  const cargar = () => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
         const res = await apiFetch('/historial/mi');
@@ -36,7 +52,23 @@ export function HistorialSection({ onNavigateToPost }) {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  };
+
+  useEffect(cargar, []);
+
+  const handleEliminar = async (pubId) => {
+    if (!window.confirm('¿Eliminar esta publicación? Esta acción no se puede deshacer.')) return;
+    try {
+      await deletePublicacionApi(pubId);
+      setData((prev) => ({
+        ...prev,
+        publicaciones: prev.publicaciones.filter((p) => p.id !== pubId),
+        favoritos: prev.favoritos?.filter((p) => p.id !== pubId) ?? [],
+      }));
+    } catch (e) {
+      setError(e.message);
+    }
+  };
 
   if (loading) return <div className="hist-wrap"><p>Cargando tu historial…</p></div>;
   if (error)   return <div className="hist-wrap"><div className="hist-error">{error}</div></div>;
@@ -52,7 +84,86 @@ export function HistorialSection({ onNavigateToPost }) {
       </header>
 
       <div className="hist-grid">
-        {/* Trabajos */}
+
+        {/* MIS PUBLICACIONES */}
+        <section className="hist-card hist-card-wide">
+          <h2>Mis publicaciones</h2>
+          <ul className="hist-list">
+            {(data.publicaciones || []).length === 0 && <li className="hist-empty">Sin publicaciones</li>}
+            {(data.publicaciones || []).map((p) => {
+              const { text, hashtags } = parseDesc(p.descripcion);
+              return (
+                <li key={p.id} style={{ paddingBottom: '0.75rem' }}>
+                  <button
+                    type="button"
+                    className="hist-item-link"
+                    title={p.titulo || 'Ver publicación'}
+                    onClick={() => onNavigateToPost?.(p.id)}
+                  >
+                    {p.titulo || 'Sin título'}
+                  </button>
+                  {text && <span className="hist-meta">{text.slice(0, 120)}{text.length > 120 ? '…' : ''}</span>}
+                  {hashtags.length > 0 && (
+                    <span className="hist-meta" style={{ color: 'var(--anunza-violet)', fontWeight: 600 }}>
+                      {hashtags.map((t) => `#${t}`).join(' ')}
+                    </span>
+                  )}
+                  {p.tipo && (
+                    <span className="hist-meta">
+                      {p.tipo === 'ofrezco' ? '📢 Ofrezco' : '🔍 Busco'}
+                      {p.precio ? ` · $${Number(p.precio).toLocaleString('es-CO')}` : ''}
+                      {p.created_at ? ` · ${new Date(p.created_at).toLocaleDateString('es-CO')}` : ''}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className="pub-btn pub-delete"
+                    style={{ marginTop: '0.35rem', fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}
+                    onClick={() => handleEliminar(p.id)}
+                  >
+                    Eliminar
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        {/* MIS FAVORITOS */}
+        <section className="hist-card hist-card-wide">
+          <h2>⭐ Mis favoritos</h2>
+          <ul className="hist-list">
+            {(data.favoritos || []).length === 0 && <li className="hist-empty">No has guardado publicaciones aún</li>}
+            {(data.favoritos || []).map((p) => {
+              const { text, hashtags } = parseDesc(p.descripcion);
+              return (
+                <li key={p.id} style={{ paddingBottom: '0.75rem' }}>
+                  <button
+                    type="button"
+                    className="hist-item-link"
+                    onClick={() => onNavigateToPost?.(p.id)}
+                  >
+                    {p.titulo || 'Sin título'}
+                  </button>
+                  {text && <span className="hist-meta">{text.slice(0, 120)}{text.length > 120 ? '…' : ''}</span>}
+                  {hashtags.length > 0 && (
+                    <span className="hist-meta" style={{ color: 'var(--anunza-violet)', fontWeight: 600 }}>
+                      {hashtags.map((t) => `#${t}`).join(' ')}
+                    </span>
+                  )}
+                  {p.tipo && (
+                    <span className="hist-meta">
+                      {p.tipo === 'ofrezco' ? '📢 Ofrezco' : '🔍 Busco'}
+                      {p.precio ? ` · $${Number(p.precio).toLocaleString('es-CO')}` : ''}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        {/* TRABAJOS */}
         <section className="hist-card">
           <h2>Trabajos</h2>
           <ul className="hist-list">
@@ -70,48 +181,41 @@ export function HistorialSection({ onNavigateToPost }) {
           </ul>
         </section>
 
-        {/* Calificaciones */}
+        {/* CALIFICACIONES */}
         <section className="hist-card">
           <h2>Calificaciones recibidas</h2>
-          <ul className="hist-list">
-            {(data.calificaciones || []).length === 0 && <li className="hist-empty">Sin calificaciones</li>}
-            {(data.calificaciones || []).map((c) => (
-              <li key={c.id}>
-                <strong>{'★'.repeat(c.puntuacion ?? c.puntos ?? 0)} {c.puntuacion ?? c.puntos ?? '—'}/5</strong>
-                {c.comentario && <p>{c.comentario}</p>}
-                {c.imagen_url && (
-                  <img src={c.imagen_url} alt="Imagen de reseña" className="hist-resena-img" />
-                )}
-                {c.video_url && (
-                  <video src={c.video_url} controls playsInline className="hist-resena-video" />
-                )}
-              </li>
-            ))}
-          </ul>
+          {(() => {
+            const cals = data.calificaciones || [];
+            if (cals.length === 0) return <ul className="hist-list"><li className="hist-empty">Sin calificaciones</li></ul>;
+            const avg = Math.round((cals.reduce((s, c) => s + (c.puntuacion ?? c.puntos ?? 0), 0) / cals.length) * 10) / 10;
+            const rounded = Math.round(avg);
+            return (
+              <div style={{ textAlign: 'center', padding: '0.75rem 0.5rem' }}>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--anunza-violet)', lineHeight: 1 }}>{avg}</div>
+                <div style={{ fontSize: '1.3rem', margin: '0.25rem 0', letterSpacing: '2px' }}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <span key={i} style={{ color: i < rounded ? '#f5b301' : '#e0e0e0' }}>★</span>
+                  ))}
+                </div>
+                <div style={{ fontSize: '0.82rem', color: '#888' }}>
+                  {cals.length} {cals.length === 1 ? 'calificación' : 'calificaciones'}
+                </div>
+                <ul className="hist-list" style={{ marginTop: '0.75rem', textAlign: 'left' }}>
+                  {cals.map((c) => (
+                    <li key={c.id}>
+                      <strong>{'★'.repeat(c.puntuacion ?? c.puntos ?? 0)} {c.puntuacion ?? c.puntos ?? '—'}/5</strong>
+                      {c.comentario && <p>{c.comentario}</p>}
+                      {c.imagen_url && <img src={c.imagen_url} alt="Imagen de reseña" className="hist-resena-img" />}
+                      {c.video_url && <video src={c.video_url} controls playsInline className="hist-resena-video" />}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
         </section>
 
-        {/* Mis publicaciones */}
-        <section className="hist-card">
-          <h2>Mis publicaciones</h2>
-          <ul className="hist-list">
-            {(data.publicaciones || []).length === 0 && <li className="hist-empty">Sin publicaciones</li>}
-            {(data.publicaciones || []).map((p) => (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  className="hist-item-link"
-                  title={p.titulo || 'Ver publicación'}
-                  onClick={() => onNavigateToPost?.(p.id)}
-                >
-                  {p.titulo || 'Sin título'}
-                </button>
-                <span className="hist-meta">{parseTitulo(p.descripcion)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Interacciones */}
+        {/* INTERACCIONES */}
         <section className="hist-card">
           <h2>Mis interacciones</h2>
           <ul className="hist-list">
@@ -138,7 +242,7 @@ export function HistorialSection({ onNavigateToPost }) {
           </ul>
         </section>
 
-        {/* Historial de actividad */}
+        {/* HISTORIAL DE ACTIVIDAD */}
         <section className="hist-card hist-card-wide">
           <h2>Historial de actividad</h2>
           <ul className="hist-list">
@@ -151,6 +255,7 @@ export function HistorialSection({ onNavigateToPost }) {
             ))}
           </ul>
         </section>
+
       </div>
     </div>
   );

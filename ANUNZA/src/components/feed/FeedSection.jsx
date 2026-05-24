@@ -8,6 +8,8 @@ import {
   fetchFeed,
   crearPublicacion,
   toggleLikePost,
+  toggleFavoritoPost,
+  deletePublicacionApi,
 } from '../../models/publicacionModel';
 import { fetchMiEstado } from '../../models/pagosModel';
 import './FeedSection.css';
@@ -122,6 +124,27 @@ export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHi
       return () => clearTimeout(t);
     }
   }, [highlightPublicacionId, loading, onHighlightConsumed]);
+  const handleToggleFavorito = async (publicacionId) => {
+    try {
+      const data = await toggleFavoritoPost(publicacionId);
+      setItems((prev) =>
+        prev.map((p) =>
+          p.id === publicacionId ? { ...p, user_saved: data.saved } : p
+        )
+      );
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const handleDeletePublicacion = async (publicacionId) => {
+    try {
+      await deletePublicacionApi(publicacionId);
+      setItems((prev) => prev.filter((p) => p.id !== publicacionId));
+    } catch (e) {
+      setError(e.message);
+    }
+  };
 
   const handleFilterChange = (patch) => {
     setFilters((f) => ({ ...f, ...patch }));
@@ -240,6 +263,8 @@ export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHi
               p={p}
               currentUserId={user?.id}
               onToggleLike={handleToggleLike}
+              onToggleFavorito={handleToggleFavorito}
+              onDeletePublicacion={handleDeletePublicacion}
               onOpenChat={(uid, pubId) => onChatWithUser(uid, pubId)}
               onError={setError}
               onDestacar={handleDestacar}

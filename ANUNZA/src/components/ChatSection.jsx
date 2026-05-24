@@ -33,6 +33,12 @@ export function ChatSection({
   const [blockOpen, setBlockOpen] = useState(false);
   const [blockMotivo, setBlockMotivo] = useState('');
   const [bloqueados, setBloqueados] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [newChatOpen, setNewChatOpen] = useState(false);
+  const [pickUser, setPickUser] = useState('');
+  const [reportingMensaje, setReportingMensaje] = useState(null);
+  const [reportMotivo, setReportMotivo] = useState('Contenido inapropiado');
+  const [reportDetalles, setReportDetalles] = useState('');
   const listEndRef = useRef(null);
 
   const motivosBloqueo = [
@@ -215,6 +221,20 @@ export function ChatSection({
     }
   };
 
+  const sendReporteMensaje = async () => {
+    if (!reportingMensaje || !reportMotivo) return;
+    try {
+      await apiFetch('/reportes', {
+        method: 'POST',
+        body: JSON.stringify({ tipo: 'mensaje', objeto_id: reportingMensaje.id, motivo: reportMotivo, detalles: reportDetalles }),
+      });
+      setReportingMensaje(null);
+      setReportDetalles('');
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
   const activeConv = conversaciones.find((c) => c.id === activeId);
   const peer = activeConv?.peer;
   const estiaBloqueado = bloqueados.some(b => b.usuario_bloqueado === peer?.id);
@@ -308,6 +328,16 @@ export function ChatSection({
                         <p>{m.contenido}</p>
                         <time>{formatTime(m.created_at)}</time>
                       </div>
+                      {!mine && (
+                        <button
+                          type="button"
+                          title="Reportar mensaje"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#aaa', alignSelf: 'center', marginLeft: '4px', padding: '0 4px' }}
+                          onClick={() => { setReportingMensaje(m); setReportMotivo('Contenido inapropiado'); setReportDetalles(''); }}
+                        >
+                          ⚑
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -381,6 +411,37 @@ export function ChatSection({
                 disabled={!blockMotivo}
               >
                 Bloquear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {reportingMensaje && (
+        <div className="chat-modal-backdrop" role="presentation" onClick={() => setReportingMensaje(null)}>
+          <div className="chat-modal" role="dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Reportar mensaje</h3>
+            <p className="chat-muted">Selecciona el motivo del reporte.</p>
+            <select value={reportMotivo} onChange={(e) => setReportMotivo(e.target.value)}>
+              <option>Contenido inapropiado</option>
+              <option>Spam o publicidad</option>
+              <option>Información falsa</option>
+              <option>Acoso o amenazas</option>
+              <option>Otro</option>
+            </select>
+            <textarea
+              rows={3}
+              placeholder="Detalles adicionales (opcional)…"
+              value={reportDetalles}
+              onChange={(e) => setReportDetalles(e.target.value)}
+              style={{ width: '100%', borderRadius: '8px', border: '1px solid #ccc', padding: '0.5rem', marginBottom: '0.5rem', fontFamily: 'inherit', resize: 'vertical' }}
+            />
+            <div className="chat-modal-actions">
+              <button type="button" onClick={() => setReportingMensaje(null)}>
+                Cancelar
+              </button>
+              <button type="button" className="primary" onClick={sendReporteMensaje} disabled={!reportMotivo}>
+                Enviar reporte
               </button>
             </div>
           </div>
