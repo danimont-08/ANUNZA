@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../services/api';
+import { UserPublicProfileModal } from './UserPublicProfileModal';
 import { supabase } from '../services/supabaseClient';
 import { ReportModal } from './feed/ReportModal';
 import { IconFlag, IconUserX } from './icons';
@@ -28,6 +29,7 @@ export function ChatSection({
   const listEndRef = useRef(null);
   const [reportMsg, setReportMsg] = useState(null);
   const [reportUser, setReportUser] = useState(false);
+  const [profileUserId, setProfileUserId] = useState(null);
 
   const motivosBloqueo = [
     'Acoso o intimidación',
@@ -268,6 +270,7 @@ export function ChatSection({
                   <img
                     src={c.peer?.foto_perfil || DEFAULT_AVATAR}
                     alt=""
+                    loading="lazy"
                   />
                   <div className="chat-conv-text">
                     <span className="chat-conv-name">{c.peer?.nombre || 'Chat'}</span>
@@ -303,9 +306,17 @@ export function ChatSection({
                 <img
                   src={peer?.foto_perfil || DEFAULT_AVATAR}
                   alt=""
+                  loading="lazy"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => peer?.id && setProfileUserId(peer.id)}
                 />
                 <div className="chat-peer-info">
-                  <strong>{peer?.nombre || 'Usuario'}</strong>
+                  <strong
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => peer?.id && setProfileUserId(peer.id)}
+                  >
+                    {peer?.nombre || 'Usuario'}
+                  </strong>
                   <div className="chat-peer-sub">En línea en ANUNZA</div>
                   {activeConv?.publicacion_titulo && (
                     <div className="chat-peer-pub">📌 {activeConv.publicacion_titulo}</div>
@@ -457,6 +468,12 @@ export function ChatSection({
             </div>
           </div>
         </div>
+      )}
+      {profileUserId && (
+        <UserPublicProfileModal
+          userId={profileUserId}
+          onClose={() => setProfileUserId(null)}
+        />
       )}
     </section>
   );

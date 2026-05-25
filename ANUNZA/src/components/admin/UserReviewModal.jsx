@@ -43,31 +43,22 @@ export function UserReviewModal({
     return () => { cancelled = true; };
   }, [reporte?.objeto_id, reporte?.tipo]);
 
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   if (!reporte) return null;
 
   const reporteDesc = reporte.detalles?.trim();
-  const userEstado = usuario?.estado || 'activo';
+  const userEstado = usuario?.estado || reporte.usuario_reportado_estado || 'activo';
 
   return (
-    <div className="admin-review-backdrop" role="presentation" onClick={onClose}>
+    <div className="admin-review-backdrop" role="presentation">
       <div
         className="admin-review-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="admin-user-review-title"
-        onClick={(e) => e.stopPropagation()}
       >
         <header className="admin-review-head">
           <h2 id="admin-user-review-title">Revisar usuario reportado</h2>
-          <button type="button" className="admin-review-close" onClick={onClose} aria-label="Cerrar">
-            ✕
-          </button>
+          <span className="admin-review-decision-badge">Se requiere una decisión</span>
         </header>
 
         <div className="admin-review-body">
@@ -121,15 +112,9 @@ export function UserReviewModal({
               </div>
 
               <div className="admin-review-tags-row">
-                {usuario.rol && (
-                  <span className="admin-review-chip">{usuario.rol}</span>
-                )}
-                {usuario.telefono && (
-                  <span className="admin-review-chip">{usuario.telefono}</span>
-                )}
-                {usuario.cedula && (
-                  <span className="admin-review-chip">CC {usuario.cedula}</span>
-                )}
+                {usuario.rol && <span className="admin-review-chip">{usuario.rol}</span>}
+                {usuario.telefono && <span className="admin-review-chip">{usuario.telefono}</span>}
+                {usuario.cedula && <span className="admin-review-chip">CC {usuario.cedula}</span>}
                 {usuario.verificado && (
                   <span className="admin-review-chip admin-review-chip--price">Verificado</span>
                 )}
@@ -148,6 +133,7 @@ export function UserReviewModal({
         </div>
 
         <footer className="admin-review-foot">
+          <p className="admin-review-foot-hint">Elige una acción para cerrar este reporte:</p>
           <div className="admin-review-foot-actions">
             {onPatchReporte && (
               <button
@@ -156,7 +142,7 @@ export function UserReviewModal({
                 disabled={busy}
                 onClick={() => onPatchReporte(reporte.id)}
               >
-                Rechazar reporte
+                Reporte inválido
               </button>
             )}
             {usuario && onPatchUsuario && (

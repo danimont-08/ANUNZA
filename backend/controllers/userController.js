@@ -1,4 +1,6 @@
 import { User } from '../models/User.js';
+import { pool } from '../config/database.js';
+import { parseImagen } from '../utils/publicacionPayload.js';
 
 /**
  * Obtener todos los usuarios
@@ -49,6 +51,58 @@ export const getUserProfile = async (req, res) => {
   }
 };
 
+/** GET /api/users/:id/public — perfil público de cualquier usuario */
+export const getPublicProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `SELECT u.id, u.nombre, u.foto_perfil, u.foto_portada, u.foto_portada_pos, u.ciudad, u.descripcion, u.verificado,
+              u.created_at,
+              (SELECT COUNT(*)::int FROM publicaciones p
+               WHERE p.usuario_id = u.id AND COALESCE(p.estado,'activo') = 'activo') AS total_publicaciones,
+              (SELECT COALESCE(SUM(sub.likes),0)::int
+               FROM (SELECT COUNT(*) AS likes FROM interacciones i
+                     INNER JOIN publicaciones p ON p.id = i.publicacion_id
+                     WHERE p.usuario_id = u.id AND i.tipo = 'me_gusta') sub) AS total_likes
+       FROM usuarios u
+       WHERE u.id = $1 AND COALESCE(u.estado,'activo') = 'activo'`,
+      [id]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Usuario no encontrado' });
+    res.json({ user: rows[0] });
+  } catch (error) {
+    console.error('getPublicProfile:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/** GET /api/users/:id/publicaciones — publicaciones activas de un usuario */
+export const getPublicUserPublicaciones = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `SELECT p.id, p.titulo, p.descripcion, p.precio, p.tipo, p.created_at,
+              p.imagen,
+              cat.nombre AS categoria_nombre,
+              (SELECT COUNT(*)::int FROM interacciones WHERE publicacion_id = p.id AND tipo = 'me_gusta') AS likes,
+              (SELECT COUNT(*)::int FROM comentarios WHERE publicacion_id = p.id) AS comentarios_count
+       FROM publicaciones p
+       LEFT JOIN categorias cat ON cat.id = p.categoria_id
+       WHERE p.usuario_id = $1 AND COALESCE(p.estado,'activo') = 'activo'
+       ORDER BY p.created_at DESC`,
+      [id]
+    );
+    const publicaciones = rows.map(r => ({
+      ...r,
+      imagen_preview: parseImagen(r.imagen)[0]?.url ?? null,
+    }));
+    res.json({ publicaciones });
+  } catch (error) {
+    console.error('getPublicUserPublicaciones:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 /**
  * Actualizar usuario
  * PUT /api/users/:id
@@ -63,6 +117,8 @@ export const updateUser = async (req, res) => {
       telefono,
       descripcion,
       foto_perfil,
+      foto_portada,
+      foto_portada_pos,
       ciudad,
       codigo_postal,
       latitud,
@@ -92,6 +148,8 @@ export const updateUser = async (req, res) => {
       telefono,
       descripcion,
       foto_perfil,
+      foto_portada,
+      foto_portada_pos,
       ciudad,
       codigo_postal,
       latitud,

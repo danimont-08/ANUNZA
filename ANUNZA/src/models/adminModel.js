@@ -35,6 +35,10 @@ export async function fetchAdminUsuario(userId) {
   return apiFetch(`/admin/users/${userId}`);
 }
 
+export async function fetchAdminUserPublicaciones(userId) {
+  return apiFetch(`/admin/users/${userId}/publicaciones`);
+}
+
 export async function fetchAdminPublicacion(publicacionId) {
   return apiFetch(`/admin/publicaciones/${publicacionId}`);
 }

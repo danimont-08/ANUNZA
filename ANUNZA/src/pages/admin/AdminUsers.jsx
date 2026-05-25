@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { fetchAdminUsers, patchUserEstado } from '../../models/adminModel';
+import { UserProfilePanel } from '../../components/admin/UserProfilePanel';
 
 function Badge({ estado }) {
   const cls = `admin-badge admin-badge--${estado || 'activo'}`;
@@ -21,6 +22,7 @@ export function AdminUsers() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState(null);
+  const [profileUserId, setProfileUserId] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -30,7 +32,6 @@ export function AdminUsers() {
         estado: estadoFilter || undefined,
         q: search.trim() || undefined,
       });
-      // admin endpoint returns { users }, mod endpoint returns { usuarios }
       setUsers(data.users ?? data.usuarios ?? []);
     } catch (e) {
       setError(e.message || 'Error al cargar usuarios');
@@ -45,17 +46,12 @@ export function AdminUsers() {
   }, [load]);
 
   const handleEstado = async (userId, nuevoEstado) => {
-    const msg =
-      nuevoEstado === 'suspendido' ? '¿Suspender esta cuenta?' : '¿Reactivar esta cuenta?';
+    const msg = nuevoEstado === 'suspendido' ? '¿Suspender esta cuenta?' : '¿Reactivar esta cuenta?';
     if (!window.confirm(msg)) return;
-
     setActionId(userId);
     try {
-      if (nuevoEstado === 'suspendido') {
-        await apiSuspender(userId);
-      } else {
-        await apiReactivar(userId);
-      }
+      if (nuevoEstado === 'suspendido') await apiSuspender(userId);
+      else await apiReactivar(userId);
       await load();
     } catch (e) {
       setError(e.message || 'Error al actualizar usuario');
@@ -112,15 +108,24 @@ export function AdminUsers() {
             <tbody>
               {users.map((u) => (
                 <tr key={u.id}>
-                  <td>{u.nombre}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="admin-link-btn"
+                      onClick={() => setProfileUserId(u.id)}
+                      title="Ver perfil"
+                    >
+                      {u.nombre}
+                    </button>
+                  </td>
                   <td>{u.correo}</td>
                   <td>{u.rol || 'usuario'}</td>
-                  <td>
-                    <Badge estado={u.estado} />
-                  </td>
+                  <td><Badge estado={u.estado} /></td>
                   <td>
                     {u.created_at
-                      ? new Date(u.created_at).toLocaleDateString('es-CO')
+                      ? new Date(
+                          /Z$|[+-]\d{2}:\d{2}$/.test(u.created_at) ? u.created_at : u.created_at + 'Z'
+                        ).toLocaleDateString()
                       : '—'}
                   </td>
                   <td>
@@ -157,6 +162,14 @@ export function AdminUsers() {
           </table>
         )}
       </div>
+
+      {profileUserId && (
+        <UserProfilePanel
+          userId={profileUserId}
+          canActOn={true}
+          onClose={() => { setProfileUserId(null); load(); }}
+        />
+      )}
     </>
   );
 }

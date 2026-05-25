@@ -42,18 +42,8 @@ export function PublicationReviewModal({
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [reporte?.objeto_id, reporte?.tipo]);
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   if (!reporte) return null;
 
@@ -65,19 +55,16 @@ export function PublicationReviewModal({
   const pubEstado = reporte.publicacion_estado || publicacion?.estado || 'activo';
 
   return (
-    <div className="admin-review-backdrop" role="presentation" onClick={onClose}>
+    <div className="admin-review-backdrop" role="presentation">
       <div
         className="admin-review-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="admin-review-title"
-        onClick={(e) => e.stopPropagation()}
       >
         <header className="admin-review-head">
-          <h2 id="admin-review-title">Revisar publicación</h2>
-          <button type="button" className="admin-review-close" onClick={onClose} aria-label="Cerrar">
-            ✕
-          </button>
+          <h2 id="admin-review-title">Revisar publicación reportada</h2>
+          <span className="admin-review-decision-badge">Se requiere una decisión</span>
         </header>
 
         <div className="admin-review-body">
@@ -167,21 +154,9 @@ export function PublicationReviewModal({
               {svc && (svc.materiales || svc.tiempo_estimado || svc.detalles) && (
                 <div className="admin-review-service">
                   <p className="admin-review-service-title">Detalle del servicio</p>
-                  {svc.materiales && (
-                    <p>
-                      <strong>Materiales:</strong> {svc.materiales}
-                    </p>
-                  )}
-                  {svc.tiempo_estimado && (
-                    <p>
-                      <strong>Tiempo:</strong> {svc.tiempo_estimado}
-                    </p>
-                  )}
-                  {svc.detalles && (
-                    <p>
-                      <strong>Detalles:</strong> {svc.detalles}
-                    </p>
-                  )}
+                  {svc.materiales && <p><strong>Materiales:</strong> {svc.materiales}</p>}
+                  {svc.tiempo_estimado && <p><strong>Tiempo:</strong> {svc.tiempo_estimado}</p>}
+                  {svc.detalles && <p><strong>Detalles:</strong> {svc.detalles}</p>}
                 </div>
               )}
             </section>
@@ -189,6 +164,7 @@ export function PublicationReviewModal({
         </div>
 
         <footer className="admin-review-foot">
+          <p className="admin-review-foot-hint">Elige una acción para cerrar este reporte:</p>
           <div className="admin-review-foot-actions">
             {onPatchReporte && (
               <button
@@ -197,7 +173,7 @@ export function PublicationReviewModal({
                 disabled={busy}
                 onClick={() => onPatchReporte(reporte.id)}
               >
-                Rechazar reporte
+                Reporte inválido
               </button>
             )}
             {publicacion && onPatchPublicacion && (

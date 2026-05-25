@@ -264,3 +264,20 @@
 .admin-review-btn-danger:hover:not(:disabled) {
   background: #fde8e8 !important;
 }
+
+.admin-review-decision-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #fff4e5;
+  color: #b86e00;
+  white-space: nowrap;
+}
+
+.admin-review-foot-hint {
+  width: 100%;
+  font-size: 0.8rem;
+  color: #7a6f96;
+  margin: 0 0 0.35rem;
+}

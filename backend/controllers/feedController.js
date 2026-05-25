@@ -139,6 +139,9 @@ try {
       [userId, categoriaId, subcategoriaId, ciudad, precioMin, precioMax, calificacionMin]
     );
 
+    // Cache privado 30 s: el navegador no repite la petición si el usuario
+    // navega a otra sección y vuelve en menos de medio minuto.
+    res.set('Cache-Control', 'private, max-age=30');
     res.json({
       publicaciones: rows.map((r) => {
         const pub = enrichPublicacionRow(r);

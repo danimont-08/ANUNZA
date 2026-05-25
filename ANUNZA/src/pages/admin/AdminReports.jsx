@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import {
   fetchAdminReportes,
@@ -9,8 +9,10 @@ import {
   fetchAdminUsuario,
   patchUserEstado,
 } from '../../models/adminModel';
+import { formatDate } from '../../utils/format';
 import { PublicationReviewModal } from '../../components/admin/PublicationReviewModal';
 import { UserReviewModal } from '../../components/admin/UserReviewModal';
+import { MensajeReviewModal } from '../../components/admin/MensajeReviewModal';
 
 const MOTIVO_LABEL = {
   spam: 'Spam',
@@ -20,22 +22,17 @@ const MOTIVO_LABEL = {
   otro: 'Otro',
 };
 
-function Badge({ estado }) {
-  const raw = (estado || 'pendiente').toLowerCase();
-  const badgeKey = raw === 'desestimado' ? 'rechazado' : raw;
-  const label = {
-    pendiente: 'Pendiente',
-    revisado: 'Revisado',
-    rechazado: 'Rechazado',
-  }[badgeKey] || estado || 'pendiente';
-  return <span className={`admin-badge admin-badge--${badgeKey}`}>{label}</span>;
-}
+const TABS = [
+  { key: 'todos',      label: 'Todos' },
+  { key: 'publicacion', label: 'Publicaciones' },
+  { key: 'usuario',    label: 'Usuarios' },
+  { key: 'mensaje',    label: 'Mensajes' },
+];
 
-function truncate(str, max = 60) {
+function truncate(str, max = 55) {
   if (!str) return null;
   const s = String(str).trim();
-  if (s.length <= max) return s;
-  return `${s.slice(0, max)}…`;
+  return s.length <= max ? s : `${s.slice(0, max)}…`;
 }
 
 export function AdminReports() {
@@ -55,6 +52,7 @@ export function AdminReports() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [reviewReporte, setReviewReporte] = useState(null);
+  const [tab, setTab] = useState('todos');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,19 +67,27 @@ export function AdminReports() {
     }
   }, [apiFetchReportes]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
+
+  const counts = useMemo(() => ({
+    todos: reportes.length,
+    publicacion: reportes.filter(r => r.tipo === 'publicacion').length,
+    usuario: reportes.filter(r => r.tipo === 'usuario').length,
+    mensaje: reportes.filter(r => r.tipo === 'mensaje').length,
+  }), [reportes]);
+
+  const filtered = useMemo(
+    () => tab === 'todos' ? reportes : reportes.filter(r => r.tipo === tab),
+    [reportes, tab]
+  );
 
   const openReview = async (r) => {
     setReviewReporte(r);
     if (r.estado !== 'revisado') {
       try {
         await apiMarcarRevisado(r.id);
-        setReportes((prev) =>
-          prev.map((rep) => rep.id === r.id ? { ...rep, estado: 'revisado' } : rep)
-        );
-      } catch { /* no bloquear la apertura del modal si falla */ }
+        setReportes(prev => prev.map(rep => rep.id === r.id ? { ...rep, estado: 'revisado' } : rep));
+      } catch { /* no bloquear apertura */ }
     }
   };
 
@@ -100,13 +106,10 @@ export function AdminReports() {
 
   const handlePublicacion = async (publicacionId, estado) => {
     const confirmMsg =
-      estado === 'eliminado'
-        ? '¿Eliminar permanentemente esta publicación? Esta acción no se puede deshacer.'
-        : estado === 'oculto'
-          ? '¿Ocultar esta publicación?'
-          : estado === 'activo'
-            ? '¿Restaurar esta publicación?'
-            : `¿Aplicar "${estado}" a esta publicación?`;
+      estado === 'eliminado' ? '¿Eliminar permanentemente esta publicación? Esta acción no se puede deshacer.'
+      : estado === 'oculto'  ? '¿Ocultar esta publicación?'
+      : estado === 'activo'  ? '¿Restaurar esta publicación?'
+      : `¿Aplicar "${estado}" a esta publicación?`;
     if (!window.confirm(confirmMsg)) return;
 
     setBusyId(`p-${publicacionId}`);
@@ -115,10 +118,8 @@ export function AdminReports() {
       if (estado === 'eliminado') {
         setReviewReporte(null);
       } else {
-        setReviewReporte((prev) =>
-          prev && prev.objeto_id === publicacionId
-            ? { ...prev, publicacion_estado: estado }
-            : prev
+        setReviewReporte(prev =>
+          prev?.objeto_id === publicacionId ? { ...prev, publicacion_estado: estado } : prev
         );
       }
       await load();
@@ -130,18 +131,14 @@ export function AdminReports() {
   };
 
   const handleUsuario = async (usuarioId, estado) => {
-    const confirmMsg =
-      estado === 'suspendido'
-        ? '¿Suspender este usuario?'
-        : '¿Restaurar este usuario?';
+    const confirmMsg = estado === 'suspendido' ? '¿Suspender este usuario?' : '¿Restaurar este usuario?';
     if (!window.confirm(confirmMsg)) return;
 
     setBusyId(`u-${usuarioId}`);
     try {
       await apiPatchUsuario(usuarioId, estado);
-      setReviewReporte((prev) =>
-        prev ? { ...prev, usuario_estado: estado } : prev
-      );
+      setReviewReporte(prev => prev ? { ...prev, usuario_estado: estado } : prev);
+      setReviewReporte(null);
       await load();
     } catch (e) {
       setError(e.message || 'Error al moderar usuario');
@@ -154,11 +151,27 @@ export function AdminReports() {
 
   return (
     <>
-      <h1 className="admin-section-title">Publicaciones reportadas</h1>
+      <h1 className="admin-section-title">Reportes</h1>
       {error && <p className="admin-error">{error}</p>}
 
-      <div className="admin-toolbar">
-        <button type="button" className="admin-btn admin-btn--primary" onClick={load}>
+      {/* Tabs de agrupación */}
+      <div className="admin-report-tabs">
+        {TABS.map(t => (
+          <button
+            key={t.key}
+            type="button"
+            className={`admin-report-tab${tab === t.key ? ' active' : ''}`}
+            onClick={() => setTab(t.key)}
+          >
+            {t.label}
+            <span className="admin-report-tab-count">{counts[t.key]}</span>
+          </button>
+        ))}
+        <button
+          type="button"
+          className="admin-btn admin-btn--secondary admin-report-refresh"
+          onClick={load}
+        >
           Actualizar
         </button>
       </div>
@@ -166,91 +179,71 @@ export function AdminReports() {
       <div className="admin-table-wrap">
         {loading ? (
           <p className="admin-empty">Cargando…</p>
-        ) : reportes.length === 0 ? (
-          <p className="admin-empty">No hay reportes en este filtro.</p>
+        ) : filtered.length === 0 ? (
+          <p className="admin-empty">No hay reportes en este grupo.</p>
         ) : (
           <table className="admin-table admin-table--reportes">
             <thead>
               <tr>
                 <th>Tipo</th>
-                <th>Publicación / Usuario</th>
+                <th>Publicación / Usuario / Mensaje</th>
                 <th>Motivo</th>
                 <th>Detalles</th>
                 <th>Reportó</th>
-                <th>Estado</th>
-                <th>Estado pub.</th>
                 <th>Fecha</th>
-                <th>Acciones</th>
+                <th>Acción</th>
               </tr>
             </thead>
             <tbody>
-              {reportes.map((r) => {
+              {filtered.map((r) => {
                 const detalles = r.detalles?.trim();
                 const titulo =
-                  r.tipo === 'publicacion'
-                    ? r.publicacion_titulo || 'Sin título'
-                    : r.usuario_reportado_nombre || r.autor_nombre || '—';
+                  r.tipo === 'publicacion' ? (r.publicacion_titulo || 'Sin título')
+                  : r.tipo === 'usuario'   ? (r.usuario_reportado_nombre || '—')
+                  : r.tipo === 'mensaje'   ? (r.mensaje_remitente_nombre
+                      ? `Mensaje de ${r.mensaje_remitente_nombre}`
+                      : 'Mensaje')
+                  : '—';
                 return (
                   <tr key={r.id}>
-                    <td><Badge estado={r.tipo} /></td>
+                    <td>
+                      <span className={`admin-badge admin-badge--${
+                        r.tipo === 'publicacion' ? 'revisado'
+                        : r.tipo === 'usuario' ? 'pendiente'
+                        : 'oculto'
+                      }`}>
+                        {r.tipo === 'publicacion' ? 'Publicación'
+                          : r.tipo === 'usuario' ? 'Usuario'
+                          : 'Mensaje'}
+                      </span>
+                    </td>
                     <td className="admin-cell-pub">
                       <button
                         type="button"
                         className="admin-link-btn"
                         onClick={() => openReview(r)}
-                        title="Ver detalle"
+                        title="Revisar"
                       >
                         {titulo}
                       </button>
                     </td>
                     <td>{MOTIVO_LABEL[r.motivo] || r.motivo}</td>
                     <td className="admin-cell-desc">
-                      {detalles ? (
-                        <span title={detalles}>{truncate(detalles, 48)}</span>
-                      ) : (
-                        <span className="admin-desc-empty">—</span>
-                      )}
+                      {detalles
+                        ? <span title={detalles}>{truncate(detalles)}</span>
+                        : <span className="admin-desc-empty">—</span>}
                     </td>
-                    <td>{r.reportante_nombre}</td>
-                    <td>
-                      {r.estado === 'revisado' ? (
-                        <span className="admin-badge admin-badge--revisado">Revisado</span>
-                      ) : (
-                        <span className="admin-badge admin-badge--pendiente">Pendiente</span>
-                      )}
-                    </td>
-                    <td>
-                      {r.tipo === 'publicacion' ? (
-                        <Badge estado={r.publicacion_estado} />
-                      ) : (
-                        <span className="admin-desc-empty">—</span>
-                      )}
-                    </td>
-                    <td>
-                      {r.created_at
-                        ? new Date(r.created_at).toLocaleString('es-CO', {
-                            dateStyle: 'short',
-                            timeStyle: 'short',
-                          })
-                        : '—'}
-                    </td>
+                    <td>{r.reportante_nombre || '—'}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{formatDate(r.created_at)}</td>
                     <td>
                       <div className="admin-actions">
                         <button
                           type="button"
                           className="admin-btn-review"
-                          disabled={busyId === `r-${r.id}`}
+                          disabled={!!busyId}
                           onClick={() => openReview(r)}
                         >
                           Revisar
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-btn admin-btn--danger"
-                          disabled={busyId === `r-${r.id}`}
-                          onClick={() => handleDescartarReporte(r.id)}
-                        >
-                          Descartar
                         </button>
                       </div>
                     </td>
@@ -282,6 +275,16 @@ export function AdminReports() {
           onPatchReporte={(id) => handleDescartarReporte(id, { closeModal: true })}
           onPatchUsuario={handleUsuario}
           fetchUsuario={apiFetchUsuario}
+        />
+      )}
+
+      {reviewReporte?.tipo === 'mensaje' && (
+        <MensajeReviewModal
+          reporte={reviewReporte}
+          busy={modalBusy}
+          onClose={() => setReviewReporte(null)}
+          onPatchReporte={(id) => handleDescartarReporte(id, { closeModal: true })}
+          onPatchUsuario={handleUsuario}
         />
       )}
     </>

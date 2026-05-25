@@ -4,6 +4,7 @@ import {
   getStats,
   listUsers,
   getUser,
+  getUserPublicaciones,
   patchUserEstado,
   listReportes,
   patchReporteEstado,
@@ -19,6 +20,7 @@ router.use(verifyToken, verifyAdmin);
 router.get('/stats', getStats);
 router.get('/users', listUsers);
 router.get('/users/:id', getUser);
+router.get('/users/:id/publicaciones', getUserPublicaciones);
 router.patch('/users/:id/estado', patchUserEstado);
 router.get('/reportes', listReportes);
 router.patch('/reportes/:id/estado', marcarReporteRevisado);

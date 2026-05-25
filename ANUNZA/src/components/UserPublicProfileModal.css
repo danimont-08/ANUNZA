@@ -1,0 +1,250 @@
+/* ── Backdrop ── */
+.uppm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1200;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+/* ── Panel ── */
+.uppm-panel {
+  position: relative;
+  background: #f5f2ff;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 540px;
+  padding: 1.5rem;
+  box-shadow: 0 16px 48px rgba(47, 8, 109, 0.18);
+  animation: uppm-in 0.2s ease;
+}
+
+@keyframes uppm-in {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Close button ── */
+.uppm-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  background: rgba(255,255,255,0.85);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  line-height: 32px;
+  text-align: center;
+  cursor: pointer;
+  color: #5b35d5;
+  z-index: 2;
+  transition: background 0.15s;
+}
+.uppm-close:hover { background: rgba(255,255,255,1); }
+
+/* ── States ── */
+.uppm-loading,
+.uppm-error {
+  text-align: center;
+  padding: 2rem 0;
+  color: #666;
+}
+.uppm-error { color: #c0392b; }
+
+/* ── Cover inside modal ── */
+.uppm-cover {
+  height: 90px;
+  margin: -1.5rem -1.5rem 0;
+  border-radius: 18px 18px 0 0;
+  background: linear-gradient(135deg, var(--anunza-violet, #8a4eff) 0%, var(--anunza-midnight, #2f086d) 100%);
+}
+
+/* ── Card inside modal ── */
+.uppm-prof-card {
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+/* ── Avatar offset below cover ── */
+.uppm-head-offset {
+  margin-top: -1.25rem;
+}
+
+.uppm-head-offset .prof-avatar {
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(47, 8, 109, 0.18);
+}
+
+/* ── Stats row ── */
+.uppm-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0.85rem 0 0.5rem;
+}
+
+.uppm-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.uppm-stat-num {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--anunza-midnight, #2f086d);
+}
+
+.uppm-stat-label {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.uppm-since {
+  font-size: 0.8rem;
+}
+
+/* ── Publications section ── */
+.uppm-pubs {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(47, 8, 109, 0.08);
+}
+
+.uppm-pubs-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--anunza-midnight, #2f086d);
+  margin: 0 0 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.uppm-pubs-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: rgba(47, 8, 109, 0.1);
+  color: #5b35d5;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.uppm-empty {
+  color: #999;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+/* ── Publications grid ── */
+.uppm-pubs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+/* ── Mini publication card ── */
+.uppm-pub-card {
+  border: 1px solid rgba(47, 8, 109, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #faf9ff;
+  transition: box-shadow 0.15s;
+}
+.uppm-pub-card:hover {
+  box-shadow: 0 4px 14px rgba(47, 8, 109, 0.1);
+}
+
+.uppm-pub-img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  display: block;
+}
+
+.uppm-pub-img--empty {
+  background: linear-gradient(135deg, #ede8ff 0%, #d6caff 100%);
+}
+
+.uppm-pub-info {
+  padding: 0.55rem 0.65rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.uppm-tipo {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  align-self: flex-start;
+}
+
+.uppm-tipo--ofrezco { background: #e6f4ea; color: #1a7f4b; }
+.uppm-tipo--busco   { background: #fff4e5; color: #b86e00; }
+
+.uppm-cat {
+  font-size: 0.72rem;
+  color: #888;
+}
+
+.uppm-pub-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--anunza-midnight, #2f086d);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.uppm-pub-price {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5b35d5;
+  margin: 0;
+}
+
+.uppm-pub-stats {
+  font-size: 0.72rem;
+  color: #aaa;
+  margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .uppm-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .uppm-panel {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    max-width: 100%;
+    padding: 1.1rem;
+    max-height: 92dvh;
+    overflow-y: auto;
+  }
+
+  .uppm-cover {
+    margin: -1.1rem -1.1rem 0;
+  }
+
+  .uppm-pubs-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+}

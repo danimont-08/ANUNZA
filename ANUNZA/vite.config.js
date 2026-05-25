@@ -12,5 +12,18 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
-  }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor separado para mejor caché del navegador
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+        },
+      },
+    },
+    // Advertir si algún chunk supera 600 KB
+    chunkSizeWarningLimit: 600,
+  },
 })

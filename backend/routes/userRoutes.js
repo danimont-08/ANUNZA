@@ -3,6 +3,8 @@ import { verifyToken, verifyAdmin } from '../middleware/auth.js';
 import {
   getAllUsers,
   getUserProfile,
+  getPublicProfile,
+  getPublicUserPublicaciones,
   updateUser,
   deleteUser,
 } from '../controllers/userController.js';
@@ -24,6 +26,8 @@ router.get('/', verifyToken, verifyAdmin, getAllUsers);
  * Obtener perfil del usuario autenticado
  */
 router.get('/profile', verifyToken, getUserProfile);
+router.get('/:id/public', verifyToken, getPublicProfile);
+router.get('/:id/publicaciones', verifyToken, getPublicUserPublicaciones);
 
 /**
  * PUT /api/users/:id

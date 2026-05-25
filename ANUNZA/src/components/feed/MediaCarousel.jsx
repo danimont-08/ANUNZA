@@ -19,7 +19,7 @@ export function MediaCarousel({ items }) {
         {cur.type === 'video' ? (
           <video className="mc-media" src={cur.url} controls playsInline />
         ) : (
-          <img className="mc-media" src={cur.url} alt="" />
+          <img className="mc-media" src={cur.url} alt="" loading="lazy" decoding="async" />
         )}
       </div>
       {items.length > 1 && (

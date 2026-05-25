@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MediaCarousel } from './MediaCarousel';
+import { UserPublicProfileModal } from '../UserPublicProfileModal';
 import { ResenaPanel } from './ResenaPanel';
 import {
   fetchComentarios,
@@ -23,7 +24,8 @@ function isDestacadaActiva(p) {
   return new Date(p.destacada_hasta.endsWith('Z') ? p.destacada_hasta : p.destacada_hasta + 'Z') > new Date();
 }
 
-export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError, onDestacar }) {
+export const PublicationCard = React.memo(function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError, onDestacar }) {
+  const [profileUserId, setProfileUserId]   = useState(null);
   const [openComments, setOpenComments]     = useState(false);
   const [openResenas, setOpenResenas]       = useState(false);
   const [openReport, setOpenReport]         = useState(false);
@@ -120,9 +122,21 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
       )}
 
       <header className="pub-card-head">
-        <img className="pub-avatar" src={p.autor_foto || DEFAULT_AVATAR} alt="" />
+        <img
+          className="pub-avatar"
+          src={p.autor_foto || DEFAULT_AVATAR}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          style={{ cursor: 'pointer' }}
+          onClick={() => setProfileUserId(p.usuario_id)}
+        />
         <div className="pub-head-text">
-          <div className="pub-author">
+          <div
+            className="pub-author"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setProfileUserId(p.usuario_id)}
+          >
             {p.autor_nombre}
             {p.autor_verificado && (
               <span className="pub-badge-verificado" title="Usuario verificado">✓ Verificado</span>
@@ -340,6 +354,12 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
           }}
         />
       )}
+      {profileUserId && (
+        <UserPublicProfileModal
+          userId={profileUserId}
+          onClose={() => setProfileUserId(null)}
+        />
+      )}
     </article>
   );
-}
+});

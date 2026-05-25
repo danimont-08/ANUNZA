@@ -1,6 +1,6 @@
 import { pool } from '../config/database.js';
 import { User } from '../models/User.js';
-import { enrichPublicacionRow } from '../utils/publicacionPayload.js';
+import { enrichPublicacionRow, parseImagen } from '../utils/publicacionPayload.js';
 
 const ESTADOS_USUARIO = ['activo', 'suspendido'];
 const ESTADOS_PUBLICACION = ['activo', 'oculto', 'eliminado'];
@@ -97,21 +97,55 @@ export const listReportes = async (req, res) => {
     const { rows } = await pool.query(
       `SELECT r.id, r.tipo, r.objeto_id, r.motivo, r.detalles, r.estado, r.created_at,
               u_rep.nombre AS reportante_nombre,
-              p.titulo     AS publicacion_titulo,
-              p.estado     AS publicacion_estado,
-              u_due.nombre AS autor_nombre,
-              u_obj.nombre AS usuario_reportado_nombre
+              p.titulo          AS publicacion_titulo,
+              p.estado          AS publicacion_estado,
+              u_due.nombre      AS autor_nombre,
+              u_obj.id          AS usuario_reportado_id,
+              u_obj.nombre      AS usuario_reportado_nombre,
+              u_obj.estado      AS usuario_reportado_estado,
+              msg.contenido     AS mensaje_contenido,
+              msg.remitente_id  AS mensaje_remitente_id,
+              u_msg.nombre      AS mensaje_remitente_nombre
        FROM reportes r
        LEFT JOIN usuarios u_rep ON u_rep.id = r.reportado_por
        LEFT JOIN publicaciones p   ON r.tipo = 'publicacion' AND p.id = r.objeto_id
        LEFT JOIN usuarios u_due    ON r.tipo = 'publicacion' AND u_due.id = p.usuario_id
        LEFT JOIN usuarios u_obj    ON r.tipo = 'usuario'     AND u_obj.id = r.objeto_id
+       LEFT JOIN mensajes msg      ON r.tipo = 'mensaje'     AND msg.id = r.objeto_id
+       LEFT JOIN usuarios u_msg    ON r.tipo = 'mensaje'     AND u_msg.id = msg.remitente_id
        ORDER BY r.created_at DESC
-       LIMIT 100`
+       LIMIT 200`
     );
     res.json({ reportes: rows });
   } catch (error) {
     console.error('listReportes:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/** GET /api/admin/users/:id/publicaciones */
+export const getUserPublicaciones = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `SELECT p.id, p.titulo, p.descripcion, p.precio, p.tipo, p.estado, p.created_at,
+              p.imagen,
+              cat.nombre AS categoria_nombre,
+              (SELECT COUNT(*)::int FROM interacciones WHERE publicacion_id = p.id AND tipo = 'me_gusta') AS likes,
+              (SELECT COUNT(*)::int FROM comentarios WHERE publicacion_id = p.id) AS comentarios_count
+       FROM publicaciones p
+       LEFT JOIN categorias cat ON cat.id = p.categoria_id
+       WHERE p.usuario_id = $1
+       ORDER BY p.created_at DESC`,
+      [id]
+    );
+    const publicaciones = rows.map(r => ({
+      ...r,
+      imagen_preview: parseImagen(r.imagen)[0]?.url ?? null,
+    }));
+    res.json({ publicaciones });
+  } catch (error) {
+    console.error('getUserPublicaciones:', error);
     res.status(500).json({ message: error.message });
   }
 };
