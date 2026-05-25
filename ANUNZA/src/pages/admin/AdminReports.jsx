@@ -6,8 +6,11 @@ import {
   marcarReporteRevisado,
   fetchAdminPublicacion,
   patchPublicacionEstado,
+  fetchAdminUsuario,
+  patchUserEstado,
 } from '../../models/adminModel';
 import { PublicationReviewModal } from '../../components/admin/PublicationReviewModal';
+import { UserReviewModal } from '../../components/admin/UserReviewModal';
 
 const MOTIVO_LABEL = {
   spam: 'Spam',
@@ -43,6 +46,8 @@ export function AdminReports() {
   const apiMarcarRevisado   = pc.marcarRevisado    ?? marcarReporteRevisado;
   const apiFetchPublicacion = pc.fetchPublicacion  ?? fetchAdminPublicacion;
   const apiPatchPublicacion = pc.patchPublicacion  ?? patchPublicacionEstado;
+  const apiFetchUsuario     = pc.fetchUsuario      ?? fetchAdminUsuario;
+  const apiPatchUsuario     = pc.patchUsuario      ?? patchUserEstado;
   const puedeEliminar       = pc.puedeEliminar     ?? true;
 
   const [reportes, setReportes] = useState([]);
@@ -119,6 +124,27 @@ export function AdminReports() {
       await load();
     } catch (e) {
       setError(e.message || 'Error al moderar publicación');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleUsuario = async (usuarioId, estado) => {
+    const confirmMsg =
+      estado === 'suspendido'
+        ? '¿Suspender este usuario?'
+        : '¿Restaurar este usuario?';
+    if (!window.confirm(confirmMsg)) return;
+
+    setBusyId(`u-${usuarioId}`);
+    try {
+      await apiPatchUsuario(usuarioId, estado);
+      setReviewReporte((prev) =>
+        prev ? { ...prev, usuario_estado: estado } : prev
+      );
+      await load();
+    } catch (e) {
+      setError(e.message || 'Error al moderar usuario');
     } finally {
       setBusyId(null);
     }
@@ -210,16 +236,14 @@ export function AdminReports() {
                     </td>
                     <td>
                       <div className="admin-actions">
-                        {r.tipo === 'publicacion' && (
-                          <button
-                            type="button"
-                            className="admin-btn-review"
-                            disabled={busyId === `r-${r.id}`}
-                            onClick={() => openReview(r)}
-                          >
-                            Revisar
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="admin-btn-review"
+                          disabled={busyId === `r-${r.id}`}
+                          onClick={() => openReview(r)}
+                        >
+                          Revisar
+                        </button>
                         <button
                           type="button"
                           className="admin-btn admin-btn--danger"
@@ -238,7 +262,7 @@ export function AdminReports() {
         )}
       </div>
 
-      {reviewReporte && (
+      {reviewReporte?.tipo === 'publicacion' && (
         <PublicationReviewModal
           reporte={reviewReporte}
           busy={modalBusy}
@@ -247,6 +271,17 @@ export function AdminReports() {
           onPatchReporte={(id) => handleDescartarReporte(id, { closeModal: true })}
           onPatchPublicacion={handlePublicacion}
           fetchPublicacion={apiFetchPublicacion}
+        />
+      )}
+
+      {reviewReporte?.tipo === 'usuario' && (
+        <UserReviewModal
+          reporte={reviewReporte}
+          busy={modalBusy}
+          onClose={() => setReviewReporte(null)}
+          onPatchReporte={(id) => handleDescartarReporte(id, { closeModal: true })}
+          onPatchUsuario={handleUsuario}
+          fetchUsuario={apiFetchUsuario}
         />
       )}
     </>

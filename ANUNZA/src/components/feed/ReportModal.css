@@ -130,7 +130,7 @@
 .report-btn-cancel:hover { background: #f7f3ff; }
 
 .report-btn-primary {
-  background: #8a4eff;
+  background: var(--btn-primary);
   color: #fff;
   border: none;
   padding: 9px 20px;
@@ -138,9 +138,9 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: background 0.2s;
+  transition: opacity 0.2s, transform 0.15s;
 }
-.report-btn-primary:hover:not(:disabled) { background: #7042d9; }
+.report-btn-primary:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
 .report-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .report-success {
@@ -150,3 +150,21 @@
 .report-success-icon { font-size: 40px; display: block; margin-bottom: 10px; }
 .report-success h3 { color: #2d1b69; margin: 0 0 8px; }
 .report-success p  { color: #7c6aab; font-size: 14px; margin: 0 0 18px; }
+
+@media (max-width: 480px) {
+  .report-modal {
+    padding: 20px 16px 16px;
+    border-radius: 14px;
+  }
+  .report-head h3 { font-size: 15px; }
+  .report-option { font-size: 13px; padding: 8px 10px; }
+  .report-actions { flex-direction: column; gap: 8px; }
+  .report-btn-cancel,
+  .report-btn-primary { width: 100%; text-align: center; padding: 10px; }
+}
+
+@media (max-width: 360px) {
+  .report-modal { padding: 16px 12px 14px; }
+  .report-motivos legend { font-size: 13px; }
+  .report-textarea { font-size: 1rem; }
+}

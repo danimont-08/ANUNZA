@@ -44,3 +44,7 @@ export async function addComentarioApi(publicacionId, contenido) {
     body: JSON.stringify({ contenido }),
   });
 }
+
+export async function toggleGuardarPublicacion(publicacionId) {
+  return apiFetch(`/feed/publicaciones/${publicacionId}/guardar`, { method: 'POST' });
+}

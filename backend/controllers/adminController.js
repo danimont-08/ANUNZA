@@ -73,6 +73,24 @@ export const patchUserEstado = async (req, res) => {
   }
 };
 
+/** GET /api/admin/users/:id */
+export const getUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `SELECT id, nombre, correo, telefono, cedula, foto_perfil, verificado, ciudad,
+              rol, estado, descripcion, created_at
+       FROM usuarios WHERE id = $1`,
+      [id]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Usuario no encontrado' });
+    res.json({ user: rows[0] });
+  } catch (error) {
+    console.error('getUser:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 /** GET /api/admin/reportes */
 export const listReportes = async (req, res) => {
   try {

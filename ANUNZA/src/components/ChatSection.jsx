@@ -1,21 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../services/api';
 import { supabase } from '../services/supabaseClient';
+import { ReportModal } from './feed/ReportModal';
+import { IconFlag, IconUserX } from './icons';
+import { DEFAULT_AVATAR } from '../utils/constants';
+import { formatTime } from '../utils/format';
 import './ChatSection.css';
 
-// AVATAR POR DEFECTO
-const DEFAULT_AVATAR =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0aac8'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 20c0-4 3.6-7 8-7s8 3 8 7'/%3E%3C/svg%3E";
-
-function formatTime(iso) {
-  if (!iso) return '';
-  try {
-    const str = /Z$|[+-]\d{2}:\d{2}$/.test(String(iso)) ? iso : iso + 'Z';
-    return new Date(str).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  } catch {
-    return '';
-  }
-}
+const isKeyboardOpen = () => document.body.classList.contains('keyboard-open');
 
 export function ChatSection({
   user,
@@ -34,6 +26,8 @@ export function ChatSection({
   const [blockMotivo, setBlockMotivo] = useState('');
   const [bloqueados, setBloqueados] = useState([]);
   const listEndRef = useRef(null);
+  const [reportMsg, setReportMsg] = useState(null);
+  const [reportUser, setReportUser] = useState(false);
 
   const motivosBloqueo = [
     'Acoso o intimidación',
@@ -44,8 +38,30 @@ export function ChatSection({
     'Otro'
   ];
 
+  // Scroll al final solo si el teclado NO está abierto (evita window scroll en Android)
   const scrollToBottom = () => {
+    if (isKeyboardOpen()) return;
     listEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const cleanupKeyboard = useCallback(() => {
+    document.body.classList.remove('keyboard-open');
+  }, []);
+
+  // Limpiar si el usuario vuelve atrás sin cerrar el teclado
+  useEffect(() => {
+    if (!activeId) cleanupKeyboard();
+  }, [activeId, cleanupKeyboard]);
+
+  // Limpiar al desmontar el componente
+  useEffect(() => () => cleanupKeyboard(), [cleanupKeyboard]);
+
+  const handleComposeFocus = () => {
+    document.body.classList.add('keyboard-open');
+  };
+
+  const handleComposeBlur = () => {
+    document.body.classList.remove('keyboard-open');
   };
 
   const loadConversaciones = useCallback(async () => {
@@ -65,7 +81,9 @@ export function ChatSection({
     try {
       const data = await apiFetch(`/chat/conversaciones/${conversacionId}/mensajes`);
       setMensajes(data.mensajes || []);
-      setTimeout(scrollToBottom, 80);
+      // Solo hacer scroll automático si el teclado NO está activo
+      // (si está activo, scrollIntoView mueve el window en Android)
+      if (!isKeyboardOpen()) setTimeout(scrollToBottom, 80);
     } catch (e) {
       setError(e.message);
     }
@@ -156,6 +174,7 @@ export function ChatSection({
   }, [activeId, loadMensajes]);
 
   useEffect(() => {
+    // scrollToBottom ya verifica internamente si el teclado está abierto
     scrollToBottom();
   }, [mensajes]);
 
@@ -220,7 +239,7 @@ export function ChatSection({
   const estiaBloqueado = bloqueados.some(b => b.usuario_bloqueado === peer?.id);
 
   return (
-    <section className="chat-section">
+    <section className={`chat-section${activeId ? ' chat-has-active' : ''}`}>
       <div className="chat-layout">
         <aside className="chat-sidebar">
           <div className="chat-sidebar-head">
@@ -232,7 +251,7 @@ export function ChatSection({
                 onClick={() => setBlockOpen('ver-bloqueados')}
                 title={`${bloqueados.length} usuario(s) bloqueado(s)`}
               >
-                🚫 {bloqueados.length}
+                <IconUserX /> {bloqueados.length}
               </button>
             )}
           </div>
@@ -273,27 +292,46 @@ export function ChatSection({
           {activeId && (
             <>
               <header className="chat-peer-bar">
+                <button
+                  type="button"
+                  className="chat-back-btn"
+                  onClick={() => { cleanupKeyboard(); setActiveId(null); }}
+                  aria-label="Volver a conversaciones"
+                >
+                  ←
+                </button>
                 <img
                   src={peer?.foto_perfil || DEFAULT_AVATAR}
                   alt=""
                 />
-                <div>
+                <div className="chat-peer-info">
                   <strong>{peer?.nombre || 'Usuario'}</strong>
                   <div className="chat-peer-sub">En línea en ANUNZA</div>
                   {activeConv?.publicacion_titulo && (
                     <div className="chat-peer-pub">📌 {activeConv.publicacion_titulo}</div>
                   )}
                 </div>
-                <button
-                  type="button"
-                  className="chat-block-btn"
-                  onClick={() => setBlockOpen(true)}
-                  title="Bloquear usuario"
-                >
-                  🚫
-                </button>
+                <div className="chat-peer-actions">
+                  <button
+                    type="button"
+                    className="chat-action-btn"
+                    onClick={() => setReportUser(true)}
+                    title="Reportar usuario"
+                  >
+                    <IconFlag />
+                  </button>
+                  <button
+                    type="button"
+                    className="chat-action-btn chat-block-btn"
+                    onClick={() => setBlockOpen(true)}
+                    title="Bloquear usuario"
+                  >
+                    <IconUserX />
+                  </button>
+                </div>
               </header>
               <div className="chat-messages">
+                <div className="chat-messages-spacer" />
                 {mensajes.map((m) => {
                   const mine = m.remitente_id === user?.id;
                   return (
@@ -308,6 +346,16 @@ export function ChatSection({
                         <p>{m.contenido}</p>
                         <time>{formatTime(m.created_at)}</time>
                       </div>
+                      {!mine && (
+                        <button
+                          type="button"
+                          className="chat-report-msg-btn"
+                          title="Reportar mensaje"
+                          onClick={() => setReportMsg(m)}
+                        >
+                          <IconFlag />
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -320,6 +368,8 @@ export function ChatSection({
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && send()}
+                  onFocus={handleComposeFocus}
+                  onBlur={handleComposeBlur}
                   disabled={estiaBloqueado}
                 />
                 <button type="button" onClick={send} disabled={estiaBloqueado}>
@@ -354,6 +404,28 @@ export function ChatSection({
             <button type="button" className="chat-modal-cerrar" onClick={() => setBlockOpen(false)}>Cerrar</button>
           </div>
         </div>
+      )}
+
+      {reportMsg && (
+        <ReportModal
+          tipo="mensaje"
+          targetId={reportMsg.id}
+          targetLabel={
+            reportMsg.contenido.length > 60
+              ? reportMsg.contenido.slice(0, 60) + '…'
+              : reportMsg.contenido
+          }
+          onClose={() => setReportMsg(null)}
+        />
+      )}
+
+      {reportUser && peer && (
+        <ReportModal
+          tipo="usuario"
+          targetId={peer.id}
+          targetLabel={peer.nombre}
+          onClose={() => setReportUser(false)}
+        />
       )}
 
       {blockOpen && blockOpen !== 'ver-bloqueados' && (

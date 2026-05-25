@@ -108,7 +108,30 @@
 
 @media (max-width: 480px) {
   .notif-panel {
-    width: calc(100vw - 20px);
-    right: -10px;
+    position: fixed;
+    top: 60px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-height: 70vh;
+    border-radius: 16px;
   }
+
+  .notif-item {
+    padding: 13px 14px;
+  }
+
+  .notif-msg {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .notif-panel {
+    left: 4px;
+    right: 4px;
+    top: 56px;
+  }
+  .notif-panel-head { padding: 10px 14px 8px; }
+  .notif-item { padding: 10px 12px; gap: 8px; }
 }

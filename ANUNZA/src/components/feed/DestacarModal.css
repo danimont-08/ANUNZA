@@ -210,3 +210,22 @@
   transition: filter 0.15s;
 }
 .pub-btn-destacar:hover { filter: brightness(1.08); }
+
+@media (max-width: 480px) {
+  .pago-modal {
+    padding: 1.25rem 1rem 1rem;
+    border-radius: 14px;
+  }
+  .pago-title { font-size: 1.05rem; }
+  .pago-price { font-size: 1.4rem; }
+  .pago-actions { flex-direction: column; gap: 0.5rem; }
+  .pago-btn-primary,
+  .pago-btn-ghost { width: 100%; padding: 0.65rem 1rem; }
+  .pago-icon { font-size: 2rem; }
+}
+
+@media (max-width: 360px) {
+  .pago-modal { padding: 1rem 0.75rem 0.75rem; }
+  .pago-benefits { padding: 0.65rem 0.75rem; }
+  .pago-benefits li { font-size: 0.82rem; }
+}

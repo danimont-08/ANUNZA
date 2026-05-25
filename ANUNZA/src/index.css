@@ -15,6 +15,7 @@
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-heading: 'Syne', 'DM Sans', sans-serif;
+  --btn-primary: linear-gradient(135deg, var(--anunza-violet), var(--anunza-midnight));
 }
 
 * {
@@ -30,6 +31,8 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent unwanted horizontal scroll on mobile */
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -74,9 +77,9 @@ body {
   background: #555;
 }
 
-/* Estilos de transición global */
-* {
-  transition: background 0.3s ease, color 0.3s ease;
+/* Transición solo en elementos interactivos, no en todos */
+button, a, input, select, textarea {
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 input,
@@ -84,6 +87,17 @@ button,
 select,
 textarea {
   font-family: inherit;
+}
+
+/* Prevenir zoom automático en iOS al hacer foco en campos de texto.
+   iOS hace zoom cuando font-size < 16px; max() lo garantiza sin importar
+   el tamaño de pantalla ni si hay un media query de por medio. */
+@media (pointer: coarse) {
+  input:not([type='range']),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
 }
 
 button {

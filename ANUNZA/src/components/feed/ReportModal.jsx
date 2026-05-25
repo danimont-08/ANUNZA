@@ -3,16 +3,28 @@ import { enviarReporte } from '../../models/reporteModel';
 import './ReportModal.css';
 
 const MOTIVOS = [
-  { value: 'spam', label: '📢 Spam o publicidad engañosa' },
+  { value: 'spam',        label: '📢 Spam o publicidad engañosa' },
   { value: 'inapropiado', label: '🔞 Contenido inapropiado' },
-  { value: 'fraude', label: '💸 Fraude o estafa' },
-  { value: 'acoso', label: '⚠️ Acoso o intimidación' },
-  { value: 'otro', label: '❓ Otro motivo' },
+  { value: 'fraude',      label: '💸 Fraude o estafa' },
+  { value: 'acoso',       label: '⚠️ Acoso o intimidación' },
+  { value: 'otro',        label: '❓ Otro motivo' },
 ];
 
-export function ReportModal({ publicacionId, publicacionTitulo, onClose }) {
+const TITULOS = {
+  publicacion: 'Reportar publicación',
+  usuario:     'Reportar usuario',
+  mensaje:     'Reportar mensaje',
+};
+
+const LEYENDAS = {
+  publicacion: '¿Por qué reportas esta publicación?',
+  usuario:     '¿Por qué reportas a este usuario?',
+  mensaje:     '¿Por qué reportas este mensaje?',
+};
+
+export function ReportModal({ tipo = 'publicacion', targetId, targetLabel, onClose }) {
   const [motivo, setMotivo] = useState('');
-  const [descripcion, setDescripcion] = useState('');
+  const [detalles, setDetalles] = useState('');
   const [loading, setLoading] = useState(false);
   const [exito, setExito] = useState(false);
   const [error, setError] = useState('');
@@ -23,7 +35,7 @@ export function ReportModal({ publicacionId, publicacionTitulo, onClose }) {
     setLoading(true);
     setError('');
     try {
-      await enviarReporte({ publicacion_id: publicacionId, motivo, descripcion });
+      await enviarReporte({ tipo, objeto_id: targetId, motivo, detalles });
       setExito(true);
     } catch (err) {
       setError(err.message || 'Error al enviar el reporte');
@@ -45,15 +57,15 @@ export function ReportModal({ publicacionId, publicacionTitulo, onClose }) {
         ) : (
           <>
             <div className="report-head">
-              <h3>Reportar publicación</h3>
+              <h3>{TITULOS[tipo] ?? 'Reportar'}</h3>
               <button type="button" className="report-close" onClick={onClose} aria-label="Cerrar">✕</button>
             </div>
-            {publicacionTitulo && (
-              <p className="report-pub-name">"{publicacionTitulo}"</p>
+            {targetLabel && (
+              <p className="report-pub-name">"{targetLabel}"</p>
             )}
             <form onSubmit={handleSubmit}>
               <fieldset className="report-motivos">
-                <legend>¿Por qué reportas esta publicación?</legend>
+                <legend>{LEYENDAS[tipo] ?? '¿Por qué realizas este reporte?'}</legend>
                 {MOTIVOS.map((m) => (
                   <label key={m.value} className={`report-option ${motivo === m.value ? 'is-selected' : ''}`}>
                     <input
@@ -69,10 +81,10 @@ export function ReportModal({ publicacionId, publicacionTitulo, onClose }) {
               </fieldset>
               <textarea
                 className="report-textarea"
-                placeholder="Descripción adicional (opcional, máx. 300 caracteres)"
+                placeholder="Detalles adicionales (opcional, máx. 300 caracteres)"
                 maxLength={300}
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
+                value={detalles}
+                onChange={(e) => setDetalles(e.target.value)}
                 rows={3}
               />
               {error && <p className="report-error">{error}</p>}

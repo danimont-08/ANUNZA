@@ -3,3 +3,9 @@
   margin: 0 auto;
   padding: 1.5rem 1.25rem 3rem;
 }
+
+@media (max-width: 768px) {
+  .mod-layout-body {
+    padding: 1rem 0.5rem 2rem;
+  }
+}

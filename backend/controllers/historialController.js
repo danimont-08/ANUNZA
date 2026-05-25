@@ -20,7 +20,7 @@ export const getMiHistorial = async (req, res) => {
   const userId = req.userId;
   try {
     // Queries base en paralelo (no dependen entre sí)
-    const [publicacionesRes, interaccionesRes, historialRes] = await Promise.all([
+    const [publicacionesRes, interaccionesRes, historialRes, guardadasRes] = await Promise.all([
       pool.query(
         `SELECT * FROM publicaciones WHERE usuario_id = $1 ORDER BY created_at DESC NULLS LAST`,
         [userId]
@@ -30,12 +30,21 @@ export const getMiHistorial = async (req, res) => {
                 p.titulo AS publicacion_titulo
          FROM interacciones i
          LEFT JOIN publicaciones p ON p.id = i.publicacion_id
-         WHERE i.usuario_id = $1
+         WHERE i.usuario_id = $1 AND i.tipo != 'guardado'
          ORDER BY i.created_at DESC NULLS LAST LIMIT 200`,
         [userId]
       ),
       pool.query(
         `SELECT * FROM historial WHERE usuario_id = $1 ORDER BY created_at DESC NULLS LAST LIMIT 200`,
+        [userId]
+      ),
+      pool.query(
+        `SELECT p.id, p.titulo, p.descripcion, p.precio, p.created_at,
+                i.created_at AS guardado_en
+         FROM interacciones i
+         INNER JOIN publicaciones p ON p.id = i.publicacion_id
+         WHERE i.usuario_id = $1 AND i.tipo = 'guardado'
+         ORDER BY i.created_at DESC NULLS LAST`,
         [userId]
       ),
     ]);
@@ -81,6 +90,7 @@ export const getMiHistorial = async (req, res) => {
       publicaciones: publicacionesRes.rows,
       interacciones: interaccionesRes.rows,
       historial: historialRes.rows,
+      publicaciones_guardadas: guardadasRes.rows,
       trabajos,
       calificaciones,
       promedio_calificacion: promedio != null ? Number(Number(promedio).toFixed(2)) : null,

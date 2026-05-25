@@ -52,6 +52,10 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!titulo.trim()) {
+      onError('El título es obligatorio.');
+      return;
+    }
     const text = descripcion.trim();
     if (!text) {
       onError('Escribe una descripción del servicio.');
@@ -67,7 +71,7 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
       agregarServicio && precio !== '' && !Number.isNaN(Number(precio)) ? Number(precio) : null;
 
     const body = {
-      titulo: titulo.trim() || undefined,
+      titulo: titulo.trim(),
       descripcion: text,
       categoria_id: Number(categoriaId),
       tipo,
@@ -103,8 +107,8 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
     <form className="pc-card" onSubmit={handleSubmit}>
       <h2 className="pc-title">Crear publicación</h2>
       <label className="pc-label">
-        Título (opcional)
-        <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ej. Clases de crochet" />
+        Título *
+        <input required value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ej. Clases de crochet" />
       </label>
       <label className="pc-label">
         Descripción del servicio
@@ -142,23 +146,32 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
         </label>
         <label className="pc-label">
           Tipo
-          <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+          <select
+            value={tipo}
+            onChange={(e) => {
+              const t = e.target.value;
+              setTipo(t);
+              if (t !== 'ofrezco') setAgregarServicio(false);
+            }}
+          >
             <option value="ofrezco">Ofrezco</option>
             <option value="busco">Busco</option>
           </select>
         </label>
       </div>
 
-      <label className="pc-switch">
-        <input
-          type="checkbox"
-          checked={agregarServicio}
-          onChange={(e) => setAgregarServicio(e.target.checked)}
-        />
-        <span>Agregar información del servicio</span>
-      </label>
+      {tipo === 'ofrezco' && (
+        <label className="pc-switch">
+          <input
+            type="checkbox"
+            checked={agregarServicio}
+            onChange={(e) => setAgregarServicio(e.target.checked)}
+          />
+          <span>Agregar información del servicio</span>
+        </label>
+      )}
 
-      <div className={`pc-extra ${agregarServicio ? 'is-open' : ''}`}>
+      {tipo === 'ofrezco' && <div className={`pc-extra ${agregarServicio ? 'is-open' : ''}`}>
         <label className="pc-label">
           Precio (opcional)
           <input
@@ -182,7 +195,7 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
           Detalles adicionales
           <textarea rows={2} value={detalles} onChange={(e) => setDetalles(e.target.value)} />
         </label>
-      </div>
+      </div>}
 
       <div className="pc-media-block">
         <input

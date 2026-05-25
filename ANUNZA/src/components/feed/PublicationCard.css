@@ -19,6 +19,12 @@
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--anunza-lavender);
+  flex-shrink: 0;
+}
+
+.pub-head-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .pub-author {
@@ -35,6 +41,85 @@
   font-size: 0.8rem;
   color: #666;
   margin-top: 2px;
+}
+
+/* ── Menú 3 puntos ── */
+.pub-menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pub-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.pub-menu-btn:hover {
+  background: var(--anunza-lavender, #f5f2ff);
+  color: var(--anunza-midnight, #2f086d);
+}
+
+.pub-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #fff;
+  border: 1px solid rgba(47, 8, 109, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(47, 8, 109, 0.15);
+  min-width: 175px;
+  overflow: hidden;
+  z-index: 100;
+  animation: pubMenuIn 0.15s ease;
+}
+
+@keyframes pubMenuIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.pub-menu-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: none;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--anunza-midnight, #2f086d);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+
+.pub-menu-dropdown button:hover:not(:disabled) {
+  background: var(--anunza-lavender, #f5f2ff);
+}
+
+.pub-menu-dropdown button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pub-menu-dropdown button.danger {
+  color: #c0392b;
+}
+
+.pub-menu-dropdown button.danger:hover {
+  background: rgba(192, 57, 43, 0.07);
 }
 
 .pub-cat {
@@ -89,6 +174,7 @@
   color: var(--anunza-midnight);
 }
 
+/* ── Barra de acciones (solo iconos) ── */
 .pub-actions {
   display: flex;
   flex-wrap: wrap;
@@ -97,12 +183,17 @@
 }
 
 .pub-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   border: 1px solid rgba(47, 8, 109, 0.15);
   background: #fff;
   border-radius: 999px;
-  padding: 0.45rem 0.85rem;
+  padding: 0.45rem 0.75rem;
   font-size: 0.85rem;
+  line-height: 1;
   cursor: pointer;
+  color: inherit;
   transition: background 0.15s, box-shadow 0.15s;
 }
 
@@ -121,6 +212,28 @@
   cursor: not-allowed;
 }
 
+.pub-btn span {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.pub-btn-destacar {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(47, 8, 109, 0.15);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.45rem 0.65rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pub-btn-destacar:hover {
+  background: #fffde7;
+}
+
+/* ── Panels ── */
 .pub-panel {
   margin-top: 1rem;
   padding: 1rem;
@@ -134,14 +247,8 @@
 }
 
 @keyframes pubIn {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .pub-panel-title {
@@ -179,12 +286,15 @@
 
 .pub-send {
   border: none;
-  background: var(--anunza-violet);
+  background: var(--btn-primary);
   color: #fff;
   padding: 0.5rem 1rem;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
 }
+.pub-send:hover { opacity: 0.92; transform: translateY(-1px); }
 
 .pub-comment-list {
   list-style: none;
@@ -222,24 +332,22 @@
 
 .pub-comment-form button {
   border: none;
-  background: var(--anunza-midnight);
+  background: var(--btn-primary);
   color: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 0 0.85rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
 }
-
-/* Botón reportar */
-.pub-btn.pub-report {
-  color: #c0392b;
-  border-color: rgba(192, 57, 43, 0.25);
-}
-.pub-btn.pub-report:hover {
-  background: rgba(192, 57, 43, 0.08);
-}
+.pub-comment-form button:hover { opacity: 0.92; }
 
 .pub-card--finalizada {
   border-color: rgba(46, 125, 50, 0.25);
+}
+
+.pub-panel-resenas {
+  background: #fffef8;
 }
 
 .pub-author-row {
@@ -258,6 +366,34 @@
   font-weight: 600;
 }
 
-.pub-panel-resenas {
-  background: #fffef8;
+
+@media (max-width: 600px) {
+  .pub-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .pub-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .pub-title {
+    font-size: 1rem;
+  }
+
+  /* iOS zoom prevention */
+  .pub-comment-form input,
+  .pub-panel textarea {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .pub-card { padding: 0.75rem; border-radius: 10px; }
+  .pub-avatar { width: 36px; height: 36px; }
+  .pub-title { font-size: 0.95rem; }
+  .pub-btn { padding: 0.4rem 0.55rem; font-size: 0.8rem; }
+  .pub-actions { gap: 0.35rem; }
+  .pub-menu-dropdown { min-width: 155px; }
 }

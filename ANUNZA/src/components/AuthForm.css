@@ -186,6 +186,16 @@
   gap: 1rem;
 }
 
+.auth-form--grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group--full {
+  grid-column: 1 / -1;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -299,6 +309,31 @@
   color: var(--muted);
 }
 
+.geo-hint--ok {
+  color: #1a7f4b;
+  font-weight: 500;
+}
+
+.geo-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Mapa embebido en registro */
+.geo-map-wrap {
+  margin-top: 0.6rem;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--c200);
+}
+
+.geo-map {
+  width: 100%;
+  height: 180px;
+  border: none;
+  display: block;
+}
+
 /* ─── Loading screen ────────────────────────────────── */
 .auth-loading-screen {
   min-height: 100vh;
@@ -321,8 +356,61 @@
   align-items: flex-start;
 }
 
+/* ─── Tablet ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .auth-panel-form {
+    padding: 2rem 1.5rem;
+  }
+  .auth-box h1 { font-size: 1.6rem; }
+  .geo-map { height: 150px; }
+  .auth-form--grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ─── Mobile ────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .auth-panel-form { padding: 2rem 1.25rem; }
+  .auth-panel-form {
+    padding: 2.5rem 1.25rem 2rem;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+  .auth-box {
+    max-width: 100%;
+  }
   .auth-box h1 { font-size: 1.5rem; }
+  .auth-logo-mobile { margin-bottom: 0.1rem; }
+  .auth-logo-mobile-slogan { margin-bottom: 1.25rem; }
+
+  /* Evita zoom automático en iOS (requiere font-size >= 16px) */
+  .form-group input {
+    font-size: 1rem;
+  }
+
+  .geo-map { height: 130px; }
+  .geo-btn { width: 100%; text-align: center; }
+}
+
+/* ─── Ultra-mobile ──────────────────────────────────── */
+@media (max-width: 360px) {
+  .auth-panel-form { padding: 1.75rem 1rem 1.5rem; }
+  .auth-box h1 { font-size: 1.3rem; }
+  .auth-logo-mobile { font-size: 1.6rem; }
+  .submit-button { font-size: 0.9rem; padding: 0.75rem; }
+  .form-group input { padding: 0.65rem 0.75rem; }
+  .geo-map { height: 110px; }
+}
+
+/* Registro: scroll natural en móvil */
+@media (max-width: 899px) {
+  .auth-container--register {
+    height: auto;
+    overflow: visible;
+    min-height: 100vh;
+  }
+  .auth-panel-form--register {
+    overflow-y: visible;
+    align-items: center;
+    padding-bottom: 3rem;
+  }
 }

@@ -43,3 +43,31 @@
   font-weight: 600;
   height: fit-content;
 }
+
+@media (max-width: 480px) {
+  .ffb-bar {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .ffb-field {
+    min-width: 130px;
+  }
+
+  /* Evita zoom en iOS */
+  .ffb-field select,
+  .ffb-field input {
+    font-size: 1rem;
+  }
+
+  .ffb-clear {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 360px) {
+  .ffb-bar { padding: 0.6rem; gap: 0.4rem; }
+  .ffb-field { min-width: 110px; }
+  .ffb-field label { font-size: 0.75rem; }
+}

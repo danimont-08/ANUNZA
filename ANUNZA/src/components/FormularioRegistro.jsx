@@ -1,36 +1,44 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { geolocateToCity, osmEmbedUrl } from '../utils/geolocate';
 import './AuthForm.css';
 
 export const FormularioRegistro = () => {
   const navigate = useNavigate();
   const { register, error: authError } = useAuth();
+
   const [formData, setFormData] = useState({
     nombre: '', correo: '', telefono: '', cedula: '',
     ciudad: '', latitud: '', longitud: '', password: '', confirmPassword: '',
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoData, setGeoData]   = useState(null); // { lat, lon, city }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const usarUbicacion = () => {
-    if (!navigator.geolocation) { setError('Tu navegador no permite geolocalización.'); return; }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setFormData((prev) => ({
-          ...prev,
-          latitud: String(pos.coords.latitude),
-          longitud: String(pos.coords.longitude),
-        }));
-        setError('');
-      },
-      () => setError('No se pudo obtener la ubicación. Puedes escribir la ciudad manualmente.')
-    );
+  const usarUbicacion = async () => {
+    setGeoLoading(true);
+    setError('');
+    try {
+      const { lat, lon, city } = await geolocateToCity();
+      setGeoData({ lat, lon, city });
+      setFormData((prev) => ({
+        ...prev,
+        latitud:  String(lat),
+        longitud: String(lon),
+        ciudad:   city || prev.ciudad,
+      }));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setGeoLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -59,7 +67,7 @@ export const FormularioRegistro = () => {
       await register(
         formData.nombre, formData.correo, formData.telefono, formData.password,
         formData.cedula, formData.ciudad,
-        formData.latitud !== '' ? Number(formData.latitud) : null,
+        formData.latitud  !== '' ? Number(formData.latitud)  : null,
         formData.longitud !== '' ? Number(formData.longitud) : null
       );
       navigate('/dashboard');
@@ -93,7 +101,6 @@ export const FormularioRegistro = () => {
       <div className="auth-panel-form auth-panel-form--register">
         <div className="auth-box auth-box--register">
 
-          {/* Logo mobile */}
           <div className="auth-logo-mobile">ANUN<span>ZA</span></div>
           <span className="auth-logo-mobile-slogan">Tu talento importa</span>
 
@@ -136,19 +143,36 @@ export const FormularioRegistro = () => {
                 placeholder="Documento de identidad" required />
             </div>
 
-            {/* Ciudad — ancho completo */}
+            {/* Ubicación — ancho completo */}
             <div className="form-group form-group--full">
               <label htmlFor="ciudad">Ciudad / ubicación</label>
               <input type="text" id="ciudad" name="ciudad"
                 value={formData.ciudad} onChange={handleChange}
                 placeholder="Ej. Medellín" required />
-              <button type="button" className="geo-btn" onClick={usarUbicacion}>
-                📍 Obtener coordenadas (opcional)
+
+              <button
+                type="button"
+                className="geo-btn"
+                onClick={usarUbicacion}
+                disabled={geoLoading}
+              >
+                {geoLoading ? '⏳ Detectando…' : '📍 Usar mi ubicación'}
               </button>
-              {(formData.latitud || formData.longitud) && (
-                <p className="geo-hint">
-                  Coordenadas guardadas. Lat: {formData.latitud} · Lng: {formData.longitud}
-                </p>
+
+              {geoData && (
+                <>
+                  <p className="geo-hint geo-hint--ok">
+                    ✓ Ubicación detectada{geoData.city ? `: ${geoData.city}` : ''}
+                    {geoData.source === 'ip' ? ' (aproximada por IP)' : ''}
+                  </p>
+                  <div className="geo-map-wrap">
+                    <iframe
+                      title="Mapa de ubicación"
+                      src={osmEmbedUrl(geoData.lat, geoData.lon)}
+                      className="geo-map"
+                    />
+                  </div>
+                </>
               )}
             </div>
 

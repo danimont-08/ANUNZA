@@ -111,6 +111,38 @@ export function HistorialSection({ onNavigateToPost }) {
           </ul>
         </section>
 
+        {/* Publicaciones guardadas */}
+        <section className="hist-card">
+          <h2>Guardados</h2>
+          <ul className="hist-list">
+            {(data.publicaciones_guardadas || []).length === 0 && (
+              <li className="hist-empty">No has guardado publicaciones</li>
+            )}
+            {(data.publicaciones_guardadas || []).map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  className="hist-item-link"
+                  title={p.titulo || 'Ver publicación'}
+                  onClick={() => onNavigateToPost?.(p.id)}
+                >
+                  {p.titulo || 'Sin título'}
+                </button>
+                {p.precio != null && Number(p.precio) > 0 && (
+                  <span className="hist-meta">
+                    Desde {Number(p.precio).toLocaleString('es-CO')}
+                  </span>
+                )}
+                {p.guardado_en && (
+                  <span className="hist-meta">
+                    Guardado el {new Date(p.guardado_en).toLocaleDateString('es-CO')}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+
         {/* Interacciones */}
         <section className="hist-card">
           <h2>Mis interacciones</h2>

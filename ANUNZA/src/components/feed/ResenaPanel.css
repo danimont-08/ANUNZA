@@ -50,13 +50,16 @@
 .resena-btn-finalizar {
   margin-top: 0.5rem;
   border: none;
-  background: var(--anunza-midnight);
+  background: var(--btn-primary);
   color: #fff;
   padding: 0.45rem 0.9rem;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 0.85rem;
+  font-weight: 600;
+  transition: opacity 0.2s, transform 0.15s;
 }
+.resena-btn-finalizar:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
 
 .resena-btn-finalizar:disabled {
   opacity: 0.6;
@@ -177,12 +180,15 @@
 
 .resena-submit {
   border: none;
-  background: var(--anunza-violet);
+  background: var(--btn-primary);
   color: #fff;
   padding: 0.5rem 1rem;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
 }
+.resena-submit:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
 
 .resena-submit:disabled {
   opacity: 0.6;
@@ -251,4 +257,27 @@
 .pub-btn.pub-resenas.has-rating {
   border-color: #f5b301;
   color: var(--anunza-midnight);
+}
+
+@media (max-width: 480px) {
+  /* Evita zoom en iOS */
+  .resena-form textarea {
+    font-size: 1rem;
+  }
+
+  .resena-stars-input button {
+    font-size: 1.6rem;
+    padding: 0.25rem;
+  }
+
+  .resena-submit,
+  .resena-btn-finalizar {
+    width: 100%;
+    padding: 0.7rem;
+    text-align: center;
+  }
+
+  .resena-item-media {
+    max-width: 100%;
+  }
 }

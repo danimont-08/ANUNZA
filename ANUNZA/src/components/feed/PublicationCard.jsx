@@ -1,27 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { MediaCarousel } from './MediaCarousel';
 import { ResenaPanel } from './ResenaPanel';
 import {
   fetchComentarios,
   addComentarioApi,
+  toggleGuardarPublicacion,
 } from '../../models/publicacionModel';
 import { ReportModal } from './ReportModal';
 import { DestacarModal } from './DestacarModal';
+import {
+  IconHeart, IconChat, IconComment, IconStar,
+  IconShare, IconBookmark, IconFlag, IconAlertUser, IconDots,
+} from '../icons';
+import { DEFAULT_AVATAR } from '../../utils/constants';
+import { formatDate } from '../../utils/format';
 import './PublicationCard.css';
 import './DestacarModal.css';
-
-const DEFAULT_AVATAR =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0aac8'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 20c0-4 3.6-7 8-7s8 3 8 7'/%3E%3C/svg%3E";
-
-function formatDate(iso) {
-  if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleString('es-CO', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  } catch { return ''; }
-}
 
 function isDestacadaActiva(p) {
   if (!p.destacada) return false;
@@ -30,21 +24,39 @@ function isDestacadaActiva(p) {
 }
 
 export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError, onDestacar }) {
-  const [openComments, setOpenComments] = useState(false);
-  const [openResenas, setOpenResenas] = useState(false);
-  const [openReport, setOpenReport] = useState(false);
-  const [openDestacar, setOpenDestacar] = useState(false);
+  const [openComments, setOpenComments]     = useState(false);
+  const [openResenas, setOpenResenas]       = useState(false);
+  const [openReport, setOpenReport]         = useState(false);
+  const [openReportUser, setOpenReportUser] = useState(false);
+  const [openDestacar, setOpenDestacar]     = useState(false);
+  const [openMenu, setOpenMenu]             = useState(false);
+  const [isGuardado, setIsGuardado]         = useState(p.user_guardado ?? false);
+  const [guardandoLoading, setGuardandoLoading] = useState(false);
+  const menuRef = useRef(null);
+
   const destacadaActiva = isDestacadaActiva(p);
   const esMio = p.usuario_id === currentUserId;
-  const [comments, setComments] = useState([]);
-  const [commentCount, setCommentCount] = useState(p.comentarios_count ?? 0);
-  const [resenasCount, setResenasCount] = useState(p.resenas_count ?? 0);
+
+  const [comments, setComments]           = useState([]);
+  const [commentCount, setCommentCount]   = useState(p.comentarios_count ?? 0);
+  const [resenasCount, setResenasCount]   = useState(p.resenas_count ?? 0);
   const [promedioResenas, setPromedioResenas] = useState(p.promedio_resenas ?? null);
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft]                 = useState('');
+
   const media = p.media_items?.length ? p.media_items : [];
   const texto = p.texto_plano ?? p.descripcion ?? '';
-  const tags = p.hashtags || [];
-  const svc = p.service_detalle;
+  const tags  = p.hashtags || [];
+  const svc   = p.service_detalle;
+  const likeCount = p.interacciones_count ?? 0;
+
+  useEffect(() => {
+    if (!openMenu) return;
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpenMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openMenu]);
 
   const loadComments = async () => {
     try {
@@ -57,10 +69,7 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
   const toggleComments = () => {
     const next = !openComments;
     setOpenComments(next);
-    if (next) {
-      setOpenResenas(false);
-      loadComments();
-    }
+    if (next) { setOpenResenas(false); loadComments(); }
   };
 
   const toggleResenas = () => {
@@ -80,6 +89,18 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
     } catch (e) { onError(e.message); }
   };
 
+  const handleGuardar = async () => {
+    setGuardandoLoading(true);
+    try {
+      const data = await toggleGuardarPublicacion(p.id);
+      setIsGuardado(data.guardado);
+    } catch (e) {
+      onError(e.message);
+    } finally {
+      setGuardandoLoading(false);
+    }
+  };
+
   const shareLink = async () => {
     const url = `${window.location.origin}/dashboard?post=${p.id}`;
     try {
@@ -87,7 +108,7 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
     } catch { onError('No se pudo copiar el enlace'); }
   };
 
-  const resenasLabel =
+  const resenasTitle =
     resenasCount > 0 && promedioResenas != null
       ? `Reseñas · ${promedioResenas}★ (${resenasCount})`
       : `Reseñas · ${resenasCount}`;
@@ -97,6 +118,7 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
       {destacadaActiva && (
         <div className="pub-badge-destacado">⭐ Destacado</div>
       )}
+
       <header className="pub-card-head">
         <img className="pub-avatar" src={p.autor_foto || DEFAULT_AVATAR} alt="" />
         <div className="pub-head-text">
@@ -111,6 +133,52 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
           </div>
           <time className="pub-time">{formatDate(p.created_at)}</time>
           {p.autor_ciudad && <div className="pub-loc">📍 {p.autor_ciudad}</div>}
+        </div>
+
+        {/* ── Menú 3 puntos ── */}
+        <div className="pub-menu-wrap" ref={menuRef}>
+          <button
+            type="button"
+            className="pub-menu-btn"
+            onClick={() => setOpenMenu((v) => !v)}
+            aria-label="Más opciones"
+            title="Más opciones"
+          >
+            <IconDots />
+          </button>
+          {openMenu && (
+            <div className="pub-menu-dropdown">
+              <button type="button" onClick={() => { shareLink(); setOpenMenu(false); }}>
+                <IconShare /> Reenviar
+              </button>
+              <button
+                type="button"
+                onClick={() => { handleGuardar(); setOpenMenu(false); }}
+                disabled={guardandoLoading}
+              >
+                <IconBookmark saved={isGuardado} />
+                {isGuardado ? 'Guardado' : 'Guardar'}
+              </button>
+              {!esMio && (
+                <button
+                  type="button"
+                  className="danger"
+                  onClick={() => { setOpenReport(true); setOpenMenu(false); }}
+                >
+                  <IconFlag /> Reportar
+                </button>
+              )}
+              {!esMio && (
+                <button
+                  type="button"
+                  className="danger"
+                  onClick={() => { setOpenReportUser(true); setOpenMenu(false); }}
+                >
+                  <IconAlertUser /> Reportar usuario
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -128,9 +196,9 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
 
       {svc && (svc.materiales || svc.tiempo_estimado || svc.detalles) && (
         <div className="pub-service">
-          {svc.materiales && <p><strong>Materiales:</strong> {svc.materiales}</p>}
+          {svc.materiales      && <p><strong>Materiales:</strong> {svc.materiales}</p>}
           {svc.tiempo_estimado && <p><strong>Tiempo estimado:</strong> {svc.tiempo_estimado}</p>}
-          {svc.detalles && <p><strong>Detalles:</strong> {svc.detalles}</p>}
+          {svc.detalles        && <p><strong>Detalles:</strong> {svc.detalles}</p>}
         </div>
       )}
 
@@ -142,47 +210,62 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
 
       <MediaCarousel items={media} />
 
+      {/* ── Barra de acciones (solo iconos) ── */}
       <footer className="pub-actions">
         <button
           type="button"
           className={`pub-btn pub-like ${p.user_liked ? 'is-on' : ''}`}
           onClick={() => onToggleLike(p.id)}
+          aria-label={p.user_liked ? 'Quitar me gusta' : 'Me gusta'}
+          title={`Me gusta · ${likeCount}`}
         >
-          {p.user_liked ? 'Te gusta' : 'Me gusta'} · {p.interacciones_count ?? 0}
+          <IconHeart filled={p.user_liked} />
+          {likeCount > 0 && <span>{likeCount}</span>}
         </button>
-        <button type="button" className="pub-btn" onClick={shareLink}>Reenviar</button>
+
         <button
           type="button"
           className={`pub-btn pub-resenas ${resenasCount > 0 ? 'has-rating' : ''}`}
           onClick={toggleResenas}
+          aria-label={resenasTitle}
+          title={resenasTitle}
         >
-          {resenasLabel}
+          <IconStar />
+          {resenasCount > 0 && promedioResenas != null && <span>{promedioResenas}★</span>}
+          {resenasCount > 0 && <span>({resenasCount})</span>}
         </button>
+
         <button
           type="button"
           className="pub-btn pub-chat"
           onClick={() => onOpenChat(p.usuario_id, p.id)}
           disabled={p.usuario_id === currentUserId}
+          aria-label="Iniciar chat"
+          title="Iniciar chat"
         >
-          Chat
+          <IconChat />
         </button>
-        <button type="button" className="pub-btn" onClick={toggleComments}>
-          Comentar · {commentCount}
-        </button>
+
         <button
           type="button"
-          className="pub-btn pub-report"
-          onClick={() => setOpenReport(true)}
+          className="pub-btn"
+          onClick={toggleComments}
+          aria-label={`Comentarios · ${commentCount}`}
+          title={`Comentarios · ${commentCount}`}
         >
-          Reportar
+          <IconComment />
+          {commentCount > 0 && <span>{commentCount}</span>}
         </button>
+
         {esMio && !destacadaActiva && (
           <button
             type="button"
             className="pub-btn-destacar"
             onClick={() => setOpenDestacar(true)}
+            aria-label="Destacar publicación"
+            title="Destacar publicación"
           >
-            ⭐ Destacar
+            ⭐
           </button>
         )}
       </footer>
@@ -231,9 +314,19 @@ export function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, on
 
       {openReport && (
         <ReportModal
-          publicacionId={p.id}
-          publicacionTitulo={p.titulo}
+          tipo="publicacion"
+          targetId={p.id}
+          targetLabel={p.titulo}
           onClose={() => setOpenReport(false)}
+        />
+      )}
+
+      {openReportUser && (
+        <ReportModal
+          tipo="usuario"
+          targetId={p.usuario_id}
+          targetLabel={p.autor_nombre}
+          onClose={() => setOpenReportUser(false)}
         />
       )}
 

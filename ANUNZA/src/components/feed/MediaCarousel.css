@@ -24,8 +24,8 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 50%;
   background: rgba(47, 8, 109, 0.55);
@@ -33,6 +33,9 @@
   font-size: 1.25rem;
   cursor: pointer;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mc-prev {
@@ -61,4 +64,18 @@
 
 .mc-dot.is-active {
   background: var(--anunza-violet);
+}
+
+@media (max-width: 600px) {
+  .mc-media { max-height: 280px; }
+  .mc-nav { width: 36px; height: 36px; font-size: 1rem; }
+  .mc-prev { left: 5px; }
+  .mc-next { right: 5px; }
+}
+
+@media (max-width: 360px) {
+  .mc-media { max-height: 220px; }
+  .mc-nav { width: 30px; height: 30px; font-size: 0.85rem; }
+  .mc-dots { gap: 4px; padding: 6px; }
+  .mc-dot { width: 6px; height: 6px; }
 }

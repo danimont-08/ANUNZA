@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { MediaCarousel } from '../feed/MediaCarousel';
 import { fetchAdminPublicacion as defaultFetchPublicacion } from '../../models/adminModel';
+import { DEFAULT_AVATAR } from '../../utils/constants';
+import { formatDate } from '../../utils/format';
 import './PublicationReviewModal.css';
 
 const MOTIVO_LABEL = {
@@ -10,18 +12,6 @@ const MOTIVO_LABEL = {
   acoso: 'Acoso o intimidación',
   otro: 'Otro motivo',
 };
-
-const DEFAULT_AVATAR =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0aac8'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 20c0-4 3.6-7 8-7s8 3 8 7'/%3E%3C/svg%3E";
-
-function formatDate(iso) {
-  if (!iso) return '—';
-  try {
-    return new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
-  } catch {
-    return '—';
-  }
-}
 
 export function PublicationReviewModal({
   reporte,

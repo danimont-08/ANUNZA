@@ -154,7 +154,7 @@
 
 .mod-btn-danger    { background: #dc3545; color: #fff; }
 .mod-btn-warn      { background: #7a27eb; color: #fff; }
-.mod-btn-success   { background: #8a4eff; color: #fff; }
+.mod-btn-success   { background: var(--btn-primary); color: #fff; border-radius: 10px; }
 .mod-btn-secondary { background: #f0ebff; color: #5b35d5; border: 1px solid #d6caff; }
 .mod-btn-ghost     { background: transparent; color: #5b35d5; border: 1.5px solid #d6caff; }
 .mod-btn-close {
@@ -281,4 +281,24 @@
   .mod-section { padding: 1rem 0.5rem 2rem; }
   .mod-user-badges { justify-content: flex-start; margin-left: 0; margin-top: 0.4rem; }
   .mod-card-user .mod-user-head { flex-wrap: wrap; }
+
+  /* Evita zoom en iOS al tocar inputs */
+  .mod-search,
+  .mod-input-dias { font-size: 1rem; }
+
+  /* El buscador ocupa todo el ancho en móvil */
+  .mod-search { max-width: 100%; }
+
+  /* Tabs más compactas y scrollables */
+  .mod-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .mod-tab { font-size: 0.85rem; padding: 0.5rem 0.75rem; white-space: nowrap; }
+
+  /* Botones con área táctil mínima de 44px */
+  .mod-btn { min-height: 40px; padding: 0.5rem 1rem; }
+
+  /* Badges del usuario no se apilan de modo raro */
+  .mod-card-top { gap: 0.35rem; }
+
+  /* Chat viewer de moderación ocupa más pantalla en móvil */
+  .mod-chat-viewer { max-height: 85vh; }
 }

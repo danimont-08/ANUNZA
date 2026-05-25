@@ -27,6 +27,7 @@ export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHi
   });
   const [showComposer, setShowComposer] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [miEstado, setMiEstado] = useState(null);
   const cardRefs = useRef({});
 
@@ -225,10 +226,24 @@ export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHi
         </div>
       )}
 
-      <FiltrosServicios
-        filtros={filters}
-        onChange={handleFilterChange}
-      />
+      <button
+        type="button"
+        className="feed-filters-toggle"
+        onClick={() => setShowFilters((v) => !v)}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="4" y1="6" x2="20" y2="6"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+          <line x1="11" y1="18" x2="13" y2="18"/>
+        </svg>
+        {showFilters ? 'Ocultar filtros' : 'Filtrar servicios'}
+      </button>
+      <div className={`feed-filters-panel${showFilters ? ' is-open' : ''}`}>
+        <FiltrosServicios
+          filtros={filters}
+          onChange={handleFilterChange}
+        />
+      </div>
 
       <div className="feed-list">
         {items.length === 0 && !error && (

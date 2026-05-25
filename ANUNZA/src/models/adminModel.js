@@ -31,6 +31,10 @@ export async function marcarReporteRevisado(reporteId) {
   return apiFetch(`/admin/reportes/${reporteId}/estado`, { method: 'PATCH' });
 }
 
+export async function fetchAdminUsuario(userId) {
+  return apiFetch(`/admin/users/${userId}`);
+}
+
 export async function fetchAdminPublicacion(publicacionId) {
   return apiFetch(`/admin/publicaciones/${publicacionId}`);
 }

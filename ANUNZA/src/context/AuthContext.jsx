@@ -1,8 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { API_URL, getStoredToken } from '../services/api';
 
 const AuthContext = createContext(null);
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 /**
  * Sesión JWT: valida token contra /users/profile al cargar (evita sesión rota en localStorage).
@@ -21,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const t = localStorage.getItem('token');
+    const t = getStoredToken();
     if (!t) {
       setLoading(false);
       return;

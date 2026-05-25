@@ -3,6 +3,7 @@ import { verifyToken, verifyAdmin } from '../middleware/auth.js';
 import {
   getStats,
   listUsers,
+  getUser,
   patchUserEstado,
   listReportes,
   patchReporteEstado,
@@ -17,6 +18,7 @@ router.use(verifyToken, verifyAdmin);
 
 router.get('/stats', getStats);
 router.get('/users', listUsers);
+router.get('/users/:id', getUser);
 router.patch('/users/:id/estado', patchUserEstado);
 router.get('/reportes', listReportes);
 router.patch('/reportes/:id/estado', marcarReporteRevisado);

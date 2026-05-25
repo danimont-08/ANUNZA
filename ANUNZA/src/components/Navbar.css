@@ -81,14 +81,16 @@
 }
 
 .anunza-navbar-logout {
-  background: var(--anunza-violet);
+  background: var(--btn-primary);
   color: #fff;
   border: none;
   padding: 0.45rem 1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
   font-size: 0.9rem;
+  transition: opacity 0.2s, transform 0.15s;
 }
+.anunza-navbar-logout:hover { opacity: 0.92; transform: translateY(-1px); }
 
 .anunza-navbar-logout:hover {
   filter: brightness(1.05);
@@ -98,6 +100,61 @@
   .anunza-navbar-name {
     display: none;
   }
+  .anunza-navbar-logout {
+    padding: 0.4rem 0.65rem;
+    font-size: 0.8rem;
+  }
+  /* Admin/Moderador link más compacto en móvil */
+  .anunza-admin-link {
+    font-size: 0.78rem;
+    padding: 0.28rem 0.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .anunza-navbar-inner {
+    padding: 0.45rem 0.65rem;
+    gap: 0.35rem;
+  }
+  .anunza-navbar-logo {
+    height: 32px;
+  }
+  .anunza-navbar-actions {
+    gap: 0.3rem;
+  }
+  /* NO ocultar el link admin — solo hacerlo más pequeño */
+  .anunza-admin-link {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.4rem;
+  }
+  .anunza-navbar-logout {
+    padding: 0.3rem 0.45rem;
+    font-size: 0.72rem;
+    border-radius: 6px;
+  }
+  .anunza-notif-btn {
+    padding: 5px 5px;
+    font-size: 18px;
+  }
+  .anunza-navbar-avatar {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 360px) {
+  .anunza-navbar-inner {
+    padding: 0.4rem 0.5rem;
+    gap: 0.25rem;
+  }
+  .anunza-navbar-logo { height: 28px; }
+  .anunza-admin-link { display: none; }
+  .anunza-navbar-logout {
+    padding: 0.28rem 0.4rem;
+    font-size: 0.7rem;
+  }
+  .anunza-notif-btn { padding: 4px; font-size: 16px; }
+  .anunza-navbar-avatar { width: 26px; height: 26px; }
 }
 
 /* Botón de notificaciones (campanita) */

@@ -114,8 +114,27 @@
 .sidebar-nav li {
   padding: 15px 20px;
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.2s, color 0.2s;
   border-left: 4px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.nav-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--anunza-midnight, #2f086d);
+}
+
+.nav-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar-nav li.active .nav-icon {
+  color: #8A4EFF;
 }
 
 .sidebar-nav li:hover {
@@ -142,6 +161,15 @@
   top: 70px;
   right: max(calc(50% - 600px + 16px), 16px);
   z-index: 400;
+}
+
+@media (max-width: 480px) {
+  /* En móvil: el panel de notificaciones sale del wrapper y se posiciona con CSS propio */
+  .notif-panel-wrapper {
+    top: 61px;
+    right: 0;
+    left: 0;
+  }
 }
 
 
@@ -308,18 +336,20 @@
 }
 
 .view-more-btn {
-  background-color: #007bff;
+  background: var(--btn-primary);
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.3s;
+  font-weight: 600;
+  transition: opacity 0.2s, transform 0.15s;
 }
 
 .view-more-btn:hover {
-  background-color: #0056b3;
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
 /* Recent Activity */
@@ -351,8 +381,24 @@
 @media (max-width: 768px) {
   .dashboard-body {
     flex-direction: column;
-    padding: 10px 10px 80px; /* espacio inferior para la barra de navegación */
+    padding: 8px 8px 68px; /* espacio inferior para la barra de navegación */
   }
+
+  /* Welcome section más compacta en móvil */
+  .welcome-section {
+    padding: 20px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .welcome-section h1 { font-size: 20px; }
+  .welcome-section p  { font-size: 14px; }
+
+  /* Grids de stats/anuncios con mínimo más pequeño */
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .ads-grid   { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+
+  /* Evitar que servicios-section desborde */
+  .services-section { overflow: hidden; }
 
   /* El sidebar se convierte en nav bottom */
   .sidebar {
@@ -369,6 +415,7 @@
     box-shadow: 0 -2px 12px rgba(47, 8, 109, 0.12);
     z-index: 50;
     overflow: visible;
+    background: #fff;
   }
 
   .sidebar-nav ul {
@@ -378,22 +425,54 @@
 
   .sidebar-nav li {
     flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    padding: 10px 4px;
-    font-size: 0.75rem;
+    padding: 7px 4px 5px;
+    font-size: 0.65rem;
     border-left: none;
     border-top: 3px solid transparent;
+    gap: 0.15rem;
+    min-height: 54px;
+  }
+
+  .nav-label {
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-icon svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.75;
+  }
+
+  .sidebar-nav li.active .nav-icon svg {
+    stroke: #8A4EFF;
   }
 
   .sidebar-nav li.active {
     border-left: none;
     border-top-color: #8A4EFF;
     background-color: #f0e9ff;
+    color: #8A4EFF;
   }
 
   .sidebar-nav li:hover {
     border-left: none;
     border-top-color: #8A4EFF;
+  }
+
+  /* iPhone home bar */
+  .sidebar {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 
@@ -403,13 +482,62 @@
     grid-template-columns: 1fr;
   }
 
-  .navbar-actions {
-    flex-direction: column;
-    gap: 10px;
-  }
-
   .profile-menu span {
     display: none;
+  }
+
+  .dashboard-body {
+    padding: 6px 6px 68px;
+  }
+
+  .sidebar-nav li {
+    padding: 6px 2px 4px;
+    font-size: 0.6rem;
+    min-height: 50px;
+  }
+
+  .nav-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 360px) {
+  .sidebar-nav li {
+    padding: 5px 1px 3px;
+    font-size: 0.55rem;
+    min-height: 46px;
+  }
+
+  .nav-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .dashboard-body {
+    padding: 4px 4px 64px;
+  }
+}
+
+/* ── Modo mensajes: bloquear scroll de página ── */
+body:has(.dashboard-body--chat) {
+  overflow: hidden;
+}
+
+/* Teclado abierto en móvil: ocultar barra inferior y ajustar chat */
+@media (max-width: 768px) {
+  body.keyboard-open .sidebar {
+    display: none !important;
+  }
+
+  body.keyboard-open .dashboard-body {
+    padding-bottom: 8px !important;
+  }
+
+  body.keyboard-open .chat-layout {
+    /* Sin barra inferior: el chat ocupa hasta el teclado (dvh ya lo excluye) */
+    height: calc(100vh - 61px) !important;
+    height: calc(100dvh - 61px) !important;
   }
 }
 /* Sección de Perfil */
@@ -457,19 +585,20 @@
 }
 
 .edit-button {
-  background: #8A4EFF;
+  background: var(--btn-primary);
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 5px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  transition: background 0.3s;
+  transition: opacity 0.2s, transform 0.15s;
   margin-left: 20px;
 }
 
 .edit-button:hover {
-  background: #7442d9;
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
 .profile-actions {
@@ -533,18 +662,19 @@
 }
 
 .save-button {
-  background: #8A4EFF;
+  background: var(--btn-primary);
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 5px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  transition: background 0.3s;
+  transition: opacity 0.2s, transform 0.15s;
 }
 
 .save-button:hover {
-  background: #7442d9;
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
 .cancel-button {
@@ -584,18 +714,19 @@
 }
 
 .refresh-button {
-  background: #8A4EFF;
+  background: var(--btn-primary);
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 5px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  transition: background 0.3s;
+  transition: opacity 0.2s, transform 0.15s;
 }
 
 .refresh-button:hover:not(:disabled) {
-  background: #7442d9;
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
 .refresh-button:disabled {

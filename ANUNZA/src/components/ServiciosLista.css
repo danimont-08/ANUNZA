@@ -4,6 +4,16 @@
   gap: 20px;
 }
 
+@media (max-width: 480px) {
+  .servicios-lista {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .servicio-img { height: 160px; }
+  .servicio-body { padding: 14px; }
+  .servicio-header h3 { font-size: 16px; }
+}
+
 .servicio-card {
   background-color: #fff;
   border-radius: 14px;

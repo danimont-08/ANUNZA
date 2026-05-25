@@ -93,7 +93,13 @@ try {
             WHERE i2.publicacion_id = p.id
               AND i2.usuario_id = $1
               AND i2.tipo = 'me_gusta'
-          ) AS user_liked
+          ) AS user_liked,
+          EXISTS (
+            SELECT 1 FROM interacciones i3
+            WHERE i3.publicacion_id = p.id
+              AND i3.usuario_id = $1
+              AND i3.tipo = 'guardado'
+          ) AS user_guardado
         FROM publicaciones p
         INNER JOIN usuarios u ON u.id = p.usuario_id
         LEFT JOIN categorias cat ON cat.id = p.categoria_id
@@ -324,6 +330,29 @@ export const toggleLike = async (req, res) => {
     res.json({ liked: true, interacciones_count: count.rows[0].c });
   } catch (error) {
     console.error('toggleLike:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const toggleGuardar = async (req, res) => {
+  const userId = req.userId;
+  const { publicacionId } = req.params;
+  try {
+    const existing = await pool.query(
+      `SELECT id FROM interacciones WHERE usuario_id = $1 AND publicacion_id = $2 AND tipo = 'guardado'`,
+      [userId, publicacionId]
+    );
+    if (existing.rows.length > 0) {
+      await pool.query(`DELETE FROM interacciones WHERE id = $1`, [existing.rows[0].id]);
+      return res.json({ guardado: false });
+    }
+    await pool.query(
+      `INSERT INTO interacciones (usuario_id, publicacion_id, tipo) VALUES ($1, $2, 'guardado')`,
+      [userId, publicacionId]
+    );
+    res.json({ guardado: true });
+  } catch (error) {
+    console.error('toggleGuardar:', error);
     res.status(500).json({ message: error.message });
   }
 };

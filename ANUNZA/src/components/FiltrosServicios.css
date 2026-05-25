@@ -29,7 +29,7 @@
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
-  font-size: 15px;
+  font-size: 1rem;
   color: #111827;
 }
 
@@ -72,4 +72,31 @@
 
 .rating-group button:hover {
   background-color: #c7d2fe;
+}
+
+@media (max-width: 768px) {
+  .filtros-servicios {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .filtros-servicios h2 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .filtro-group {
+    margin-bottom: 12px;
+  }
+
+  .filtro-group input,
+  .filtro-group select {
+    font-size: 1rem;
+    padding: 8px 10px;
+  }
+
+  .rating-group button {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
 }

@@ -9,3 +9,10 @@
   font-size: 16px;
   margin-top: 20px;
 }
+
+@media (max-width: 480px) {
+  .lista-servicios {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}

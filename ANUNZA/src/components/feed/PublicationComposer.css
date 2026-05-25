@@ -127,14 +127,41 @@
   margin-top: 0.5rem;
   padding: 0.75rem;
   border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--anunza-violet), var(--anunza-midnight));
+  border-radius: 10px;
+  background: var(--btn-primary);
   color: #fff;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
 }
+.pc-submit:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
 
 .pc-submit:disabled {
   opacity: 0.6;
   cursor: wait;
+}
+
+@media (max-width: 480px) {
+  .pc-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  /* Evita zoom en iOS */
+  .pc-label input,
+  .pc-label select,
+  .pc-label textarea {
+    font-size: 1rem;
+  }
+
+  .pc-submit {
+    padding: 0.85rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .pc-card { padding: 0.75rem; border-radius: 10px; }
+  .pc-title { font-size: 1rem; }
+  .pc-prev { width: 72px; height: 72px; }
 }
