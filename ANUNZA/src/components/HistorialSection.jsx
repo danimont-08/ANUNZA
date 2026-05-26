@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../services/api';
+import { formatCOP } from '../utils/format';
 import './HistorialSection.css';
 
 /** Parsea la descripción que puede ser texto plano o JSON {"text":"..."}. */
@@ -130,7 +131,7 @@ export function HistorialSection({ onNavigateToPost }) {
                 </button>
                 {p.precio != null && Number(p.precio) > 0 && (
                   <span className="hist-meta">
-                    Desde {Number(p.precio).toLocaleString('es-CO')}
+                    Desde {formatCOP(p.precio)}
                   </span>
                 )}
                 {p.guardado_en && (

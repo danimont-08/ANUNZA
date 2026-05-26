@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { apiFetch } from '../services/api';
+import { apiFetch, getStoredToken } from '../services/api';
 import { UserPublicProfileModal } from './UserPublicProfileModal';
-import { supabase } from '../services/supabaseClient';
+import { connectSocket, getSocket, disconnectSocket } from '../services/socket';
 import { ReportModal } from './feed/ReportModal';
 import { IconFlag, IconUserX } from './icons';
 import { DEFAULT_AVATAR } from '../utils/constants';
@@ -148,32 +148,45 @@ export function ChatSection({
     loadMensajes(activeId);
   }, [activeId, loadMensajes]);
 
+  // Conectar socket al montar, desconectar al desmontar
   useEffect(() => {
-    if (!activeId || !supabase) return;
+    const token = getStoredToken();
+    if (!token) return;
+    connectSocket(token);
+    return () => disconnectSocket();
+  }, []);
 
-    const channel = supabase
-      .channel(`mensajes:${activeId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'mensajes',
-          filter: `conversacion_id=eq.${activeId}`,
-        },
-        () => {
-          loadMensajes(activeId);
-        }
-      )
-      .subscribe();
+  // Unirse al room de la conversación activa y escuchar mensajes nuevos
+  useEffect(() => {
+    if (!activeId) return;
+    const socket = getSocket();
+    if (!socket) return;
 
-    const poll = setInterval(() => loadMensajes(activeId), 5000);
+    const joinRoom = () => socket.emit('join_conversation', activeId);
+    if (socket.connected) joinRoom();
+    socket.on('connect', joinRoom);
+
+    const onNewMessage = ({ mensaje }) => {
+      setMensajes((prev) =>
+        prev.some((m) => m.id === mensaje.id) ? prev : [...prev, mensaje]
+      );
+      setConversaciones((prev) =>
+        prev.map((c) =>
+          c.id === mensaje.conversacion_id
+            ? { ...c, ultimo_mensaje: mensaje.contenido }
+            : c
+        )
+      );
+    };
+
+    socket.on('new_message', onNewMessage);
 
     return () => {
-      clearInterval(poll);
-      supabase.removeChannel(channel);
+      socket.emit('leave_conversation', activeId);
+      socket.off('connect', joinRoom);
+      socket.off('new_message', onNewMessage);
     };
-  }, [activeId, loadMensajes]);
+  }, [activeId]);
 
   useEffect(() => {
     // scrollToBottom ya verifica internamente si el teclado está abierto
@@ -185,11 +198,11 @@ export function ChatSection({
     if (!text || !activeId) return;
     setDraft('');
     try {
-      const data = await apiFetch(`/chat/conversaciones/${activeId}/mensajes`, {
+      await apiFetch(`/chat/conversaciones/${activeId}/mensajes`, {
         method: 'POST',
         body: JSON.stringify({ contenido: text, tipo: 'texto' }),
       });
-      setMensajes((m) => [...m, data.mensaje]);
+      // El socket emite 'new_message' al room, incluyendo al remitente
     } catch (e) {
       setError(e.message);
       setDraft(text);

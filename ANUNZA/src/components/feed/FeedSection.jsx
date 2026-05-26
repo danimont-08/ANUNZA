@@ -124,21 +124,8 @@ export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHi
     }
   }, [highlightPublicacionId, loading, onHighlightConsumed]);
 
-  const handleFilterChange = (patch) => {
-    setFilters((f) => ({ ...f, ...patch }));
-    setLoading(true);
-  };
-
-  const clearFilters = () => {
-    setFilters({ 
-      categoria: '', 
-      subcategoria: '',
-      ciudad: '',
-      precioMin: '',
-      precioMax: '',
-      calificacionMin: ''
-    });
-    setLoading(true);
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
   };
 
   if (loading && items.length === 0 && !error) {
@@ -240,7 +227,6 @@ export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHi
       </button>
       <div className={`feed-filters-panel${showFilters ? ' is-open' : ''}`}>
         <FiltrosServicios
-          filtros={filters}
           onChange={handleFilterChange}
         />
       </div>

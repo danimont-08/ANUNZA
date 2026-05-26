@@ -14,7 +14,8 @@ import {
   IconShare, IconBookmark, IconFlag, IconAlertUser, IconDots,
 } from '../icons';
 import { DEFAULT_AVATAR } from '../../utils/constants';
-import { formatDate } from '../../utils/format';
+import { formatDate, formatCOP } from '../../utils/format';
+import { useToast } from '../Toast';
 import './PublicationCard.css';
 import './DestacarModal.css';
 
@@ -34,6 +35,7 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
   const [openMenu, setOpenMenu]             = useState(false);
   const [isGuardado, setIsGuardado]         = useState(p.user_guardado ?? false);
   const [guardandoLoading, setGuardandoLoading] = useState(false);
+  const { showToast, ToastEl } = useToast();
   const menuRef = useRef(null);
 
   const destacadaActiva = isDestacadaActiva(p);
@@ -96,6 +98,7 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
     try {
       const data = await toggleGuardarPublicacion(p.id);
       setIsGuardado(data.guardado);
+      showToast(data.guardado ? 'Publicación guardada' : 'Eliminada de guardados', data.guardado ? 'success' : 'info');
     } catch (e) {
       onError(e.message);
     } finally {
@@ -218,7 +221,7 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
 
       {p.precio != null && Number(p.precio) > 0 && (
         <p className="pub-price">
-          Desde <strong>{Number(p.precio).toLocaleString('es-CO')}</strong>
+          Desde <strong>{formatCOP(p.precio)}</strong>
         </p>
       )}
 
@@ -360,6 +363,7 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
           onClose={() => setProfileUserId(null)}
         />
       )}
+      {ToastEl}
     </article>
   );
 });

@@ -1,4 +1,5 @@
 import { pool } from '../config/database.js';
+import { getIo } from '../socket.js';
 
 async function findExistingDmConversation(userA, userB) {
   const { rows } = await pool.query(
@@ -271,7 +272,12 @@ export const sendMessage = async (req, res) => {
       }
     } catch { /* no bloquear la respuesta */ }
 
-    res.status(201).json({ mensaje: { ...rows[0], ...u.rows[0] } });
+    const fullMsg = { ...rows[0], ...u.rows[0] };
+
+    // Emitir en tiempo real a todos los participantes del room
+    getIo()?.to(`conv:${conversacionId}`).emit('new_message', { mensaje: fullMsg });
+
+    res.status(201).json({ mensaje: fullMsg });
   } catch (error) {
     console.error('sendMessage:', error);
     res.status(500).json({ message: error.message });

@@ -173,7 +173,7 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
 
       {tipo === 'ofrezco' && <div className={`pc-extra ${agregarServicio ? 'is-open' : ''}`}>
         <label className="pc-label">
-          Precio (opcional)
+          Precio en COP (opcional)
           <input
             type="number"
             min="0"

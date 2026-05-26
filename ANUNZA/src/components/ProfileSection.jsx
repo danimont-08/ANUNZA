@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { PlanPremiumModal } from './PlanPremiumModal';
 import { fetchMiEstado } from '../models/pagosModel';
 import { apiFetch } from '../services/api';
 import { geolocateToCity, osmEmbedUrl } from '../utils/geolocate';
 import { DEFAULT_AVATAR } from '../utils/constants';
-import { formatDate } from '../utils/format';
+import { formatDate, formatCOP } from '../utils/format';
 import './ProfileSection.css';
 import '../pages/UserPublicProfile.css';
 
@@ -26,7 +25,7 @@ function PubCard({ pub, onClick }) {
         </div>
         <p className="upp2-pub-title">{pub.titulo}</p>
         {pub.precio != null && (
-          <p className="upp2-pub-price">${Number(pub.precio).toLocaleString('es-CO')}</p>
+          <p className="upp2-pub-price">{formatCOP(pub.precio)}</p>
         )}
         <div className="upp2-pub-stats">
           <span>♥ {pub.likes ?? 0}</span>
@@ -38,8 +37,7 @@ function PubCard({ pub, onClick }) {
   );
 }
 
-export function ProfileSection({ user, updateProfile, onError }) {
-  const navigate = useNavigate();
+export function ProfileSection({ user, updateProfile, onError, onNavigateToPost }) {
   const [editing, setEditing]               = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [miEstado, setMiEstado]             = useState(null);
@@ -311,7 +309,7 @@ export function ProfileSection({ user, updateProfile, onError }) {
                   <PubCard
                     key={pub.id}
                     pub={pub}
-                    onClick={() => navigate('/dashboard', { state: { openSection: 'inicio', highlightId: pub.id } })}
+                    onClick={() => onNavigateToPost?.(pub.id)}
                   />
                 ))}
               </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatCOP } from '../utils/format';
 import './ServiciosLista.css';
 
 /**
@@ -26,7 +27,7 @@ const ServiciosLista = ({ servicios }) => {
           <div className="servicio-body">
             <div className="servicio-header">
               <h3>{servicio.titulo}</h3>
-              <span className="servicio-price">${servicio.precio}</span>
+              <span className="servicio-price">{formatCOP(servicio.precio)}</span>
             </div>
             <p className="servicio-description">{servicio.descripcion}</p>
             <div className="servicio-meta">

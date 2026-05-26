@@ -2,12 +2,18 @@ import React, { useState } from 'react';
 import { enviarReporte } from '../../models/reporteModel';
 import './ReportModal.css';
 
+const IcSpam      = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>;
+const IcContent   = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
+const IcFraud     = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+const IcHarass    = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+const IcOther     = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+
 const MOTIVOS = [
-  { value: 'spam',        label: '📢 Spam o publicidad engañosa' },
-  { value: 'inapropiado', label: '🔞 Contenido inapropiado' },
-  { value: 'fraude',      label: '💸 Fraude o estafa' },
-  { value: 'acoso',       label: '⚠️ Acoso o intimidación' },
-  { value: 'otro',        label: '❓ Otro motivo' },
+  { value: 'spam',        label: 'Spam o publicidad engañosa',  Icon: IcSpam    },
+  { value: 'inapropiado', label: 'Contenido inapropiado',       Icon: IcContent },
+  { value: 'fraude',      label: 'Fraude o estafa',             Icon: IcFraud   },
+  { value: 'acoso',       label: 'Acoso o intimidación',        Icon: IcHarass  },
+  { value: 'otro',        label: 'Otro motivo',                 Icon: IcOther   },
 ];
 
 const TITULOS = {
@@ -66,16 +72,17 @@ export function ReportModal({ tipo = 'publicacion', targetId, targetLabel, onClo
             <form onSubmit={handleSubmit}>
               <fieldset className="report-motivos">
                 <legend>{LEYENDAS[tipo] ?? '¿Por qué realizas este reporte?'}</legend>
-                {MOTIVOS.map((m) => (
-                  <label key={m.value} className={`report-option ${motivo === m.value ? 'is-selected' : ''}`}>
+                {MOTIVOS.map(({ value, label, Icon }) => (
+                  <label key={value} className={`report-option ${motivo === value ? 'is-selected' : ''}`}>
                     <input
                       type="radio"
                       name="motivo"
-                      value={m.value}
-                      checked={motivo === m.value}
-                      onChange={() => setMotivo(m.value)}
+                      value={value}
+                      checked={motivo === value}
+                      onChange={() => setMotivo(value)}
                     />
-                    {m.label}
+                    <Icon />
+                    {label}
                   </label>
                 ))}
               </fieldset>

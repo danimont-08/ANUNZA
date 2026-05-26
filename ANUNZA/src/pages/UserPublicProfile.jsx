@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
 import { DEFAULT_AVATAR } from '../utils/constants';
-import { formatDate } from '../utils/format';
+import { formatDate, formatCOP } from '../utils/format';
 import logo from '../assets/Logo_Anunza.png';
 import '../components/Navbar.css';
 import './UserPublicProfile.css';
@@ -25,7 +25,7 @@ function PubCard({ pub, onClick }) {
         </div>
         <p className="upp2-pub-title">{pub.titulo}</p>
         {pub.precio != null && (
-          <p className="upp2-pub-price">${Number(pub.precio).toLocaleString('es-CO')}</p>
+          <p className="upp2-pub-price">{formatCOP(pub.precio)}</p>
         )}
         <div className="upp2-pub-stats">
           <span>♥ {pub.likes ?? 0}</span>

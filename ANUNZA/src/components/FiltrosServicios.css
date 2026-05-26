@@ -100,3 +100,47 @@
     font-size: 0.85rem;
   }
 }
+
+/* ── Botones de acción ── */
+.filtros-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.filtros-apply-btn {
+  flex: 1;
+  padding: 10px 16px;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.filtros-apply-btn:hover {
+  background: #6d28d9;
+}
+
+.filtros-apply-btn.has-changes {
+  background: #5b21b6;
+  box-shadow: 0 0 0 2px #c4b5fd;
+}
+
+.filtros-clear-btn {
+  padding: 10px 16px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.filtros-clear-btn:hover {
+  background: #e5e7eb;
+}

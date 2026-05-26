@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useCallback, useState } from 'react';
 import { apiFetch } from '../services/api';
 import { DEFAULT_AVATAR } from '../utils/constants';
-import { formatDate } from '../utils/format';
+import { formatDate, formatCOP } from '../utils/format';
 import './UserPublicProfileModal.css';
 
 function PubMiniCard({ pub }) {
@@ -19,7 +19,7 @@ function PubMiniCard({ pub }) {
         )}
         <p className="uppm-pub-title">{pub.titulo}</p>
         {pub.precio != null && (
-          <p className="uppm-pub-price">${Number(pub.precio).toLocaleString('es-CO')}</p>
+          <p className="uppm-pub-price">{formatCOP(pub.precio)}</p>
         )}
         <p className="uppm-pub-stats">♥ {pub.likes ?? 0} · 💬 {pub.comentarios_count ?? 0}</p>
       </div>

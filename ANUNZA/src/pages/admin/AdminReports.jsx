@@ -13,6 +13,7 @@ import { formatDate } from '../../utils/format';
 import { PublicationReviewModal } from '../../components/admin/PublicationReviewModal';
 import { UserReviewModal } from '../../components/admin/UserReviewModal';
 import { MensajeReviewModal } from '../../components/admin/MensajeReviewModal';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 const MOTIVO_LABEL = {
   spam: 'Spam',
@@ -53,6 +54,7 @@ export function AdminReports() {
   const [busyId, setBusyId] = useState(null);
   const [reviewReporte, setReviewReporte] = useState(null);
   const [tab, setTab] = useState('todos');
+  const [confirm, setConfirm] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,7 +98,7 @@ export function AdminReports() {
     try {
       await apiDescartarReporte(id);
       if (closeModal) setReviewReporte(null);
-      await load();
+      setReportes((prev) => prev.filter((r) => r.id !== id));
     } catch (e) {
       setError(e.message || 'Error al descartar reporte');
     } finally {
@@ -104,47 +106,59 @@ export function AdminReports() {
     }
   };
 
-  const handlePublicacion = async (publicacionId, estado) => {
-    const confirmMsg =
+  const handlePublicacion = (publicacionId, estado) => {
+    const msg =
       estado === 'eliminado' ? '¿Eliminar permanentemente esta publicación? Esta acción no se puede deshacer.'
       : estado === 'oculto'  ? '¿Ocultar esta publicación?'
       : estado === 'activo'  ? '¿Restaurar esta publicación?'
       : `¿Aplicar "${estado}" a esta publicación?`;
-    if (!window.confirm(confirmMsg)) return;
-
-    setBusyId(`p-${publicacionId}`);
-    try {
-      await apiPatchPublicacion(publicacionId, estado);
-      if (estado === 'eliminado') {
-        setReviewReporte(null);
-      } else {
-        setReviewReporte(prev =>
-          prev?.objeto_id === publicacionId ? { ...prev, publicacion_estado: estado } : prev
-        );
-      }
-      await load();
-    } catch (e) {
-      setError(e.message || 'Error al moderar publicación');
-    } finally {
-      setBusyId(null);
-    }
+    setConfirm({
+      message: msg,
+      danger: estado === 'eliminado',
+      confirmLabel: estado === 'eliminado' ? 'Eliminar' : estado === 'oculto' ? 'Ocultar' : 'Restaurar',
+      action: async () => {
+        setBusyId(`p-${publicacionId}`);
+        try {
+          await apiPatchPublicacion(publicacionId, estado);
+          if (estado === 'eliminado') {
+            setReviewReporte(null);
+            setReportes((prev) => prev.filter((r) => r.objeto_id !== publicacionId));
+          } else {
+            setReviewReporte((prev) =>
+              prev?.objeto_id === publicacionId ? { ...prev, publicacion_estado: estado } : prev
+            );
+          }
+        } catch (e) {
+          setError(e.message || 'Error al moderar publicación');
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   };
 
-  const handleUsuario = async (usuarioId, estado) => {
-    const confirmMsg = estado === 'suspendido' ? '¿Suspender este usuario?' : '¿Restaurar este usuario?';
-    if (!window.confirm(confirmMsg)) return;
-
-    setBusyId(`u-${usuarioId}`);
-    try {
-      await apiPatchUsuario(usuarioId, estado);
-      setReviewReporte(prev => prev ? { ...prev, usuario_estado: estado } : prev);
-      setReviewReporte(null);
-      await load();
-    } catch (e) {
-      setError(e.message || 'Error al moderar usuario');
-    } finally {
-      setBusyId(null);
-    }
+  const handleUsuario = (usuarioId, estado) => {
+    setConfirm({
+      message: estado === 'suspendido' ? '¿Suspender este usuario?' : '¿Restaurar este usuario?',
+      danger: estado === 'suspendido',
+      confirmLabel: estado === 'suspendido' ? 'Suspender' : 'Restaurar',
+      action: async () => {
+        setBusyId(`u-${usuarioId}`);
+        try {
+          await apiPatchUsuario(usuarioId, estado);
+          setReviewReporte(null);
+          setReportes((prev) =>
+            prev.map((r) =>
+              r.usuario_id === usuarioId ? { ...r, usuario_estado: estado } : r
+            )
+          );
+        } catch (e) {
+          setError(e.message || 'Error al moderar usuario');
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   };
 
   const modalBusy = !!busyId;
@@ -285,6 +299,16 @@ export function AdminReports() {
           onClose={() => setReviewReporte(null)}
           onPatchReporte={(id) => handleDescartarReporte(id, { closeModal: true })}
           onPatchUsuario={handleUsuario}
+        />
+      )}
+
+      {confirm && (
+        <ConfirmDialog
+          message={confirm.message}
+          confirmLabel={confirm.confirmLabel}
+          danger={confirm.danger}
+          onConfirm={() => { const fn = confirm.action; setConfirm(null); fn(); }}
+          onCancel={() => setConfirm(null)}
         />
       )}
     </>

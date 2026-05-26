@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { fetchAdminUsers, patchUserEstado } from '../../models/adminModel';
 import { UserProfilePanel } from '../../components/admin/UserProfilePanel';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 function Badge({ estado }) {
   const cls = `admin-badge admin-badge--${estado || 'activo'}`;
@@ -23,6 +24,7 @@ export function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState(null);
   const [profileUserId, setProfileUserId] = useState(null);
+  const [confirm, setConfirm] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,14 +47,18 @@ export function AdminUsers() {
     return () => clearTimeout(t);
   }, [load]);
 
-  const handleEstado = async (userId, nuevoEstado) => {
-    const msg = nuevoEstado === 'suspendido' ? '¿Suspender esta cuenta?' : '¿Reactivar esta cuenta?';
-    if (!window.confirm(msg)) return;
+  const handleEstado = (userId, nuevoEstado) => {
+    setConfirm({ userId, nuevoEstado });
+  };
+
+  const doEstado = async () => {
+    const { userId, nuevoEstado } = confirm;
+    setConfirm(null);
     setActionId(userId);
     try {
       if (nuevoEstado === 'suspendido') await apiSuspender(userId);
       else await apiReactivar(userId);
-      await load();
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, estado: nuevoEstado } : u));
     } catch (e) {
       setError(e.message || 'Error al actualizar usuario');
     } finally {
@@ -168,6 +174,18 @@ export function AdminUsers() {
           userId={profileUserId}
           canActOn={true}
           onClose={() => { setProfileUserId(null); load(); }}
+          onEstadoChange={(id, estado) =>
+            setUsers((prev) => prev.map((u) => u.id === id ? { ...u, estado } : u))
+          }
+        />
+      )}
+      {confirm && (
+        <ConfirmDialog
+          message={confirm.nuevoEstado === 'suspendido' ? '¿Suspender esta cuenta?' : '¿Reactivar esta cuenta?'}
+          confirmLabel={confirm.nuevoEstado === 'suspendido' ? 'Suspender' : 'Reactivar'}
+          danger={confirm.nuevoEstado === 'suspendido'}
+          onConfirm={doEstado}
+          onCancel={() => setConfirm(null)}
         />
       )}
     </>

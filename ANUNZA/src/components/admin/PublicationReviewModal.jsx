@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MediaCarousel } from '../feed/MediaCarousel';
 import { fetchAdminPublicacion as defaultFetchPublicacion } from '../../models/adminModel';
 import { DEFAULT_AVATAR } from '../../utils/constants';
-import { formatDate } from '../../utils/format';
+import { formatDate, formatCOP } from '../../utils/format';
 import './PublicationReviewModal.css';
 
 const MOTIVO_LABEL = {
@@ -130,7 +130,7 @@ export function PublicationReviewModal({
                 )}
                 {publicacion.precio != null && (
                   <span className="admin-review-chip admin-review-chip--price">
-                    ${Number(publicacion.precio).toLocaleString('es-CO')}
+                    {formatCOP(publicacion.precio)}
                   </span>
                 )}
               </div>

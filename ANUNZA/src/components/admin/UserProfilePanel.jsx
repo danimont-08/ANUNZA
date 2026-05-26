@@ -1,7 +1,8 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { fetchAdminUsuario, fetchAdminUserPublicaciones, patchUserEstado } from '../../models/adminModel';
 import { DEFAULT_AVATAR } from '../../utils/constants';
-import { formatDate } from '../../utils/format';
+import { formatDate, formatCOP } from '../../utils/format';
+import { ConfirmDialog } from '../ConfirmDialog';
 import './UserProfilePanel.css';
 
 function PubCard({ pub }) {
@@ -20,7 +21,7 @@ function PubCard({ pub }) {
         </div>
         <p className="upp-pub-title">{pub.titulo}</p>
         {pub.precio != null && (
-          <p className="upp-pub-price">${Number(pub.precio).toLocaleString('es-CO')}</p>
+          <p className="upp-pub-price">{formatCOP(pub.precio)}</p>
         )}
         <p className="upp-pub-meta">
           {pub.tipo === 'busco' ? 'Busco' : 'Ofrezco'}
@@ -35,13 +36,14 @@ function PubCard({ pub }) {
   );
 }
 
-export function UserProfilePanel({ userId, onClose, canActOn = true }) {
+export function UserProfilePanel({ userId, onClose, canActOn = true, onEstadoChange }) {
   const [usuario, setUsuario] = useState(null);
   const [pubs, setPubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingPubs, setLoadingPubs] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(null);
 
   const loadUser = useCallback(async () => {
     setLoading(true);
@@ -76,13 +78,16 @@ export function UserProfilePanel({ userId, onClose, canActOn = true }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const handleEstado = async (nuevoEstado) => {
-    const msg = nuevoEstado === 'suspendido' ? '¿Suspender esta cuenta?' : '¿Reactivar esta cuenta?';
-    if (!window.confirm(msg)) return;
+  const handleEstado = (nuevoEstado) => setConfirm(nuevoEstado);
+
+  const doEstado = async () => {
+    const nuevoEstado = confirm;
+    setConfirm(null);
     setBusy(true);
     try {
       await patchUserEstado(userId, nuevoEstado);
-      await loadUser();
+      setUsuario((prev) => ({ ...prev, estado: nuevoEstado }));
+      onEstadoChange?.(userId, nuevoEstado);
     } catch (e) {
       setError(e.message || 'Error al actualizar usuario');
     } finally {
@@ -186,6 +191,15 @@ export function UserProfilePanel({ userId, onClose, canActOn = true }) {
           )}
         </div>
       </div>
+      {confirm && (
+        <ConfirmDialog
+          message={confirm === 'suspendido' ? '¿Suspender esta cuenta?' : '¿Reactivar esta cuenta?'}
+          confirmLabel={confirm === 'suspendido' ? 'Suspender' : 'Reactivar'}
+          danger={confirm === 'suspendido'}
+          onConfirm={doEstado}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
     </div>
   );
 }

@@ -198,7 +198,15 @@ export const Dashboard = () => {
             />
           )}
           {activeSection === 'perfil' && (
-            <ProfileSection user={user} updateProfile={updateProfile} onError={setProfileError} />
+            <ProfileSection
+              user={user}
+              updateProfile={updateProfile}
+              onError={setProfileError}
+              onNavigateToPost={(id) => {
+                setFeedHighlightId(id);
+                setActiveSection('inicio');
+              }}
+            />
           )}
         </main>
       </div>
