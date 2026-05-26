@@ -48,3 +48,18 @@ export async function addComentarioApi(publicacionId, contenido) {
 export async function toggleGuardarPublicacion(publicacionId) {
   return apiFetch(`/feed/publicaciones/${publicacionId}/guardar`, { method: 'POST' });
 }
+
+export async function deletePublicacion(publicacionId) {
+  return apiFetch(`/feed/publicaciones/${publicacionId}`, { method: 'DELETE' });
+}
+
+export async function toggleComentarioLike(comentarioId) {
+  return apiFetch(`/feed/comentarios/${comentarioId}/like`, { method: 'POST' });
+}
+
+export async function addRespuesta(publicacionId, contenido, parentId) {
+  return apiFetch(`/feed/publicaciones/${publicacionId}/comentarios`, {
+    method: 'POST',
+    body: JSON.stringify({ contenido, parent_id: parentId }),
+  });
+}

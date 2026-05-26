@@ -109,6 +109,10 @@ export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHi
     );
   };
 
+  const handleDelete = (publicacionId) => {
+    setItems((prev) => prev.filter((p) => p.id !== publicacionId));
+  };
+
   // Scroll y resaltado al publicación desde notificación
   useEffect(() => {
     if (!highlightPublicacionId || loading) return;
@@ -241,9 +245,10 @@ export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHi
               p={p}
               currentUserId={user?.id}
               onToggleLike={handleToggleLike}
-              onOpenChat={(uid, pubId) => onChatWithUser(uid, pubId)}
+              onOpenChat={(uid, pubId, titulo) => onChatWithUser(uid, pubId, titulo)}
               onError={setError}
               onDestacar={handleDestacar}
+              onDelete={handleDelete}
             />
           </div>
         ))}

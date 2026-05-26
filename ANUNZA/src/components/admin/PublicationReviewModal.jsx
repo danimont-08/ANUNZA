@@ -55,16 +55,17 @@ export function PublicationReviewModal({
   const pubEstado = reporte.publicacion_estado || publicacion?.estado || 'activo';
 
   return (
-    <div className="admin-review-backdrop" role="presentation">
+    <div className="admin-review-backdrop" role="presentation" onClick={onClose}>
       <div
         className="admin-review-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="admin-review-title"
+        onClick={(e) => e.stopPropagation()}
       >
         <header className="admin-review-head">
           <h2 id="admin-review-title">Revisar publicación reportada</h2>
-          <span className="admin-review-decision-badge">Se requiere una decisión</span>
+          <button type="button" className="admin-review-close" onClick={onClose} aria-label="Cerrar">✕</button>
         </header>
 
         <div className="admin-review-body">
@@ -164,7 +165,6 @@ export function PublicationReviewModal({
         </div>
 
         <footer className="admin-review-foot">
-          <p className="admin-review-foot-hint">Elige una acción para cerrar este reporte:</p>
           <div className="admin-review-foot-actions">
             {onPatchReporte && (
               <button

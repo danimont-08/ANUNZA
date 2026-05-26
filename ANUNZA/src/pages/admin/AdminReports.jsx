@@ -54,20 +54,21 @@ export function AdminReports() {
   const [busyId, setBusyId] = useState(null);
   const [reviewReporte, setReviewReporte] = useState(null);
   const [tab, setTab] = useState('todos');
+  const [estadoFiltro, setEstadoFiltro] = useState('pendiente');
   const [confirm, setConfirm] = useState(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (estado = estadoFiltro) => {
     setLoading(true);
     setError('');
     try {
-      const data = await apiFetchReportes();
+      const data = await apiFetchReportes(estado);
       setReportes(data.reportes || []);
     } catch (e) {
       setError(e.message || 'Error al cargar reportes');
     } finally {
       setLoading(false);
     }
-  }, [apiFetchReportes]);
+  }, [apiFetchReportes, estadoFiltro]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -167,6 +168,24 @@ export function AdminReports() {
     <>
       <h1 className="admin-section-title">Reportes</h1>
       {error && <p className="admin-error">{error}</p>}
+
+      {/* Filtro pendientes / revisados */}
+      <div className="admin-report-estado-bar">
+        <button
+          type="button"
+          className={`admin-report-estado-btn${estadoFiltro === 'pendiente' ? ' is-active' : ''}`}
+          onClick={() => setEstadoFiltro('pendiente')}
+        >
+          Pendientes
+        </button>
+        <button
+          type="button"
+          className={`admin-report-estado-btn${estadoFiltro === 'revisado' ? ' is-active' : ''}`}
+          onClick={() => setEstadoFiltro('revisado')}
+        >
+          Revisados
+        </button>
+      </div>
 
       {/* Tabs de agrupación */}
       <div className="admin-report-tabs">

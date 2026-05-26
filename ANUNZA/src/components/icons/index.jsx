@@ -67,6 +67,24 @@ export const IconDots = ({ size = 18 }) => (
   </svg>
 );
 
+export const IconTrash = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <polyline points="3 6 5 6 21 6"/>
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+    <path d="M10 11v6"/>
+    <path d="M14 11v6"/>
+    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+  </svg>
+);
+
+export const IconLogout = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+    <polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+);
+
 export const IconUserX = ({ size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>

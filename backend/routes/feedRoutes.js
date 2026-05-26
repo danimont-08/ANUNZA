@@ -4,10 +4,12 @@ import {
   getFeed,
   getCategorias,
   createPublication,
+  deletePublication,
   toggleLike,
   toggleGuardar,
   getComentarios,
   addComentario,
+  toggleComentarioLike,
 } from '../controllers/feedController.js';
 import {
   getResenas,
@@ -22,8 +24,10 @@ router.post('/publicaciones', verifyToken, verifyActiveAccount, createPublicatio
 router.get('/', verifyToken, verifyActiveAccount, getFeed);
 router.post('/publicaciones/:publicacionId/like', verifyToken, verifyActiveAccount, toggleLike);
 router.post('/publicaciones/:publicacionId/guardar', verifyToken, verifyActiveAccount, toggleGuardar);
+router.delete('/publicaciones/:publicacionId', verifyToken, verifyActiveAccount, deletePublication);
 router.get('/publicaciones/:publicacionId/comentarios', verifyToken, verifyActiveAccount, getComentarios);
 router.post('/publicaciones/:publicacionId/comentarios', verifyToken, verifyActiveAccount, addComentario);
+router.post('/comentarios/:comentarioId/like', verifyToken, verifyActiveAccount, toggleComentarioLike);
 router.get('/publicaciones/:publicacionId/resenas/eligibilidad', verifyToken, verifyActiveAccount, getResenaEligibilidad);
 router.get('/publicaciones/:publicacionId/resenas', verifyToken, verifyActiveAccount, getResenas);
 router.post('/publicaciones/:publicacionId/resenas', verifyToken, verifyActiveAccount, addResena);

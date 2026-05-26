@@ -361,16 +361,21 @@ export const toggleGuardar = async (req, res) => {
 };
 
 export const getComentarios = async (req, res) => {
+  const userId = req.userId;
   const { publicacionId } = req.params;
   try {
     const { rows } = await pool.query(
-      `SELECT c.id, c.contenido, c.created_at, c.usuario_id,
-              u.nombre AS autor_nombre, u.foto_perfil AS autor_foto
+      `SELECT c.id, c.contenido, c.created_at, c.usuario_id, c.parent_id,
+              u.nombre AS autor_nombre, u.foto_perfil AS autor_foto,
+              COALESCE(lk.likes, 0)::int AS likes,
+              EXISTS(SELECT 1 FROM comentario_likes cl WHERE cl.comentario_id = c.id AND cl.usuario_id = $2) AS user_liked
        FROM comentarios c
        INNER JOIN usuarios u ON u.id = c.usuario_id
+       LEFT JOIN (SELECT comentario_id, COUNT(*)::int AS likes FROM comentario_likes GROUP BY comentario_id) lk
+         ON lk.comentario_id = c.id
        WHERE c.publicacion_id = $1
        ORDER BY c.created_at ASC`,
-      [publicacionId]
+      [publicacionId, userId]
     );
     res.json({ comentarios: rows });
   } catch (error) {
@@ -379,10 +384,54 @@ export const getComentarios = async (req, res) => {
   }
 };
 
+export const deletePublication = async (req, res) => {
+  const userId = req.userId;
+  const { publicacionId } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `SELECT usuario_id FROM publicaciones WHERE id = $1`,
+      [publicacionId]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Publicación no encontrada' });
+    if (rows[0].usuario_id !== userId) return res.status(403).json({ message: 'No autorizado' });
+    await pool.query(`UPDATE conversaciones SET publicacion_id = NULL WHERE publicacion_id = $1`, [publicacionId]);
+    await pool.query(`DELETE FROM publicaciones WHERE id = $1`, [publicacionId]);
+    res.json({ deleted: true });
+  } catch (error) {
+    console.error('deletePublication:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const toggleComentarioLike = async (req, res) => {
+  const userId = req.userId;
+  const { comentarioId } = req.params;
+  try {
+    const existing = await pool.query(
+      `SELECT id FROM comentario_likes WHERE comentario_id = $1 AND usuario_id = $2`,
+      [comentarioId, userId]
+    );
+    if (existing.rows.length > 0) {
+      await pool.query(`DELETE FROM comentario_likes WHERE id = $1`, [existing.rows[0].id]);
+      const { rows } = await pool.query(`SELECT COUNT(*)::int AS likes FROM comentario_likes WHERE comentario_id = $1`, [comentarioId]);
+      return res.json({ liked: false, likes: rows[0].likes });
+    }
+    await pool.query(
+      `INSERT INTO comentario_likes (comentario_id, usuario_id) VALUES ($1, $2)`,
+      [comentarioId, userId]
+    );
+    const { rows } = await pool.query(`SELECT COUNT(*)::int AS likes FROM comentario_likes WHERE comentario_id = $1`, [comentarioId]);
+    res.json({ liked: true, likes: rows[0].likes });
+  } catch (error) {
+    console.error('toggleComentarioLike:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const addComentario = async (req, res) => {
   const userId = req.userId;
   const { publicacionId } = req.params;
-  const { contenido } = req.body;
+  const { contenido, parent_id } = req.body;
 
   if (!contenido || !String(contenido).trim()) {
     return res.status(400).json({ message: 'El comentario no puede estar vacío' });
@@ -390,10 +439,10 @@ export const addComentario = async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      `INSERT INTO comentarios (usuario_id, publicacion_id, contenido)
-       VALUES ($1, $2, $3)
-       RETURNING id, contenido, created_at, usuario_id, publicacion_id`,
-      [userId, publicacionId, String(contenido).trim()]
+      `INSERT INTO comentarios (usuario_id, publicacion_id, contenido, parent_id)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, contenido, created_at, usuario_id, publicacion_id, parent_id`,
+      [userId, publicacionId, String(contenido).trim(), parent_id || null]
     );
 
     const u = await pool.query(

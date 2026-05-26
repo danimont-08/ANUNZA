@@ -144,7 +144,9 @@ export const getOrCreateConversation = async (req, res) => {
     }
 
     let convId = await findExistingDmConversation(userId, otroUsuarioId);
+    let isNew = false;
     if (!convId) {
+      isNew = true;
       let ins;
       try {
         ins = await pool.query(
@@ -164,7 +166,7 @@ export const getOrCreateConversation = async (req, res) => {
       );
     }
 
-    res.json({ conversacion_id: convId });
+    res.json({ conversacion_id: convId, is_new: isNew });
   } catch (error) {
     console.error('getOrCreateConversation:', error);
     res.status(500).json({ message: error.message });

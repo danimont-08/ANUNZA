@@ -145,11 +145,20 @@
 
 .report-success {
   text-align: center;
-  padding: 10px 0 4px;
+  padding: 18px 0 8px;
+  animation: rs-in 0.3s ease;
 }
-.report-success-icon { font-size: 40px; display: block; margin-bottom: 10px; }
-.report-success h3 { color: #2d1b69; margin: 0 0 8px; }
-.report-success p  { color: #7c6aab; font-size: 14px; margin: 0 0 18px; }
+@keyframes rs-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.report-success-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.report-success h3 { color: #1a7a3a; margin: 0 0 8px; font-size: 18px; }
+.report-success p  { color: #5a7a6a; font-size: 14px; margin: 0 0 22px; line-height: 1.5; }
 
 @media (max-width: 480px) {
   .report-modal {

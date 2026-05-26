@@ -1,8 +1,9 @@
 import { pool } from '../config/database.js';
 import { enrichPublicacionRow } from '../utils/publicacionPayload.js';
 
-/** Lista todos los reportes con detalle de publicación y/o usuario afectado. */
+/** Lista reportes filtrados por estado (pendiente | revisado). */
 export const getReportes = async (req, res) => {
+  const estado = req.query.estado === 'revisado' ? 'revisado' : 'pendiente';
   try {
     const { rows } = await pool.query(
       `SELECT
@@ -14,7 +15,6 @@ export const getReportes = async (req, res) => {
          r.estado,
          r.created_at,
          u_rep.nombre      AS reportado_por,
-         -- Cuando tipo = 'publicacion'
          p.id              AS publicacion_id,
          p.titulo          AS publicacion_titulo,
          p.estado          AS publicacion_estado,
@@ -22,7 +22,6 @@ export const getReportes = async (req, res) => {
          u_due.nombre      AS dueno_nombre,
          u_due.estado      AS dueno_estado,
          u_due.rol         AS dueno_rol,
-         -- Cuando tipo = 'usuario'
          u_obj.id          AS usuario_obj_id,
          u_obj.nombre      AS usuario_obj_nombre,
          u_obj.estado      AS usuario_obj_estado,
@@ -32,8 +31,10 @@ export const getReportes = async (req, res) => {
        LEFT JOIN publicaciones p ON r.tipo = 'publicacion' AND p.id = r.objeto_id
        LEFT JOIN usuarios u_due  ON r.tipo = 'publicacion' AND u_due.id = p.usuario_id
        LEFT JOIN usuarios u_obj  ON r.tipo = 'usuario'     AND u_obj.id = r.objeto_id
+       WHERE r.estado = $1
        ORDER BY r.created_at DESC NULLS LAST
-       LIMIT 200`
+       LIMIT 200`,
+      [estado]
     );
     res.json({ reportes: rows });
   } catch (error) {

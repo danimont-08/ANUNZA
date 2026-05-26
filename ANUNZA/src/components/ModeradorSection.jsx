@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   fetchReportes,
-  resolverReporte,
   ocultarPublicacion,
   mostrarPublicacion,
+  marcarModReporteRevisado,
   fetchPublicacionesOcultas,
   fetchUsuarios,
   suspenderUsuario,
@@ -41,26 +41,31 @@ function isSuspendido(estado) {
 /* ─── Subcomponente: Chat de conversación reportada ─────────── */
 /* ─── Tab: Reportes ────────────────────────────────────────── */
 function TabReportes() {
+  const [filtro, setFiltro] = useState('pendiente');
   const [reportes, setReportes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [diasMap, setDiasMap] = useState({});
   const [feedback, setFeedback] = useState({});
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (estado = filtro) => {
     setError('');
     setLoading(true);
     try {
-      const d = await fetchReportes();
+      const d = await fetchReportes(estado);
       setReportes(d.reportes || []);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filtro]);
 
   useEffect(() => { load(); }, [load]);
+
+  const cambiarFiltro = (nuevo) => {
+    setFiltro(nuevo);
+  };
 
   const showFeedback = (id, msg, ok = true) => {
     setFeedback((prev) => ({ ...prev, [id]: { msg, ok } }));
@@ -70,6 +75,7 @@ function TabReportes() {
   const handleOcultar = async (r) => {
     try {
       const d = await ocultarPublicacion(r.publicacion_id);
+      await marcarModReporteRevisado(r.id).catch(() => {});
       showFeedback(r.id, d.message);
       load();
     } catch (e) { showFeedback(r.id, e.message, false); }
@@ -78,25 +84,47 @@ function TabReportes() {
   const handleMostrar = async (r) => {
     try {
       const d = await mostrarPublicacion(r.publicacion_id);
+      await marcarModReporteRevisado(r.id).catch(() => {});
       showFeedback(r.id, d.message);
       load();
     } catch (e) { showFeedback(r.id, e.message, false); }
   };
 
-  const handleDescartar = async (r) => {
+  const handleMarcarRevisado = async (r) => {
     try {
-      await resolverReporte(r.id);
-      showFeedback(r.id, 'Reporte descartado.');
+      await marcarModReporteRevisado(r.id);
+      showFeedback(r.id, 'Reporte marcado como revisado.');
       load();
     } catch (e) { showFeedback(r.id, e.message, false); }
   };
 
-  if (loading) return <p className="mod-loading">Cargando reportes…</p>;
-  if (error) return <p className="mod-error">{error}</p>;
-  if (reportes.length === 0) return <p className="mod-empty">No hay reportes registrados.</p>;
-
   return (
     <>
+      <div className="mod-filtro-bar">
+        <button
+          type="button"
+          className={`mod-filtro-btn${filtro === 'pendiente' ? ' is-active' : ''}`}
+          onClick={() => cambiarFiltro('pendiente')}
+        >
+          Pendientes
+        </button>
+        <button
+          type="button"
+          className={`mod-filtro-btn${filtro === 'revisado' ? ' is-active' : ''}`}
+          onClick={() => cambiarFiltro('revisado')}
+        >
+          Revisados
+        </button>
+      </div>
+
+      {loading && <p className="mod-loading">Cargando reportes…</p>}
+      {error && <p className="mod-error">{error}</p>}
+      {!loading && !error && reportes.length === 0 && (
+        <p className="mod-empty">
+          {filtro === 'pendiente' ? 'No hay reportes pendientes.' : 'No hay reportes revisados.'}
+        </p>
+      )}
+
       <div className="mod-card-list">
         {reportes.map((r) => {
           const tipoBadge = TIPO_BADGE[r.tipo] || { label: r.tipo, cls: '' };
@@ -200,10 +228,12 @@ function TabReportes() {
                   )
                 )}
 
-                {/* Descartar el reporte */}
-                <button type="button" className="mod-btn mod-btn-ghost" onClick={() => handleDescartar(r)}>
-                  Descartar reporte
-                </button>
+                {/* Marcar como revisado (solo en pestaña pendientes) */}
+                {filtro === 'pendiente' && (
+                  <button type="button" className="mod-btn mod-btn-ghost" onClick={() => handleMarcarRevisado(r)}>
+                    Marcar como revisado
+                  </button>
+                )}
               </div>
             </div>
           );

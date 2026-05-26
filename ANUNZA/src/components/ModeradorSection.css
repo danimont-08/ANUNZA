@@ -195,6 +195,33 @@
 .mod-feedback-ok  { background: #d4edda; color: #155724; }
 .mod-feedback-err { background: #f8d7da; color: #721c24; }
 
+/* ── Filtro pendientes / revisados ── */
+.mod-filtro-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.mod-filtro-btn {
+  padding: 0.4rem 1.1rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(138, 78, 255, 0.3);
+  background: transparent;
+  color: #7a6fa8;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.mod-filtro-btn:hover {
+  border-color: var(--anunza-violet, #8a4eff);
+  color: var(--anunza-violet, #8a4eff);
+}
+.mod-filtro-btn.is-active {
+  background: var(--anunza-violet, #8a4eff);
+  border-color: var(--anunza-violet, #8a4eff);
+  color: #fff;
+}
+
 /* ── States ── */
 .mod-loading { color: #7a6fa8; padding: 1rem 0; }
 .mod-error   { color: #dc3545; padding: 1rem 0; }

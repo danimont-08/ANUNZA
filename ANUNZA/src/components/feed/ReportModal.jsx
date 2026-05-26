@@ -55,10 +55,17 @@ export function ReportModal({ tipo = 'publicacion', targetId, targetLabel, onClo
       <div className="report-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         {exito ? (
           <div className="report-success">
-            <span className="report-success-icon">✅</span>
+            <div className="report-success-icon">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+                <circle cx="22" cy="22" r="22" fill="#e8f8f0"/>
+                <circle cx="22" cy="22" r="17" fill="#22c55e" opacity="0.12"/>
+                <circle cx="22" cy="22" r="13" fill="#22c55e"/>
+                <polyline points="15,22 20,27 29,16" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
             <h3>Reporte enviado</h3>
-            <p>Gracias por contribuir a la comunidad ANUNZA.</p>
-            <button type="button" className="report-btn-primary" onClick={onClose}>Cerrar</button>
+            <p>Gracias por contribuir a la comunidad ANUNZA. Lo revisaremos pronto.</p>
+            <button type="button" className="report-btn-primary" onClick={onClose}>Entendido</button>
           </div>
         ) : (
           <>

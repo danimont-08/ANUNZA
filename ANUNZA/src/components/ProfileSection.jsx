@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { PlanPremiumModal } from './PlanPremiumModal';
+import { ConfirmDialog } from './ConfirmDialog';
 import { fetchMiEstado } from '../models/pagosModel';
+import { deletePublicacion } from '../models/publicacionModel';
 import { apiFetch } from '../services/api';
 import { geolocateToCity, osmEmbedUrl } from '../utils/geolocate';
 import { DEFAULT_AVATAR } from '../utils/constants';
@@ -8,7 +10,7 @@ import { formatDate, formatCOP } from '../utils/format';
 import './ProfileSection.css';
 import '../pages/UserPublicProfile.css';
 
-function PubCard({ pub, onClick }) {
+function PubCard({ pub, onClick, onDelete }) {
   return (
     <article className="upp2-pub-card" onClick={onClick}>
       {pub.imagen_preview
@@ -32,6 +34,16 @@ function PubCard({ pub, onClick }) {
           <span>💬 {pub.comentarios_count ?? 0}</span>
         </div>
         <p className="upp2-pub-date">{formatDate(pub.created_at)}</p>
+        {onDelete && (
+          <button
+            type="button"
+            className="upp2-pub-delete-btn"
+            onClick={(e) => { e.stopPropagation(); onDelete(pub); }}
+            title="Eliminar publicación"
+          >
+            Eliminar
+          </button>
+        )}
       </div>
     </article>
   );
@@ -43,6 +55,8 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
   const [miEstado, setMiEstado]             = useState(null);
   const [pubs, setPubs]                     = useState([]);
   const [pubsLoading, setPubsLoading]       = useState(false);
+  const [pubToDelete, setPubToDelete]       = useState(null);
+  const [deleting, setDeleting]             = useState(false);
   const [geoLoading, setGeoLoading]         = useState(false);
   const [geoData, setGeoData]               = useState(null);
   const [geoError, setGeoError]             = useState('');
@@ -194,6 +208,21 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
     }
   };
 
+  const handleConfirmDelete = async () => {
+    if (!pubToDelete) return;
+    setDeleting(true);
+    try {
+      await deletePublicacion(pubToDelete.id);
+      setPubs((prev) => prev.filter((p) => p.id !== pubToDelete.id));
+      fetchMiEstado().then(setMiEstado).catch(() => {});
+    } catch (e) {
+      onError(e.message);
+    } finally {
+      setDeleting(false);
+      setPubToDelete(null);
+    }
+  };
+
   const esPremium = (miEstado?.plan || user?.plan) === 'premium';
 
   return (
@@ -310,6 +339,7 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
                     key={pub.id}
                     pub={pub}
                     onClick={() => onNavigateToPost?.(pub.id)}
+                    onDelete={(p) => setPubToDelete(p)}
                   />
                 ))}
               </div>
@@ -323,6 +353,16 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
                 setShowPremiumModal(false);
                 setMiEstado((prev) => ({ ...prev, plan: 'premium', limite: null }));
               }}
+            />
+          )}
+
+          {pubToDelete && (
+            <ConfirmDialog
+              message={`¿Eliminar "${pubToDelete.titulo}"? Esta acción no se puede deshacer.`}
+              confirmLabel={deleting ? 'Eliminando…' : 'Eliminar'}
+              danger
+              onConfirm={handleConfirmDelete}
+              onCancel={() => setPubToDelete(null)}
             />
           )}
         </>

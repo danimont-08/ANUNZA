@@ -13,14 +13,35 @@ export const getStats = async (req, res) => {
         (SELECT COUNT(*)::int FROM usuarios) AS usuarios_total,
         (SELECT COUNT(*)::int FROM usuarios WHERE COALESCE(estado, 'activo') = 'activo') AS usuarios_activos,
         (SELECT COUNT(*)::int FROM usuarios WHERE estado = 'suspendido') AS usuarios_suspendidos,
-        (SELECT COUNT(*)::int FROM publicaciones) AS publicaciones_total,
         (SELECT COUNT(*)::int FROM publicaciones WHERE COALESCE(estado, 'activo') = 'activo') AS publicaciones_activas,
+        (SELECT COUNT(*)::int FROM publicaciones WHERE estado = 'oculto') AS publicaciones_ocultas,
         (SELECT COUNT(DISTINCT objeto_id)::int FROM reportes WHERE tipo = 'publicacion') AS publicaciones_reportadas,
-        (SELECT COUNT(*)::int FROM reportes) AS reportes_pendientes
+        (SELECT COUNT(*)::int FROM reportes WHERE estado = 'pendiente') AS reportes_pendientes
     `);
     res.json({ stats: rows[0] });
   } catch (error) {
     console.error('getStats:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/** GET /api/admin/publicaciones?estado=activo|oculto */
+export const listPublicaciones = async (req, res) => {
+  try {
+    const estado = req.query.estado || 'activo';
+    const { rows } = await pool.query(
+      `SELECT p.id, p.titulo, p.estado, p.created_at,
+              u.nombre AS autor_nombre, u.correo AS autor_correo
+       FROM publicaciones p
+       INNER JOIN usuarios u ON u.id = p.usuario_id
+       WHERE p.estado = $1
+       ORDER BY p.created_at DESC
+       LIMIT 50`,
+      [estado]
+    );
+    res.json({ publicaciones: rows });
+  } catch (error) {
+    console.error('listPublicaciones:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -91,8 +112,9 @@ export const getUser = async (req, res) => {
   }
 };
 
-/** GET /api/admin/reportes */
+/** GET /api/admin/reportes?estado=pendiente|revisado */
 export const listReportes = async (req, res) => {
+  const estado = req.query.estado === 'revisado' ? 'revisado' : 'pendiente';
   try {
     const { rows } = await pool.query(
       `SELECT r.id, r.tipo, r.objeto_id, r.motivo, r.detalles, r.estado, r.created_at,
@@ -113,8 +135,10 @@ export const listReportes = async (req, res) => {
        LEFT JOIN usuarios u_obj    ON r.tipo = 'usuario'     AND u_obj.id = r.objeto_id
        LEFT JOIN mensajes msg      ON r.tipo = 'mensaje'     AND msg.id = r.objeto_id
        LEFT JOIN usuarios u_msg    ON r.tipo = 'mensaje'     AND u_msg.id = msg.remitente_id
+       WHERE r.estado = $1
        ORDER BY r.created_at DESC
-       LIMIT 200`
+       LIMIT 200`,
+      [estado]
     );
     res.json({ reportes: rows });
   } catch (error) {

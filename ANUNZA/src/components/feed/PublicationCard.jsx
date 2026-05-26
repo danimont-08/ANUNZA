@@ -6,12 +6,16 @@ import {
   fetchComentarios,
   addComentarioApi,
   toggleGuardarPublicacion,
+  toggleComentarioLike,
+  addRespuesta,
+  deletePublicacion,
 } from '../../models/publicacionModel';
 import { ReportModal } from './ReportModal';
 import { DestacarModal } from './DestacarModal';
+import { ConfirmDialog } from '../ConfirmDialog';
 import {
   IconHeart, IconChat, IconComment, IconStar,
-  IconShare, IconBookmark, IconFlag, IconAlertUser, IconDots,
+  IconShare, IconBookmark, IconFlag, IconAlertUser, IconDots, IconTrash,
 } from '../icons';
 import { DEFAULT_AVATAR } from '../../utils/constants';
 import { formatDate, formatCOP } from '../../utils/format';
@@ -19,13 +23,19 @@ import { useToast } from '../Toast';
 import './PublicationCard.css';
 import './DestacarModal.css';
 
+const StarDestacar = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+);
+
 function isDestacadaActiva(p) {
   if (!p.destacada) return false;
   if (!p.destacada_hasta) return true;
   return new Date(p.destacada_hasta.endsWith('Z') ? p.destacada_hasta : p.destacada_hasta + 'Z') > new Date();
 }
 
-export const PublicationCard = React.memo(function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError, onDestacar }) {
+export const PublicationCard = React.memo(function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError, onDestacar, onDelete }) {
   const [profileUserId, setProfileUserId]   = useState(null);
   const [openComments, setOpenComments]     = useState(false);
   const [openResenas, setOpenResenas]       = useState(false);
@@ -33,6 +43,8 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
   const [openReportUser, setOpenReportUser] = useState(false);
   const [openDestacar, setOpenDestacar]     = useState(false);
   const [openMenu, setOpenMenu]             = useState(false);
+  const [confirmDelete, setConfirmDelete]   = useState(false);
+  const [deleting, setDeleting]             = useState(false);
   const [isGuardado, setIsGuardado]         = useState(p.user_guardado ?? false);
   const [guardandoLoading, setGuardandoLoading] = useState(false);
   const { showToast, ToastEl } = useToast();
@@ -46,6 +58,9 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
   const [resenasCount, setResenasCount]   = useState(p.resenas_count ?? 0);
   const [promedioResenas, setPromedioResenas] = useState(p.promedio_resenas ?? null);
   const [draft, setDraft]                 = useState('');
+  const [replyTo, setReplyTo]             = useState(null);
+  const [replyDraft, setReplyDraft]       = useState('');
+  const [reportComentarioId, setReportComentarioId] = useState(null);
 
   const media = p.media_items?.length ? p.media_items : [];
   const texto = p.texto_plano ?? p.descripcion ?? '';
@@ -88,8 +103,29 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
     try {
       const data = await addComentarioApi(p.id, text);
       setDraft('');
-      setComments((c) => [...c, data.comentario]);
+      setComments((c) => [...c, { ...data.comentario, likes: 0, user_liked: false }]);
       setCommentCount((n) => n + 1);
+    } catch (e) { onError(e.message); }
+  };
+
+  const sendReply = async () => {
+    const text = replyDraft.trim();
+    if (!text || !replyTo) return;
+    try {
+      const data = await addRespuesta(p.id, text, replyTo.id);
+      setReplyDraft('');
+      setReplyTo(null);
+      setComments((c) => [...c, { ...data.comentario, likes: 0, user_liked: false }]);
+      setCommentCount((n) => n + 1);
+    } catch (e) { onError(e.message); }
+  };
+
+  const handleComentarioLike = async (comentarioId) => {
+    try {
+      const data = await toggleComentarioLike(comentarioId);
+      setComments((prev) => prev.map((c) =>
+        c.id === comentarioId ? { ...c, likes: data.likes, user_liked: data.liked } : c
+      ));
     } catch (e) { onError(e.message); }
   };
 
@@ -113,6 +149,18 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
     } catch { onError('No se pudo copiar el enlace'); }
   };
 
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deletePublicacion(p.id);
+      onDelete?.(p.id);
+    } catch (e) {
+      onError(e.message || 'Error al eliminar la publicación');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const resenasTitle =
     resenasCount > 0 && promedioResenas != null
       ? `Reseñas · ${promedioResenas}★ (${resenasCount})`
@@ -121,7 +169,7 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
   return (
     <article className={`pub-card ${destacadaActiva ? 'pub-card-featured' : ''}`}>
       {destacadaActiva && (
-        <div className="pub-badge-destacado">⭐ Destacado</div>
+        <div className="pub-badge-destacado"><StarDestacar size={12} /> Destacado</div>
       )}
 
       <header className="pub-card-head">
@@ -194,6 +242,16 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
                   <IconAlertUser /> Reportar usuario
                 </button>
               )}
+              {esMio && (
+                <button
+                  type="button"
+                  className="danger"
+                  disabled={deleting}
+                  onClick={() => { setConfirmDelete(true); setOpenMenu(false); }}
+                >
+                  <IconTrash /> Eliminar publicación
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -240,28 +298,31 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
           {likeCount > 0 && <span>{likeCount}</span>}
         </button>
 
-        <button
-          type="button"
-          className={`pub-btn pub-resenas ${resenasCount > 0 ? 'has-rating' : ''}`}
-          onClick={toggleResenas}
-          aria-label={resenasTitle}
-          title={resenasTitle}
-        >
-          <IconStar />
-          {resenasCount > 0 && promedioResenas != null && <span>{promedioResenas}★</span>}
-          {resenasCount > 0 && <span>({resenasCount})</span>}
-        </button>
+        {!esMio && (
+          <button
+            type="button"
+            className={`pub-btn pub-resenas ${resenasCount > 0 ? 'has-rating' : ''}`}
+            onClick={toggleResenas}
+            aria-label={resenasTitle}
+            title={resenasTitle}
+          >
+            <IconStar />
+            {resenasCount > 0 && promedioResenas != null && <span>{promedioResenas}★</span>}
+            {resenasCount > 0 && <span>({resenasCount})</span>}
+          </button>
+        )}
 
-        <button
-          type="button"
-          className="pub-btn pub-chat"
-          onClick={() => onOpenChat(p.usuario_id, p.id)}
-          disabled={p.usuario_id === currentUserId}
-          aria-label="Iniciar chat"
-          title="Iniciar chat"
-        >
-          <IconChat />
-        </button>
+        {!esMio && (
+          <button
+            type="button"
+            className="pub-btn pub-chat"
+            onClick={() => onOpenChat(p.usuario_id, p.id, p.titulo)}
+            aria-label="Iniciar chat"
+            title="Iniciar chat"
+          >
+            <IconChat />
+          </button>
+        )}
 
         <button
           type="button"
@@ -282,7 +343,7 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
             aria-label="Destacar publicación"
             title="Destacar publicación"
           >
-            ⭐
+            <StarDestacar size={16} />
           </button>
         )}
       </footer>
@@ -306,12 +367,82 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
         <div className="pub-panel pub-panel-reveal">
           <p className="pub-panel-title">Comentarios</p>
           <ul className="pub-comment-list">
-            {comments.map((c) => (
+            {comments.filter(c => !c.parent_id).map((c) => (
               <li key={c.id} className="pub-comment">
                 <img src={c.autor_foto || DEFAULT_AVATAR} alt="" className="pub-c-av" />
-                <div>
-                  <strong>{c.autor_nombre}</strong>
-                  <p>{c.contenido}</p>
+                <div className="pub-c-body">
+                  <strong className="pub-c-name">{c.autor_nombre}</strong>
+                  <p className="pub-c-text">{c.contenido}</p>
+                  <div className="pub-c-actions">
+                    <button
+                      type="button"
+                      className={`pub-c-like${c.user_liked ? ' is-on' : ''}`}
+                      onClick={() => handleComentarioLike(c.id)}
+                      title="Me gusta"
+                    >
+                      <IconHeart filled={c.user_liked} size={13} />
+                      {c.likes > 0 && <span>{c.likes}</span>}
+                    </button>
+                    <button
+                      type="button"
+                      className="pub-c-reply-btn"
+                      onClick={() => setReplyTo(replyTo?.id === c.id ? null : c)}
+                      title="Responder"
+                    >
+                      Responder
+                    </button>
+                    <button
+                      type="button"
+                      className="pub-c-dots"
+                      onClick={() => setReportComentarioId(c.id)}
+                      title="Reportar comentario"
+                      aria-label="Más opciones"
+                    >
+                      <IconDots size={14} />
+                    </button>
+                  </div>
+                  {replyTo?.id === c.id && (
+                    <div className="pub-reply-form">
+                      <input
+                        type="text"
+                        placeholder={`Responder a ${c.autor_nombre}…`}
+                        value={replyDraft}
+                        autoFocus
+                        onChange={(e) => setReplyDraft(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && sendReply()}
+                      />
+                      <button type="button" onClick={sendReply}>Enviar</button>
+                      <button type="button" className="pub-reply-cancel" onClick={() => { setReplyTo(null); setReplyDraft(''); }}>✕</button>
+                    </div>
+                  )}
+                  {/* Respuestas anidadas */}
+                  {comments.filter(r => r.parent_id === c.id).map((r) => (
+                    <div key={r.id} className="pub-c-reply">
+                      <img src={r.autor_foto || DEFAULT_AVATAR} alt="" className="pub-c-av pub-c-av--sm" />
+                      <div className="pub-c-body">
+                        <strong className="pub-c-name">{r.autor_nombre}</strong>
+                        <p className="pub-c-text">{r.contenido}</p>
+                        <div className="pub-c-actions">
+                          <button
+                            type="button"
+                            className={`pub-c-like${r.user_liked ? ' is-on' : ''}`}
+                            onClick={() => handleComentarioLike(r.id)}
+                          >
+                            <IconHeart filled={r.user_liked} size={13} />
+                            {r.likes > 0 && <span>{r.likes}</span>}
+                          </button>
+                          <button
+                            type="button"
+                            className="pub-c-dots"
+                            onClick={() => setReportComentarioId(r.id)}
+                            aria-label="Más opciones"
+                          >
+                            <IconDots size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </li>
             ))}
@@ -347,6 +478,14 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
         />
       )}
 
+      {reportComentarioId && (
+        <ReportModal
+          tipo="mensaje"
+          targetId={reportComentarioId}
+          onClose={() => setReportComentarioId(null)}
+        />
+      )}
+
       {openDestacar && (
         <DestacarModal
           publicacion={p}
@@ -361,6 +500,15 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
         <UserPublicProfileModal
           userId={profileUserId}
           onClose={() => setProfileUserId(null)}
+        />
+      )}
+      {confirmDelete && (
+        <ConfirmDialog
+          message="¿Eliminar esta publicación? Esta acción no se puede deshacer."
+          confirmLabel="Eliminar"
+          danger
+          onConfirm={() => { setConfirmDelete(false); handleDelete(); }}
+          onCancel={() => setConfirmDelete(false)}
         />
       )}
       {ToastEl}

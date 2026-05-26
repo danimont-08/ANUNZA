@@ -58,9 +58,6 @@ export function Navbar({ user, onLogout, onOpenProfile, noLeidas = 0, onToggleNo
             />
             <span className="anunza-navbar-name">{user?.nombre || 'Usuario'}</span>
           </button>
-          <button type="button" className="anunza-navbar-logout" onClick={onLogout}>
-            Salir
-          </button>
         </div>
       </div>
     </header>

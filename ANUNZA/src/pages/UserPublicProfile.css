@@ -288,6 +288,23 @@
   color: #b0aac8;
 }
 
+.upp2-pub-delete-btn {
+  margin-top: 0.6rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 8px;
+  background: transparent;
+  color: #dc2626;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  align-self: flex-start;
+}
+.upp2-pub-delete-btn:hover {
+  background: #dc2626;
+  color: #fff;
+}
+
 /* ── Responsive ────────────────────────────────────── */
 
 @media (max-width: 600px) {

@@ -14,6 +14,7 @@ export function ChatSection({
   user,
   bootstrapOtroUsuarioId,
   bootstrapPublicacionId,
+  bootstrapPublicacionTitulo,
   bootstrapConversacionId,
   onBootstrapConsumed,
 }) {
@@ -124,12 +125,24 @@ export function ChatSection({
       try {
         const data = await apiFetch('/chat/conversaciones', {
           method: 'POST',
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             otro_usuario_id: bootstrapOtroUsuarioId,
             publicacion_id: bootstrapPublicacionId || null
           }),
         });
         if (cancelled) return;
+
+        // Si viene desde el botón chat de una publicación, enviar mensaje automático siempre
+        if (bootstrapPublicacionTitulo) {
+          const autoMsg = `Hola, vi tu publicación "${bootstrapPublicacionTitulo}" y me gustaría obtener más información. ¿Podrías darme más detalles?`;
+          try {
+            await apiFetch(`/chat/conversaciones/${data.conversacion_id}/mensajes`, {
+              method: 'POST',
+              body: JSON.stringify({ contenido: autoMsg, tipo: 'texto' }),
+            });
+          } catch { /* silencioso si falla el auto-mensaje */ }
+        }
+
         await loadConversaciones();
         setActiveId(data.conversacion_id);
       } catch (e) {
@@ -141,7 +154,7 @@ export function ChatSection({
     return () => {
       cancelled = true;
     };
-  }, [bootstrapOtroUsuarioId, bootstrapPublicacionId, user?.id, loadConversaciones, onBootstrapConsumed]);
+  }, [bootstrapOtroUsuarioId, bootstrapPublicacionId, bootstrapPublicacionTitulo, user?.id, loadConversaciones, onBootstrapConsumed]);
 
   useEffect(() => {
     if (!activeId) return;

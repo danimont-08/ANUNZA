@@ -130,9 +130,6 @@ export function AdminLayout({
               <span className="anunza-navbar-name">{user?.nombre || 'Usuario'}</span>
             </button>
 
-            <button type="button" className="anunza-navbar-logout" onClick={handleLogout}>
-              Salir
-            </button>
           </div>
         </div>
       </header>
@@ -149,14 +146,29 @@ export function AdminLayout({
       )}
 
       <div className="admin-body">
-        <nav className="admin-nav">
-          {NAV_ITEMS.map(({ label, path, Icon, end }) => (
-            <NavLink key={label} to={`${basePath}${path}`} end={end}>
-              <span className="admin-nav-icon"><Icon /></span>
-              <span className="admin-nav-label">{label}</span>
-            </NavLink>
-          ))}
-        </nav>
+        <div className="admin-sidebar">
+          <nav className="admin-nav">
+            {NAV_ITEMS.map(({ label, path, Icon, end }) => (
+              <NavLink key={label} to={`${basePath}${path}`} end={end}>
+                <span className="admin-nav-icon"><Icon /></span>
+                <span className="admin-nav-label">{label}</span>
+              </NavLink>
+            ))}
+          </nav>
+          <div className="admin-sidebar-footer">
+            <button
+              type="button"
+              className="anunza-navbar-user sidebar-user-btn"
+              onClick={() => navigate('/dashboard', { state: { openSection: 'perfil' } })}
+            >
+              <img src={user?.foto_perfil || DEFAULT_AVATAR} alt="" className="anunza-navbar-avatar" />
+              <span className="anunza-navbar-name">{user?.nombre || 'Usuario'}</span>
+            </button>
+            <button type="button" className="anunza-navbar-logout" onClick={handleLogout}>
+              Salir
+            </button>
+          </div>
+        </div>
         <main className="admin-main">
           <Outlet context={{ panelConfig }} />
         </main>

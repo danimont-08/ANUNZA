@@ -3,8 +3,8 @@ import { apiFetch } from '../services/api';
 export const fetchModStats = () =>
   apiFetch('/moderador/stats');
 
-export const fetchModReportes = () =>
-  apiFetch('/moderador/reportes');
+export const fetchModReportes = (estado = 'pendiente') =>
+  apiFetch(`/moderador/reportes?estado=${estado}`);
 
 export const fetchReportes = fetchModReportes;
 

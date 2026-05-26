@@ -33,52 +33,66 @@
 
 
 .admin-body {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1.5rem 1.25rem 2.5rem;
-  display: grid;
-  grid-template-columns: 210px 1fr;
-  gap: 1.75rem;
+  display: flex;
+  height: calc(100vh - 61px); /* 61px = altura del admin navbar */
+  overflow: hidden;
+}
+
+.admin-sidebar {
+  width: 210px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid rgba(138, 78, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.admin-sidebar-footer {
+  padding: 12px 10px;
+  border-top: 1px solid rgba(138, 78, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-sidebar-footer .sidebar-user-btn {
+  width: 100%;
+  justify-content: flex-start;
 }
 
 
 .admin-nav {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(47, 8, 109, 0.08);
-  padding: 12px 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 10px 8px;
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 73px; /* altura de anunza-navbar (~61px) + margen */
-  align-self: flex-start;
-  overflow: hidden;
+  gap: 2px;
 }
 
 .admin-nav a {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 15px 20px;
+  gap: 0.65rem;
+  padding: 10px 14px;
   text-decoration: none;
-  color: var(--anunza-midnight, #2f086d);
+  color: #5a4d7a;
   font-weight: 500;
-  font-size: 0.95rem;
-  border-left: 4px solid transparent;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  font-size: 0.92rem;
+  border-radius: 10px;
+  transition: background 0.18s, color 0.18s;
 }
 
 .admin-nav a.active {
-  background: #f0e9ff;
-  border-left-color: var(--anunza-violet, #8a4eff);
-  color: var(--anunza-violet, #8a4eff);
+  background: #ede9fb;
+  color: #7c3aed;
   font-weight: 600;
 }
 
 .admin-nav a:hover:not(.active) {
-  background: #f8f9fa;
-  border-left-color: var(--anunza-violet, #8a4eff);
-  color: var(--anunza-midnight, #2f086d);
+  background: #f3eeff;
+  color: #7c3aed;
 }
 
 .admin-nav-icon {
@@ -89,11 +103,14 @@
 }
 
 .admin-nav a.active .admin-nav-icon {
-  color: var(--anunza-violet, #8a4eff);
+  color: #7c3aed;
 }
 
 .admin-main {
+  flex: 1;
   min-width: 0;
+  overflow-y: auto;
+  padding: 1.5rem 1.5rem 2.5rem;
 }
 
 .admin-page-title {
@@ -136,9 +153,16 @@
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.admin-stat-card:hover {
+.admin-stat-card--clickable {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.admin-stat-card--clickable:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(138, 78, 255, 0.12);
+  box-shadow: 0 8px 22px rgba(138, 78, 255, 0.15);
+  border-color: rgba(138, 78, 255, 0.35);
 }
 
 .admin-stat-card .label {
@@ -154,6 +178,103 @@
   font-weight: 700;
   color: var(--anunza-violet, #8a4eff);
   line-height: 1;
+}
+
+.admin-stat-hint {
+  font-size: 0.7rem;
+  color: #b0a8c8;
+  margin-top: 0.5rem;
+}
+
+/* ── Panel de detalle (stat card) ── */
+.sdp-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 8, 50, 0.35);
+  backdrop-filter: blur(2px);
+  z-index: 600;
+  display: flex;
+  justify-content: flex-end;
+  animation: sdp-bg-in 0.2s ease;
+}
+@keyframes sdp-bg-in { from { opacity: 0; } to { opacity: 1; } }
+
+.sdp-panel {
+  width: min(420px, 100vw);
+  height: 100%;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -6px 0 32px rgba(47, 8, 109, 0.15);
+  animation: sdp-slide-in 0.22s ease;
+}
+@keyframes sdp-slide-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.sdp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid #ede8ff;
+}
+
+.sdp-title {
+  font-weight: 700;
+  color: #2d1b69;
+  font-size: 1rem;
+}
+
+.sdp-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+}
+
+.sdp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.sdp-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  background: #faf8ff;
+  border: 1px solid rgba(138, 78, 255, 0.08);
+}
+
+.sdp-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sdp-item-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #2d1b69;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sdp-item-sub {
+  font-size: 0.75rem;
+  color: #7c6aab;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Toolbar: inputs, selects y botones */
@@ -404,6 +525,34 @@
   border-color: var(--anunza-violet, #8a4eff) !important;
   color: var(--anunza-violet, #8a4eff) !important;
   background: #faf8ff !important;
+}
+
+/* ── Filtro pendientes / revisados ───────────────── */
+
+.admin-report-estado-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.admin-report-estado-btn {
+  padding: 0.38rem 1.1rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(138, 78, 255, 0.3);
+  background: transparent;
+  color: #7a6fa8;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.admin-report-estado-btn:hover {
+  border-color: var(--anunza-violet, #8a4eff);
+  color: var(--anunza-violet, #8a4eff);
+}
+.admin-report-estado-btn.is-active {
+  background: var(--anunza-violet, #8a4eff);
+  border-color: var(--anunza-violet, #8a4eff);
+  color: #fff;
 }
 
 /* ── Tabs de reportes ─────────────────────────────── */

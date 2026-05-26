@@ -4,6 +4,10 @@ export async function fetchAdminStats() {
   return apiFetch('/admin/stats');
 }
 
+export async function fetchAdminPublicaciones(estado = 'activo') {
+  return apiFetch(`/admin/publicaciones?estado=${estado}`);
+}
+
 export async function fetchAdminUsers({ estado, q } = {}) {
   const params = new URLSearchParams();
   if (estado) params.set('estado', estado);
@@ -19,8 +23,8 @@ export async function patchUserEstado(userId, estado) {
   });
 }
 
-export async function fetchAdminReportes() {
-  return apiFetch('/admin/reportes');
+export async function fetchAdminReportes(estado = 'pendiente') {
+  return apiFetch(`/admin/reportes?estado=${estado}`);
 }
 
 export async function patchReporteEstado(reporteId) {

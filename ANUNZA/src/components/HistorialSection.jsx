@@ -53,24 +53,6 @@ export function HistorialSection({ onNavigateToPost }) {
       </header>
 
       <div className="hist-grid">
-        {/* Trabajos */}
-        <section className="hist-card">
-          <h2>Trabajos</h2>
-          <ul className="hist-list">
-            {(data.trabajos || []).length === 0 && <li className="hist-empty">Sin registros</li>}
-            {(data.trabajos || []).map((t) => (
-              <li key={t.id}>
-                <span className="hist-item-title">{t.publicacion_titulo || 'Trabajo'}</span>
-                <span className="hist-meta">
-                  {t.estado ? `Estado: ${t.estado}` : ''}
-                  {t.fecha_inicio ? ` · Inicio: ${new Date(t.fecha_inicio).toLocaleDateString('es-CO')}` : ''}
-                  {t.fecha_fin   ? ` · Fin: ${new Date(t.fecha_fin).toLocaleDateString('es-CO')}` : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
         {/* Calificaciones */}
         <section className="hist-card">
           <h2>Calificaciones recibidas</h2>
@@ -86,27 +68,6 @@ export function HistorialSection({ onNavigateToPost }) {
                 {c.video_url && (
                   <video src={c.video_url} controls playsInline className="hist-resena-video" />
                 )}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Mis publicaciones */}
-        <section className="hist-card">
-          <h2>Mis publicaciones</h2>
-          <ul className="hist-list">
-            {(data.publicaciones || []).length === 0 && <li className="hist-empty">Sin publicaciones</li>}
-            {(data.publicaciones || []).map((p) => (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  className="hist-item-link"
-                  title={p.titulo || 'Ver publicación'}
-                  onClick={() => onNavigateToPost?.(p.id)}
-                >
-                  {p.titulo || 'Sin título'}
-                </button>
-                <span className="hist-meta">{parseTitulo(p.descripcion)}</span>
               </li>
             ))}
           </ul>
@@ -171,19 +132,6 @@ export function HistorialSection({ onNavigateToPost }) {
           </ul>
         </section>
 
-        {/* Historial de actividad */}
-        <section className="hist-card hist-card-wide">
-          <h2>Historial de actividad</h2>
-          <ul className="hist-list">
-            {(data.historial || []).length === 0 && <li className="hist-empty">Sin entradas</li>}
-            {(data.historial || []).map((h) => (
-              <li key={h.id}>
-                <span className="hist-item-title">{h.tipo}</span>
-                <p>{h.descripcion}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
       </div>
     </div>
   );

@@ -220,17 +220,18 @@
 .pub-btn-destacar {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(47, 8, 109, 0.15);
+  border: 1px solid rgba(124, 58, 237, 0.25);
   background: #fff;
   border-radius: 999px;
   padding: 0.45rem 0.65rem;
   font-size: 1rem;
+  color: #7c3aed;
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .pub-btn-destacar:hover {
-  background: #fffde7;
+  background: #f3e8ff;
 }
 
 /* ── Panels ── */
@@ -316,6 +317,103 @@
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
+}
+.pub-c-av--sm {
+  width: 24px;
+  height: 24px;
+}
+
+.pub-c-body { flex: 1; min-width: 0; }
+.pub-c-name { font-size: 0.85rem; }
+.pub-c-text { margin: 2px 0 4px; font-size: 0.88rem; color: #333; }
+
+.pub-c-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pub-c-like {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9a8fbb;
+  font-size: 0.78rem;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+.pub-c-like.is-on { color: #e05a77; }
+.pub-c-like:hover { color: #e05a77; }
+
+.pub-c-reply-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #8a4eff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+.pub-c-reply-btn:hover { background: #f3e8ff; }
+
+.pub-c-dots {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #b0a8c8;
+  padding: 2px 4px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+}
+.pub-c-dots:hover { background: #f0ebff; color: #5a3f99; }
+
+.pub-reply-form {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+.pub-reply-form input {
+  flex: 1;
+  border-radius: 8px;
+  border: 1.5px solid #c9b0ff;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  outline: none;
+  background: #faf8ff;
+}
+.pub-reply-form input:focus { border-color: #8a4eff; }
+.pub-reply-form button {
+  border: none;
+  background: var(--btn-primary);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pub-reply-cancel {
+  background: none !important;
+  color: #9a8fbb !important;
+  font-size: 0.9rem !important;
+  padding: 0 0.4rem !important;
+}
+
+.pub-c-reply {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  margin-left: 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid #ede8ff;
 }
 
 .pub-comment-form {

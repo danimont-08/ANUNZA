@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
+import { DEFAULT_AVATAR } from '../utils/constants';
 import { FeedSection } from '../components/feed/FeedSection';
 import { ChatSection } from '../components/ChatSection';
 import { HistorialSection } from '../components/HistorialSection';
@@ -49,6 +50,7 @@ export const Dashboard = () => {
   const [activeSection, setActiveSection]             = useState('inicio');
   const [chatBootstrapUserId, setChatBootstrapUserId] = useState(null);
   const [chatBootstrapPublicacionId, setChatBootstrapPublicacionId] = useState(null);
+  const [chatBootstrapPublicacionTitulo, setChatBootstrapPublicacionTitulo] = useState(null);
   const [chatBootstrapConvId, setChatBootstrapConvId] = useState(null);
   const [feedHighlightId, setFeedHighlightId] = useState(null);
   const [profileError, setProfileError] = useState('');
@@ -157,6 +159,28 @@ export const Dashboard = () => {
               ))}
             </ul>
           </nav>
+
+          <div className="sidebar-footer">
+            <button
+              type="button"
+              className="anunza-navbar-user sidebar-user-btn"
+              onClick={() => setActiveSection('perfil')}
+            >
+              <img
+                src={user?.foto_perfil || DEFAULT_AVATAR}
+                alt=""
+                className="anunza-navbar-avatar"
+              />
+              <span className="anunza-navbar-name">{user?.nombre || 'Usuario'}</span>
+            </button>
+            <button
+              type="button"
+              className="anunza-navbar-logout"
+              onClick={handleLogout}
+            >
+              Salir
+            </button>
+          </div>
         </aside>
 
         <main className="main-content anunza-main">
@@ -168,9 +192,10 @@ export const Dashboard = () => {
               user={user}
               highlightPublicacionId={feedHighlightId}
               onHighlightConsumed={() => setFeedHighlightId(null)}
-              onChatWithUser={(uid, pubId) => {
+              onChatWithUser={(uid, pubId, titulo) => {
                 setChatBootstrapUserId(uid);
                 setChatBootstrapPublicacionId(pubId ?? null);
+                setChatBootstrapPublicacionTitulo(titulo ?? null);
                 setChatBootstrapConvId(null);
                 setActiveSection('mensajes');
               }}
@@ -181,10 +206,12 @@ export const Dashboard = () => {
               user={user}
               bootstrapOtroUsuarioId={chatBootstrapUserId}
               bootstrapPublicacionId={chatBootstrapPublicacionId}
+              bootstrapPublicacionTitulo={chatBootstrapPublicacionTitulo}
               bootstrapConversacionId={chatBootstrapConvId}
               onBootstrapConsumed={() => {
                 setChatBootstrapUserId(null);
                 setChatBootstrapPublicacionId(null);
+                setChatBootstrapPublicacionTitulo(null);
                 setChatBootstrapConvId(null);
               }}
             />

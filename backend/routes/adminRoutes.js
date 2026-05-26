@@ -3,6 +3,7 @@ import { verifyToken, verifyAdmin } from '../middleware/auth.js';
 import {
   getStats,
   listUsers,
+  listPublicaciones,
   getUser,
   getUserPublicaciones,
   patchUserEstado,
@@ -18,6 +19,7 @@ const router = Router();
 router.use(verifyToken, verifyAdmin);
 
 router.get('/stats', getStats);
+router.get('/publicaciones', listPublicaciones);
 router.get('/users', listUsers);
 router.get('/users/:id', getUser);
 router.get('/users/:id/publicaciones', getUserPublicaciones);
