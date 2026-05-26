@@ -89,23 +89,29 @@ export class User {
       ciudad,
       latitud,
       longitud,
+      tokenConfirmacion = null,
+      tokenConfirmacionExp = null,
     } = userData;
 
     try {
       const { rows } = await pool.query(
-        `INSERT INTO usuarios (nombre, correo, telefono, password, cedula, verificado, ciudad, latitud, longitud)
-         VALUES ($1, $2, $3, $4, $5, COALESCE($6, false), $7, $8, $9)
-         RETURNING id, nombre, correo, telefono, cedula, foto_perfil, verificado, ciudad, latitud, longitud, descripcion, created_at`,
+        `INSERT INTO usuarios
+           (nombre, correo, telefono, password, cedula, verificado, ciudad, latitud, longitud,
+            correo_confirmado, token_confirmacion, token_confirmacion_exp)
+         VALUES ($1, $2, $3, $4, $5, false, $6, $7, $8, false, $9, $10)
+         RETURNING id, nombre, correo, telefono, cedula, foto_perfil, verificado,
+                   correo_confirmado, ciudad, latitud, longitud, descripcion, created_at`,
         [
           nombre,
           correo,
           telefono,
           passwordHash,
           cedula,
-          userData.verificado ?? false,
           ciudad ?? null,
           latitud != null && !Number.isNaN(Number(latitud)) ? Number(latitud) : null,
           longitud != null && !Number.isNaN(Number(longitud)) ? Number(longitud) : null,
+          tokenConfirmacion,
+          tokenConfirmacionExp,
         ]
       );
       return rows[0];

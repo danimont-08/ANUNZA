@@ -5,6 +5,7 @@ import {
   fetchResenaEligibilidad,
   fetchResenas,
 } from '../../models/resenaModel';
+import { IconStar } from '../icons';
 import { DEFAULT_AVATAR } from '../../utils/constants';
 import './ResenaPanel.css';
 
@@ -21,7 +22,7 @@ function StarsDisplay({ value, size = 'md' }) {
   return (
     <span className={`resena-stars-display resena-stars-display--${size}`} aria-label={`${value} de 5`}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <span key={n} className={n <= value ? 'is-on' : ''}>★</span>
+        <span key={n} className={n <= value ? 'is-on' : ''}><IconStar size={14}/></span>
       ))}
     </span>
   );
@@ -149,7 +150,7 @@ export function ResenaPanel({
                 onClick={() => setRating(n)}
                 aria-label={`${n} estrellas`}
               >
-                ★
+                <IconStar size={14}/>
               </button>
             ))}
           </div>

@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../services/api';
 import { formatCOP } from '../utils/format';
+import { IconStar } from './icons';
 import './FiltrosServicios.css';
 
 const EMPTY = {
@@ -138,7 +139,7 @@ const FiltrosServicios = ({ onChange }) => {
               className={v <= local.calificacionMin ? 'active' : ''}
               onClick={() => set({ calificacionMin: local.calificacionMin === v ? '' : v })}
             >
-              {v} ★
+              {v} <IconStar size={12}/>
             </button>
           ))}
         </div>
@@ -150,7 +151,7 @@ const FiltrosServicios = ({ onChange }) => {
           className={`filtros-apply-btn${dirty ? ' has-changes' : ''}`}
           onClick={handleAplicar}
         >
-          {dirty ? 'Aplicar filtros ●' : 'Aplicar filtros'}
+          Aplicar filtros
         </button>
         <button
           type="button"

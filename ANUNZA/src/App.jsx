@@ -9,6 +9,7 @@ import { ModeradorRoute } from './components/ModeradorRoute';
 import { Home } from './pages/Home';
 import { FormularioLogin } from './components/FormularioLogin';
 import { FormularioRegistro } from './components/FormularioRegistro';
+import { ConfirmarCorreo } from './pages/ConfirmarCorreo';
 
 // Lazy — solo se cargan cuando el usuario navega a esa ruta
 const Dashboard          = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -42,6 +43,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<FormularioLogin />} />
             <Route path="/register" element={<FormularioRegistro />} />
+            <Route path="/confirmar-correo" element={<ConfirmarCorreo />} />
 
             <Route
               path="/dashboard"

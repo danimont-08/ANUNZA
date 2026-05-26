@@ -183,34 +183,36 @@ export const getCategorias = async (req, res) => {
 };
 
 const LIMITE_GRATUITO = 3;
+const LIMITE_PREMIUM  = 5;
 
 export const createPublication = async (req, res) => {
   const userId = req.userId;
   try {
-    // Verificar límite de publicaciones para plan gratuito
+    // Verificar límite diario de publicaciones
     const planRow = await pool.query(
       `SELECT COALESCE(plan, 'gratuito') AS plan FROM usuarios WHERE id = $1`,
       [userId]
     );
     const plan = planRow.rows[0]?.plan || 'gratuito';
-    if (plan === 'gratuito') {
-      const cnt = await pool.query(
-        `SELECT COUNT(*)::int AS total FROM publicaciones
-         WHERE usuario_id = $1 AND COALESCE(estado, 'activo') = 'activo'`,
-        [userId]
-      );
-      if ((cnt.rows[0]?.total ?? 0) >= LIMITE_GRATUITO) {
-        return res.status(403).json({
-          message: `Has alcanzado el límite de ${LIMITE_GRATUITO} publicaciones activas del plan gratuito.`,
-          limit_reached: true,
-        });
-      }
+    const limite = plan === 'premium' ? LIMITE_PREMIUM : LIMITE_GRATUITO;
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const cnt = await pool.query(
+      `SELECT COUNT(*)::int AS total FROM publicaciones
+       WHERE usuario_id = $1 AND created_at >= $2`,
+      [userId, hoy.toISOString()]
+    );
+    if ((cnt.rows[0]?.total ?? 0) >= limite) {
+      return res.status(403).json({
+        message: `Has alcanzado el límite de ${limite} publicaciones diarias de tu plan.`,
+        limit_reached: true,
+      });
     }
 
     const {
       titulo,
       descripcion: descInput,
       categoria_id,
+      subcategoria_id,
       tipo = 'ofrezco',
       agregar_servicio,
       precio,
@@ -255,11 +257,13 @@ export const createPublication = async (req, res) => {
     const tipoVal = tipo === 'busco' ? 'busco' : 'ofrezco';
     const imagenVal = serializeMediaItems(media);
 
+    const subCatId = subcategoria_id ? parseInt(String(subcategoria_id), 10) : null;
+
     const { rows } = await pool.query(
-      `INSERT INTO publicaciones (usuario_id, categoria_id, titulo, descripcion, tipo, precio, imagen, estado)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'activo')
+      `INSERT INTO publicaciones (usuario_id, categoria_id, subcategoria_id, titulo, descripcion, tipo, precio, imagen, estado)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'activo')
        RETURNING *`,
-      [userId, catId, tituloVal, descripcionStored, tipoVal, precioVal, imagenVal]
+      [userId, catId, subCatId || null, tituloVal, descripcionStored, tipoVal, precioVal, imagenVal]
     );
 
     const row = rows[0];

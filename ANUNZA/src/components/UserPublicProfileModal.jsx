@@ -2,6 +2,7 @@
 import { apiFetch } from '../services/api';
 import { DEFAULT_AVATAR } from '../utils/constants';
 import { formatDate, formatCOP } from '../utils/format';
+import { IconHeart, IconChat, IconMapPin, IconShieldCheck, IconX } from './icons';
 import './UserPublicProfileModal.css';
 
 function PubMiniCard({ pub }) {
@@ -21,7 +22,7 @@ function PubMiniCard({ pub }) {
         {pub.precio != null && (
           <p className="uppm-pub-price">{formatCOP(pub.precio)}</p>
         )}
-        <p className="uppm-pub-stats">♥ {pub.likes ?? 0} · 💬 {pub.comentarios_count ?? 0}</p>
+        <p className="uppm-pub-stats"><IconHeart size={14}/> {pub.likes ?? 0} · <IconChat size={14}/> {pub.comentarios_count ?? 0}</p>
       </div>
     </div>
   );
@@ -67,7 +68,7 @@ export function UserPublicProfileModal({ userId, onClose }) {
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="uppm-close" type="button" onClick={onClose} aria-label="Cerrar">✕</button>
+        <button className="uppm-close" type="button" onClick={onClose} aria-label="Cerrar"><IconX size={16}/></button>
 
         {loading && <p className="uppm-loading">Cargando perfil…</p>}
         {error && <p className="uppm-error">{error}</p>}
@@ -93,10 +94,10 @@ export function UserPublicProfileModal({ userId, onClose }) {
                   <p className="prof-name">
                     {perfil.nombre}
                     {perfil.verificado && (
-                      <span className="prof-badge prof-badge-verificado" title="Verificado">✓ Verificado</span>
+                      <span className="prof-badge prof-badge-verificado" title="Verificado"><><IconShieldCheck size={14}/> Verificado</></span>
                     )}
                   </p>
-                  {perfil.ciudad && <p className="prof-meta">📍 {perfil.ciudad}</p>}
+                  {perfil.ciudad && <p className="prof-meta"><><IconMapPin size={14}/> {perfil.ciudad}</></p>}
                   <p className="prof-meta uppm-since">
                     Miembro desde {formatDate(perfil.created_at)}
                   </p>

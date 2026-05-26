@@ -3,6 +3,7 @@ import { MediaCarousel } from '../feed/MediaCarousel';
 import { fetchAdminPublicacion as defaultFetchPublicacion } from '../../models/adminModel';
 import { DEFAULT_AVATAR } from '../../utils/constants';
 import { formatDate, formatCOP } from '../../utils/format';
+import { IconX } from '../icons';
 import './PublicationReviewModal.css';
 
 const MOTIVO_LABEL = {
@@ -65,7 +66,7 @@ export function PublicationReviewModal({
       >
         <header className="admin-review-head">
           <h2 id="admin-review-title">Revisar publicación reportada</h2>
-          <button type="button" className="admin-review-close" onClick={onClose} aria-label="Cerrar">✕</button>
+          <button type="button" className="admin-review-close" onClick={onClose} aria-label="Cerrar"><IconX size={16}/></button>
         </header>
 
         <div className="admin-review-body">

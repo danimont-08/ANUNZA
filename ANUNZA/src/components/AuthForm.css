@@ -401,6 +401,59 @@
   .geo-map { height: 110px; }
 }
 
+/* ─── Medidor de fortaleza de contraseña ────────────────── */
+.pwd-meter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 0.5rem;
+}
+
+.pwd-meter-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 99px;
+  background: #e5e7eb;
+  transition: background 0.25s;
+}
+
+.pwd-meter-bar.filled.pwd-meter-bar--débil    { background: #ef4444; }
+.pwd-meter-bar.filled.pwd-meter-bar--regular  { background: #f97316; }
+.pwd-meter-bar.filled.pwd-meter-bar--buena    { background: #eab308; }
+.pwd-meter-bar.filled.pwd-meter-bar--fuerte   { background: #22c55e; }
+
+.pwd-meter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 6px;
+  text-transform: capitalize;
+  min-width: 48px;
+}
+.pwd-meter-label--débil   { color: #ef4444; }
+.pwd-meter-label--regular { color: #f97316; }
+.pwd-meter-label--buena   { color: #eab308; }
+.pwd-meter-label--fuerte  { color: #22c55e; }
+
+.pwd-rules {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 1rem;
+  font-size: 0.78rem;
+}
+
+.pwd-rules li { transition: color 0.2s; }
+.pwd-rules li.ok   { color: #22c55e; }
+.pwd-rules li.fail { color: #9ca3af; }
+
+.pwd-no-match {
+  font-size: 0.8rem;
+  color: #ef4444;
+  margin: 0.35rem 0 0;
+}
+
 /* Registro: scroll natural en móvil */
 @media (max-width: 899px) {
   .auth-container--register {

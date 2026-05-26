@@ -71,7 +71,11 @@ export const getMiHistorial = async (req, res) => {
     try {
       const [calRes, avgRes] = await Promise.all([
         pool.query(
-          `SELECT * FROM calificaciones WHERE evaluado_id = $1 ORDER BY created_at DESC NULLS LAST`,
+          `SELECT c.*, t.publicacion_id, p.titulo AS publicacion_titulo
+           FROM calificaciones c
+           LEFT JOIN trabajos t ON t.id = c.trabajo_id
+           LEFT JOIN publicaciones p ON p.id = t.publicacion_id
+           WHERE c.evaluado_id = $1 ORDER BY c.created_at DESC NULLS LAST`,
           [userId]
         ),
         pool.query(

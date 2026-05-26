@@ -3,6 +3,7 @@ import { fetchAdminUsuario, fetchAdminUserPublicaciones, patchUserEstado } from 
 import { DEFAULT_AVATAR } from '../../utils/constants';
 import { formatDate, formatCOP } from '../../utils/format';
 import { ConfirmDialog } from '../ConfirmDialog';
+import { IconHeart, IconChat, IconX } from '../icons';
 import './UserProfilePanel.css';
 
 function PubCard({ pub }) {
@@ -26,9 +27,9 @@ function PubCard({ pub }) {
         <p className="upp-pub-meta">
           {pub.tipo === 'busco' ? 'Busco' : 'Ofrezco'}
           {' · '}
-          {pub.likes ?? 0} ♥
+          <IconHeart size={13}/> {pub.likes ?? 0}
           {' · '}
-          {pub.comentarios_count ?? 0} 💬
+          <IconChat size={13}/> {pub.comentarios_count ?? 0}
         </p>
         <p className="upp-pub-date">{formatDate(pub.created_at)}</p>
       </div>
@@ -108,7 +109,7 @@ export function UserProfilePanel({ userId, onClose, canActOn = true, onEstadoCha
       >
         <header className="upp-head">
           <span className="upp-head-title">Perfil de usuario</span>
-          <button type="button" className="admin-review-close" onClick={onClose} aria-label="Cerrar">✕</button>
+          <button type="button" className="admin-review-close" onClick={onClose} aria-label="Cerrar"><IconX size={16}/></button>
         </header>
 
         <div className="upp-body">

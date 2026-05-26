@@ -1,0 +1,140 @@
+.pdm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.pdm-box {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.pdm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.pdm-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  margin: 0;
+}
+
+.pdm-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.pdm-close:hover { background: #f3f4f6; color: #111; }
+
+.pdm-body {
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+  flex: 1;
+  font-size: 0.88rem;
+  color: #374151;
+  line-height: 1.65;
+}
+
+.pdm-body section {
+  margin-bottom: 1.4rem;
+}
+
+.pdm-body section:last-child {
+  margin-bottom: 0;
+}
+
+.pdm-body h3 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  margin: 0 0 0.5rem;
+}
+
+.pdm-body p {
+  margin: 0 0 0.5rem;
+}
+
+.pdm-body ul {
+  margin: 0 0 0.5rem;
+  padding-left: 1.4rem;
+}
+
+.pdm-body li {
+  margin-bottom: 0.25rem;
+}
+
+.pdm-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.pdm-accept-btn {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.pdm-accept-btn:hover { background: #4338ca; }
+
+/* Checkbox en el form */
+.auth-politica-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: #374151;
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+}
+
+.auth-politica-row input[type="checkbox"] {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  accent-color: #4f46e5;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.auth-politica-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #4f46e5;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+}
+.auth-politica-link:hover { color: #4338ca; }

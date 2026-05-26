@@ -1,4 +1,5 @@
 import React from 'react';
+import { IconStar } from './icons';
 import './ServicioCard.css';
 
 const currencyFormatter = new Intl.NumberFormat('es-CO', {
@@ -30,7 +31,7 @@ const ServicioCard = ({ servicio }) => {
               key={index}
               className={index < Math.round(servicio.calificacion) ? 'star filled' : 'star'}
             >
-              ★
+              <IconStar size={14}/>
             </span>
           ))}
           <span className="rating-value">{servicio.calificacion.toFixed(1)}</span>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { contratarPremium } from '../models/pagosModel';
+import { IconCrown, IconCheck, IconLock, IconX } from './icons';
 import './feed/DestacarModal.css';
 
 export function PlanPremiumModal({ onClose, onSuccess }) {
@@ -24,26 +25,26 @@ export function PlanPremiumModal({ onClose, onSuccess }) {
   return (
     <div className="pago-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="pago-modal">
-        <button type="button" className="pago-close" onClick={onClose}>✕</button>
+        <button type="button" className="pago-close" onClick={onClose}><IconX size={16}/></button>
 
         {done ? (
           <div className="pago-success">
-            <div className="pago-success-icon">💜</div>
+            <div className="pago-success-icon"><IconCrown size={32}/></div>
             <h3>¡Plan Premium activado!</h3>
             <p>Ya puedes publicar <strong>sin límites</strong> y acceder a funciones exclusivas.</p>
             <button type="button" className="pago-btn-primary" onClick={onClose}>¡Genial!</button>
           </div>
         ) : (
           <>
-            <div className="pago-icon">💜</div>
+            <div className="pago-icon"><IconCrown size={32}/></div>
             <h3 className="pago-title">Plan Premium</h3>
             <p className="pago-pub-name">Lleva tu cuenta al siguiente nivel</p>
 
             <ul className="pago-benefits">
-              <li>✓ Publicaciones ilimitadas</li>
-              <li>✓ Insignia Premium en tu perfil</li>
-              <li>✓ Prioridad en búsquedas</li>
-              <li>✓ Destacar publicaciones a precio especial</li>
+              <li><><IconCheck size={14}/> Publicaciones ilimitadas</></li>
+              <li><><IconCheck size={14}/> Insignia Premium en tu perfil</></li>
+              <li><><IconCheck size={14}/> Prioridad en búsquedas</></li>
+              <li><><IconCheck size={14}/> Destacar publicaciones a precio especial</></li>
             </ul>
 
             <div className="pago-price-box">
@@ -52,7 +53,7 @@ export function PlanPremiumModal({ onClose, onSuccess }) {
             </div>
 
             <div className="pago-simulated-note">
-              🔒 Pago simulado — en producción se integraría con pasarela de pago
+              <><IconLock size={14}/> Pago simulado — en producción se integraría con pasarela de pago</>
             </div>
 
             {error && <p className="pago-error">{error}</p>}

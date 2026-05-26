@@ -93,3 +93,99 @@ export const IconUserX = ({ size = 18 }) => (
     <line x1="23" y1="8" x2="17" y2="14"/>
   </svg>
 );
+
+export const IconMapPin = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+    <circle cx="12" cy="10" r="3"/>
+  </svg>
+);
+
+export const IconLoader = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <line x1="12" y1="2" x2="12" y2="6"/>
+    <line x1="12" y1="18" x2="12" y2="22"/>
+    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+    <line x1="2" y1="12" x2="6" y2="12"/>
+    <line x1="18" y1="12" x2="22" y2="12"/>
+    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+  </svg>
+);
+
+export const IconCheck = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+
+export const IconX = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+);
+
+export const IconLock = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  </svg>
+);
+
+export const IconCamera = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+);
+
+export const IconArrowsUpDown = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <polyline points="17 11 12 6 7 11"/>
+    <polyline points="17 18 12 13 7 18"/>
+  </svg>
+);
+
+export const IconPin = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+    <circle cx="12" cy="10" r="3"/>
+  </svg>
+);
+
+export const IconInfo = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+);
+
+export const IconDot = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <circle cx="12" cy="12" r="4"/>
+  </svg>
+);
+
+export const IconBell = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+
+export const IconCrown = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <path d="M2 17l2.5-8L9 13l3-9 3 9 4.5-4L22 17H2z"/>
+    <line x1="2" y1="21" x2="22" y2="21"/>
+  </svg>
+);
+
+export const IconShieldCheck = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...props}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    <polyline points="9 12 11 14 15 10"/>
+  </svg>
+);

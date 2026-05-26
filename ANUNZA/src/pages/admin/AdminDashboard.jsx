@@ -8,6 +8,7 @@ import {
   fetchAdminReportes,
 } from '../../models/adminModel';
 import { formatDate } from '../../utils/format';
+import { IconX } from '../../components/icons';
 
 const STAT_ITEMS = [
   { key: 'usuarios_total',          label: 'Usuarios totales',          panelType: 'usuarios_todos'       },
@@ -84,7 +85,7 @@ function StatDetailPanel({ panelType, onClose }) {
       <div className="sdp-panel" onClick={e => e.stopPropagation()}>
         <header className="sdp-head">
           <span className="sdp-title">{titles[panelType]}</span>
-          <button type="button" className="admin-review-close" onClick={onClose} aria-label="Cerrar">✕</button>
+          <button type="button" className="admin-review-close" onClick={onClose} aria-label="Cerrar"><IconX size={16}/></button>
         </header>
 
         <div className="sdp-body">

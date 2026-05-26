@@ -1,13 +1,14 @@
 import { pool } from '../config/database.js';
 
 const LIMITE_GRATUITO = 3;
+const LIMITE_PREMIUM  = 5;
 
 const PRECIOS = {
   destacar_publicacion: 9900,   // COP por 7 días
   plan_premium:         29900,  // COP por mes
 };
 
-/** Devuelve el plan actual y cuántas publicaciones activas tiene el usuario. */
+/** Devuelve el plan actual y cuántas publicaciones ha creado hoy el usuario. */
 export const getMiEstado = async (req, res) => {
   const userId = req.userId;
   try {
@@ -17,14 +18,14 @@ export const getMiEstado = async (req, res) => {
     );
     const { plan = 'gratuito', verificado = false } = u.rows[0] || {};
 
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
     const cnt = await pool.query(
-      `SELECT COUNT(*)::int AS total
-       FROM publicaciones
-       WHERE usuario_id = $1 AND COALESCE(estado, 'activo') = 'activo'`,
-      [userId]
+      `SELECT COUNT(*)::int AS total FROM publicaciones
+       WHERE usuario_id = $1 AND created_at >= $2`,
+      [userId, hoy.toISOString()]
     );
     const publicaciones_activas = cnt.rows[0]?.total ?? 0;
-    const limite = plan === 'gratuito' ? LIMITE_GRATUITO : null;
+    const limite = plan === 'premium' ? LIMITE_PREMIUM : LIMITE_GRATUITO;
 
     res.json({ plan, verificado, publicaciones_activas, limite });
   } catch (error) {

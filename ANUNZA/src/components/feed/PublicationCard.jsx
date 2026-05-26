@@ -16,6 +16,7 @@ import { ConfirmDialog } from '../ConfirmDialog';
 import {
   IconHeart, IconChat, IconComment, IconStar,
   IconShare, IconBookmark, IconFlag, IconAlertUser, IconDots, IconTrash,
+  IconShieldCheck, IconCrown, IconMapPin, IconX,
 } from '../icons';
 import { DEFAULT_AVATAR } from '../../utils/constants';
 import { formatDate, formatCOP } from '../../utils/format';
@@ -163,7 +164,7 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
 
   const resenasTitle =
     resenasCount > 0 && promedioResenas != null
-      ? `Reseñas · ${promedioResenas}★ (${resenasCount})`
+      ? `Reseñas · ${promedioResenas} (${resenasCount})`
       : `Reseñas · ${resenasCount}`;
 
   return (
@@ -190,14 +191,14 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
           >
             {p.autor_nombre}
             {p.autor_verificado && (
-              <span className="pub-badge-verificado" title="Usuario verificado">✓ Verificado</span>
+              <span className="pub-badge-verificado" title="Usuario verificado"><><IconShieldCheck size={12}/> Verificado</></span>
             )}
             {p.autor_plan === 'premium' && (
-              <span className="pub-badge-premium" title="Usuario Premium">★ Premium</span>
+              <span className="pub-badge-premium" title="Usuario Premium"><><IconCrown size={12}/> Premium</></span>
             )}
           </div>
           <time className="pub-time">{formatDate(p.created_at)}</time>
-          {p.autor_ciudad && <div className="pub-loc">📍 {p.autor_ciudad}</div>}
+          {p.autor_ciudad && <div className="pub-loc"><><IconMapPin size={12}/> {p.autor_ciudad}</></div>}
         </div>
 
         {/* ── Menú 3 puntos ── */}
@@ -298,19 +299,17 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
           {likeCount > 0 && <span>{likeCount}</span>}
         </button>
 
-        {!esMio && (
-          <button
-            type="button"
-            className={`pub-btn pub-resenas ${resenasCount > 0 ? 'has-rating' : ''}`}
-            onClick={toggleResenas}
-            aria-label={resenasTitle}
-            title={resenasTitle}
-          >
-            <IconStar />
-            {resenasCount > 0 && promedioResenas != null && <span>{promedioResenas}★</span>}
-            {resenasCount > 0 && <span>({resenasCount})</span>}
-          </button>
-        )}
+        <button
+          type="button"
+          className={`pub-btn pub-resenas ${resenasCount > 0 ? 'has-rating' : ''}`}
+          onClick={toggleResenas}
+          aria-label={resenasTitle}
+          title={resenasTitle}
+        >
+          <IconStar />
+          {resenasCount > 0 && promedioResenas != null && <span>{promedioResenas}<IconStar size={12}/></span>}
+          {resenasCount > 0 && <span>({resenasCount})</span>}
+        </button>
 
         {!esMio && (
           <button
@@ -412,7 +411,7 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
                         onKeyDown={(e) => e.key === 'Enter' && sendReply()}
                       />
                       <button type="button" onClick={sendReply}>Enviar</button>
-                      <button type="button" className="pub-reply-cancel" onClick={() => { setReplyTo(null); setReplyDraft(''); }}>✕</button>
+                      <button type="button" className="pub-reply-cancel" onClick={() => { setReplyTo(null); setReplyDraft(''); }}><IconX size={14}/></button>
                     </div>
                   )}
                   {/* Respuestas anidadas */}

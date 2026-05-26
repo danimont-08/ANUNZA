@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { destacarPublicacion } from '../../models/pagosModel';
+import { IconStar, IconCheck, IconLock, IconX } from '../icons';
 import './DestacarModal.css';
 
 export function DestacarModal({ publicacion, onClose, onSuccess }) {
@@ -24,25 +25,25 @@ export function DestacarModal({ publicacion, onClose, onSuccess }) {
   return (
     <div className="pago-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="pago-modal">
-        <button type="button" className="pago-close" onClick={onClose}>✕</button>
+        <button type="button" className="pago-close" onClick={onClose}><IconX size={16}/></button>
 
         {done ? (
           <div className="pago-success">
-            <div className="pago-success-icon">⭐</div>
+            <div className="pago-success-icon"><IconStar size={32}/></div>
             <h3>¡Publicación destacada!</h3>
             <p>Tu publicación aparecerá en la parte superior del feed durante <strong>7 días</strong>.</p>
             <button type="button" className="pago-btn-primary" onClick={onClose}>Entendido</button>
           </div>
         ) : (
           <>
-            <div className="pago-icon">⭐</div>
+            <div className="pago-icon"><IconStar size={32}/></div>
             <h3 className="pago-title">Destacar publicación</h3>
             <p className="pago-pub-name">"{publicacion.titulo}"</p>
 
             <ul className="pago-benefits">
-              <li>✓ Aparece en la parte superior del feed</li>
-              <li>✓ Insignia "Destacado" visible</li>
-              <li>✓ Mayor visibilidad por 7 días</li>
+              <li><><IconCheck size={14}/> Aparece en la parte superior del feed</></li>
+              <li><><IconCheck size={14}/> Insignia "Destacado" visible</></li>
+              <li><><IconCheck size={14}/> Mayor visibilidad por 7 días</></li>
             </ul>
 
             <div className="pago-price-box">
@@ -51,7 +52,7 @@ export function DestacarModal({ publicacion, onClose, onSuccess }) {
             </div>
 
             <div className="pago-simulated-note">
-              🔒 Pago simulado — en producción se integraría con pasarela de pago
+              <><IconLock size={14}/> Pago simulado — en producción se integraría con pasarela de pago</>
             </div>
 
             {error && <p className="pago-error">{error}</p>}

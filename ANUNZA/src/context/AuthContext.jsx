@@ -59,7 +59,12 @@ export const AuthProvider = ({ children }) => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error en login');
+        const err = new Error(errorData.message || 'Error en login');
+        if (errorData.correo_no_confirmado) {
+          err.correo_no_confirmado = true;
+          err.correo = errorData.correo;
+        }
+        throw err;
       }
 
       const data = await response.json();
@@ -100,6 +105,9 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
+
+      // Si requiere confirmación de correo, no iniciamos sesión
+      if (data.needs_confirmation) return data;
 
       setUser(data.user);
       setToken(data.token);

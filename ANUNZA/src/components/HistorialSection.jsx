@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../services/api';
 import { formatCOP } from '../utils/format';
+import { IconHeart, IconStar, IconDot } from './icons';
 import './HistorialSection.css';
 
 /** Parsea la descripción que puede ser texto plano o JSON {"text":"..."}. */
@@ -14,9 +15,9 @@ function parseTitulo(raw) {
 }
 
 const TIPO_ICONO = {
-  me_gusta: '❤️',
-  like: '❤️',
-  me_interesa: '⭐',
+  me_gusta:    <IconHeart size={14} />,
+  like:        <IconHeart size={14} />,
+  me_interesa: <IconStar size={14} />,
 };
 
 export function HistorialSection({ onNavigateToPost }) {
@@ -60,7 +61,16 @@ export function HistorialSection({ onNavigateToPost }) {
             {(data.calificaciones || []).length === 0 && <li className="hist-empty">Sin calificaciones</li>}
             {(data.calificaciones || []).map((c) => (
               <li key={c.id}>
-                <strong>{'★'.repeat(c.puntuacion ?? c.puntos ?? 0)} {c.puntuacion ?? c.puntos ?? '—'}/5</strong>
+                <strong>{Array.from({ length: c.puntuacion ?? c.puntos ?? 0 }, (_, i) => <IconStar key={i} size={13} />)} {c.puntuacion ?? c.puntos ?? '—'}/5</strong>
+                {c.publicacion_id && (
+                  <button
+                    type="button"
+                    className="hist-item-link"
+                    onClick={() => onNavigateToPost?.(c.publicacion_id)}
+                  >
+                    {c.publicacion_titulo || 'Ver publicación'}
+                  </button>
+                )}
                 {c.comentario && <p>{c.comentario}</p>}
                 {c.imagen_url && (
                   <img src={c.imagen_url} alt="Imagen de reseña" className="hist-resena-img" />
@@ -112,7 +122,7 @@ export function HistorialSection({ onNavigateToPost }) {
             {(data.interacciones || []).length === 0 && <li className="hist-empty">Sin interacciones</li>}
             {(data.interacciones || []).map((i) => (
               <li key={i.id}>
-                <span className="hist-icon">{TIPO_ICONO[i.tipo] || '🔹'}</span>
+                <span className="hist-icon">{TIPO_ICONO[i.tipo] || <IconDot size={14} />}</span>
                 <button
                   type="button"
                   className="hist-item-link"

@@ -3,7 +3,7 @@ import { apiFetch, getStoredToken } from '../services/api';
 import { UserPublicProfileModal } from './UserPublicProfileModal';
 import { connectSocket, getSocket, disconnectSocket } from '../services/socket';
 import { ReportModal } from './feed/ReportModal';
-import { IconFlag, IconUserX } from './icons';
+import { IconFlag, IconUserX, IconPin, IconInfo } from './icons';
 import { DEFAULT_AVATAR } from '../utils/constants';
 import { formatTime } from '../utils/format';
 import './ChatSection.css';
@@ -177,6 +177,7 @@ export function ChatSection({
 
     const joinRoom = () => socket.emit('join_conversation', activeId);
     if (socket.connected) joinRoom();
+    socket.off('connect', joinRoom);
     socket.on('connect', joinRoom);
 
     const onNewMessage = ({ mensaje }) => {
@@ -192,6 +193,7 @@ export function ChatSection({
       );
     };
 
+    socket.off('new_message');
     socket.on('new_message', onNewMessage);
 
     return () => {
@@ -211,11 +213,22 @@ export function ChatSection({
     if (!text || !activeId) return;
     setDraft('');
     try {
-      await apiFetch(`/chat/conversaciones/${activeId}/mensajes`, {
+      const data = await apiFetch(`/chat/conversaciones/${activeId}/mensajes`, {
         method: 'POST',
         body: JSON.stringify({ contenido: text, tipo: 'texto' }),
       });
-      // El socket emite 'new_message' al room, incluyendo al remitente
+      // Agregar el mensaje inmediatamente desde la respuesta HTTP
+      // El socket lo recibirán los demás participantes; el dedup evita duplicados
+      if (data.mensaje) {
+        setMensajes((prev) =>
+          prev.some((m) => m.id === data.mensaje.id) ? prev : [...prev, data.mensaje]
+        );
+        setConversaciones((prev) =>
+          prev.map((c) =>
+            c.id === activeId ? { ...c, ultimo_mensaje: data.mensaje.contenido } : c
+          )
+        );
+      }
     } catch (e) {
       setError(e.message);
       setDraft(text);
@@ -301,7 +314,7 @@ export function ChatSection({
                   <div className="chat-conv-text">
                     <span className="chat-conv-name">{c.peer?.nombre || 'Chat'}</span>
                     {c.publicacion_titulo && (
-                      <span className="chat-conv-pub">📌 {c.publicacion_titulo}</span>
+                      <span className="chat-conv-pub"><><IconPin size={12}/> {c.publicacion_titulo}</></span>
                     )}
                     <span className="chat-conv-preview">{c.ultimo_mensaje || 'Sin mensajes'}</span>
                   </div>
@@ -315,7 +328,7 @@ export function ChatSection({
           {!activeId && (
             <div className="chat-placeholder">
               <p>Selecciona una conversación para comenzar.</p>
-              <p className="chat-hint">💡 Inicia chats desde el botón "Chat" en las publicaciones.</p>
+              <p className="chat-hint"><><IconInfo size={14}/> Inicia chats desde el botón "Chat" en las publicaciones.</></p>
             </div>
           )}
           {activeId && (
@@ -345,7 +358,7 @@ export function ChatSection({
                   </strong>
                   <div className="chat-peer-sub">En línea en ANUNZA</div>
                   {activeConv?.publicacion_titulo && (
-                    <div className="chat-peer-pub">📌 {activeConv.publicacion_titulo}</div>
+                    <div className="chat-peer-pub"><><IconPin size={12}/> {activeConv.publicacion_titulo}</></div>
                   )}
                 </div>
                 <div className="chat-peer-actions">

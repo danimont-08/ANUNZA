@@ -9,6 +9,7 @@ export const FormularioLogin = () => {
   const [formData, setFormData] = useState({ correo: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [correoSinConfirmar, setCorreoSinConfirmar] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,6 +21,7 @@ export const FormularioLogin = () => {
     setError('');
     setLoading(true);
     try {
+      setCorreoSinConfirmar('');
       if (!formData.correo || !formData.password) {
         setError('Por favor completa todos los campos');
         setLoading(false);
@@ -34,7 +36,12 @@ export const FormularioLogin = () => {
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.message);
+      if (err.correo_no_confirmado) {
+        setCorreoSinConfirmar(err.correo || formData.correo);
+        setError('');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -68,6 +75,30 @@ export const FormularioLogin = () => {
 
           {(error || authError) && (
             <div className="error-message">{error || authError}</div>
+          )}
+
+          {correoSinConfirmar && (
+            <div className="error-message" style={{ background: '#fef3c7', borderColor: '#fbbf24', color: '#92400e' }}>
+              Debes confirmar tu correo antes de iniciar sesión.{' '}
+              <button
+                type="button"
+                style={{ background: 'none', border: 'none', color: '#b45309', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                onClick={async () => {
+                  try {
+                    const { API_URL } = await import('../services/api');
+                    await fetch(`${API_URL}/auth/reenviar-confirmacion`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ correo: correoSinConfirmar }),
+                    });
+                    setCorreoSinConfirmar('');
+                    setError('Correo de confirmación reenviado. Revisa tu bandeja.');
+                  } catch { /* silencio */ }
+                }}
+              >
+                Reenviar correo
+              </button>
+            </div>
           )}
 
           <form onSubmit={handleSubmit} className="auth-form">

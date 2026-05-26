@@ -7,6 +7,11 @@ import { apiFetch } from '../services/api';
 import { geolocateToCity, osmEmbedUrl } from '../utils/geolocate';
 import { DEFAULT_AVATAR } from '../utils/constants';
 import { formatDate, formatCOP } from '../utils/format';
+import {
+  IconShieldCheck, IconCrown, IconMapPin, IconCamera,
+  IconArrowsUpDown, IconX, IconLoader, IconCheck,
+  IconHeart, IconChat,
+} from './icons';
 import './ProfileSection.css';
 import '../pages/UserPublicProfile.css';
 
@@ -30,8 +35,8 @@ function PubCard({ pub, onClick, onDelete }) {
           <p className="upp2-pub-price">{formatCOP(pub.precio)}</p>
         )}
         <div className="upp2-pub-stats">
-          <span>♥ {pub.likes ?? 0}</span>
-          <span>💬 {pub.comentarios_count ?? 0}</span>
+          <span><IconHeart size={13} /> {pub.likes ?? 0}</span>
+          <span><IconChat size={13} /> {pub.comentarios_count ?? 0}</span>
         </div>
         <p className="upp2-pub-date">{formatDate(pub.created_at)}</p>
         {onDelete && (
@@ -249,14 +254,14 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
                 <h1 className="upp2-name">
                   {user?.nombre}
                   {user?.verificado && (
-                    <span className="upp2-verified" title="Usuario verificado">✓</span>
+                    <span className="upp2-verified" title="Usuario verificado"><IconShieldCheck size={14}/></span>
                   )}
                   {esPremium && (
-                    <span className="prof-badge prof-badge-premium">★ Premium</span>
+                    <span className="prof-badge prof-badge-premium"><IconCrown size={12}/> Premium</span>
                   )}
                 </h1>
                 <div className="upp2-meta-row">
-                  {user?.ciudad && <span>📍 {user.ciudad}</span>}
+                  {user?.ciudad && <span><IconMapPin size={14}/> {user.ciudad}</span>}
                   {user?.created_at && (
                     <span>Miembro desde {formatDate(user.created_at)}</span>
                   )}
@@ -289,7 +294,7 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
           {/* ── Plan ── */}
           <div className={`prof-plan-box ${esPremium ? 'prof-plan-premium' : ''}`}>
             {esPremium ? (
-              <p className="prof-plan-txt">💜 Plan <strong>Premium</strong> activo — publicaciones ilimitadas</p>
+              <p className="prof-plan-txt"><IconCrown size={14}/> Plan <strong>Premium</strong> activo — publicaciones ilimitadas</p>
             ) : (
               <>
                 <p className="prof-plan-txt">
@@ -396,14 +401,14 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
                     onMouseDown={e => e.stopPropagation()}
                     onClick={() => setAdjusting(false)}
                   >
-                    ✓ Listo
+                    <IconCheck size={14}/> Listo
                   </button>
                 </div>
               ) : (
                 <div className="prof-cover-edit-overlay">
                   <input ref={coverRef} type="file" accept="image/*" className="prof-file" onChange={onPickCover} />
                   <button type="button" className="prof-cover-edit-btn" onClick={() => coverRef.current?.click()}>
-                    📷 {data.foto_portada ? 'Cambiar' : 'Añadir portada'}
+                    <><IconCamera size={14}/> {data.foto_portada ? 'Cambiar' : 'Añadir portada'}</>
                   </button>
                   {data.foto_portada && (
                     <button
@@ -411,7 +416,7 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
                       className="prof-cover-edit-btn"
                       onClick={() => setAdjusting(true)}
                     >
-                      ↕ Ajustar
+                      <><IconArrowsUpDown size={14}/> Ajustar</>
                     </button>
                   )}
                   {data.foto_portada && (
@@ -420,7 +425,7 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
                       className="prof-cover-edit-btn prof-cover-edit-btn--remove"
                       onClick={() => setData(d => ({ ...d, foto_portada: '', foto_portada_pos: '50% 50%' }))}
                     >
-                      ✕ Quitar
+                      <><IconX size={14}/> Quitar</>
                     </button>
                   )}
                 </div>
@@ -438,7 +443,7 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
                   onClick={() => fileRef.current?.click()}
                   title="Cambiar foto de perfil"
                 >
-                  📷
+                  <IconCamera size={18}/>
                 </button>
               </div>
             </div>
@@ -471,13 +476,13 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
               onClick={usarUbicacion}
               disabled={geoLoading}
             >
-              {geoLoading ? '⏳ Detectando…' : '📍 Usar mi ubicación'}
+              {geoLoading ? <><IconLoader size={14}/> Detectando…</> : <><IconMapPin size={14}/> Usar mi ubicación</>}
             </button>
             {geoError && <p className="prof-geo-error">{geoError}</p>}
             {geoData && !geoError && (
               <>
                 <p className="prof-geo-ok">
-                  ✓ Ubicación detectada{geoData.city ? `: ${geoData.city}` : ''}
+                  <><IconCheck size={14}/> Ubicación detectada{geoData.city ? `: ${geoData.city}` : ''}</>
                   {geoData.source === 'ip' ? ' (aproximada por IP)' : ''}
                 </p>
                 <div className="prof-map-wrap">

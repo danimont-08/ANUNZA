@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
 import { DEFAULT_AVATAR } from '../utils/constants';
 import { formatDate, formatCOP } from '../utils/format';
+import { IconHeart, IconChat, IconMapPin, IconShieldCheck } from '../components/icons';
 import logo from '../assets/Logo_Anunza.png';
 import '../components/Navbar.css';
 import './UserPublicProfile.css';
@@ -28,8 +29,8 @@ function PubCard({ pub, onClick }) {
           <p className="upp2-pub-price">{formatCOP(pub.precio)}</p>
         )}
         <div className="upp2-pub-stats">
-          <span>♥ {pub.likes ?? 0}</span>
-          <span>💬 {pub.comentarios_count ?? 0}</span>
+          <span><IconHeart size={14}/> {pub.likes ?? 0}</span>
+          <span><IconChat size={14}/> {pub.comentarios_count ?? 0}</span>
         </div>
         <p className="upp2-pub-date">{formatDate(pub.created_at)}</p>
       </div>
@@ -129,11 +130,11 @@ export function UserPublicProfile() {
                   <h1 className="upp2-name">
                     {perfil.nombre}
                     {perfil.verificado && (
-                      <span className="upp2-verified" title="Usuario verificado">✓</span>
+                      <span className="upp2-verified" title="Usuario verificado"><IconShieldCheck size={14}/></span>
                     )}
                   </h1>
                   <div className="upp2-meta-row">
-                    {perfil.ciudad && <span>📍 {perfil.ciudad}</span>}
+                    {perfil.ciudad && <span><IconMapPin size={14}/> {perfil.ciudad}</span>}
                     <span>Miembro desde {formatDate(perfil.created_at)}</span>
                   </div>
                   <div className="upp2-stats-row">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { enviarReporte } from '../../models/reporteModel';
+import { IconX } from '../icons';
 import './ReportModal.css';
 
 const IcSpam      = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>;
@@ -71,7 +72,7 @@ export function ReportModal({ tipo = 'publicacion', targetId, targetLabel, onClo
           <>
             <div className="report-head">
               <h3>{TITULOS[tipo] ?? 'Reportar'}</h3>
-              <button type="button" className="report-close" onClick={onClose} aria-label="Cerrar">✕</button>
+              <button type="button" className="report-close" onClick={onClose} aria-label="Cerrar"><IconX size={16}/></button>
             </div>
             {targetLabel && (
               <p className="report-pub-name">"{targetLabel}"</p>

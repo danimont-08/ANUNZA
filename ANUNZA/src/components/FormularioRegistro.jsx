@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { geolocateToCity, osmEmbedUrl } from '../utils/geolocate';
+import { PoliticaDatosModal } from './PoliticaDatosModal';
+import { IconLoader, IconMapPin, IconCheck, IconX } from './icons';
 import './AuthForm.css';
 
 export const FormularioRegistro = () => {
@@ -15,7 +17,21 @@ export const FormularioRegistro = () => {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
-  const [geoData, setGeoData]   = useState(null); // { lat, lon, city }
+  const [geoData, setGeoData]   = useState(null);
+  const [aceptaDatos, setAceptaDatos] = useState(false);
+  const [showPolitica, setShowPolitica] = useState(false);
+  const [correoEnviado, setCorreoEnviado] = useState('');
+
+  const pwdRules = [
+    { label: 'Mínimo 8 caracteres',           test: (p) => p.length >= 8 },
+    { label: 'Al menos una mayúscula',         test: (p) => /[A-Z]/.test(p) },
+    { label: 'Al menos una minúscula',         test: (p) => /[a-z]/.test(p) },
+    { label: 'Al menos un número',             test: (p) => /\d/.test(p) },
+    { label: 'Al menos un carácter especial',  test: (p) => /[!@#$%^&*(),.?":{}|<>\-_=+\[\]\\;'/`~]/.test(p) },
+  ];
+
+  const pwdScore = pwdRules.filter((r) => r.test(formData.password)).length;
+  const pwdStrength = pwdScore <= 1 ? 'débil' : pwdScore <= 3 ? 'regular' : pwdScore === 4 ? 'buena' : 'fuerte';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,12 +67,17 @@ export const FormularioRegistro = () => {
         setError('Por favor completa todos los campos (incluye ciudad)');
         setLoading(false); return;
       }
+      if (!aceptaDatos) {
+        setError('Debes aceptar la Política de Tratamiento de Datos Personales.');
+        setLoading(false); return;
+      }
       if (formData.password !== formData.confirmPassword) {
         setError('Las contraseñas no coinciden');
         setLoading(false); return;
       }
-      if (formData.password.length < 6) {
-        setError('La contraseña debe tener mínimo 6 caracteres');
+      const failedRules = pwdRules.filter((r) => !r.test(formData.password));
+      if (failedRules.length > 0) {
+        setError(`Contraseña insegura: ${failedRules[0].label.toLowerCase()}.`);
         setLoading(false); return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -64,12 +85,16 @@ export const FormularioRegistro = () => {
         setError('Correo inválido');
         setLoading(false); return;
       }
-      await register(
+      const data = await register(
         formData.nombre, formData.correo, formData.telefono, formData.password,
         formData.cedula, formData.ciudad,
         formData.latitud  !== '' ? Number(formData.latitud)  : null,
         formData.longitud !== '' ? Number(formData.longitud) : null
       );
+      if (data?.needs_confirmation) {
+        setCorreoEnviado(formData.correo.trim().toLowerCase());
+        return;
+      }
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
@@ -77,6 +102,50 @@ export const FormularioRegistro = () => {
       setLoading(false);
     }
   };
+
+  if (correoEnviado) {
+    return (
+      <div className="auth-container">
+        <div className="auth-panel-form" style={{ width: '100%' }}>
+          <div className="auth-box" style={{ maxWidth: 480, textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>
+              <IconCheck size={48} style={{ color: '#4f46e5' }} />
+            </div>
+            <h1 style={{ fontSize: '1.5rem', marginBottom: 8 }}>Revisa tu correo</h1>
+            <p style={{ color: '#6b7280', marginBottom: 20, lineHeight: 1.6 }}>
+              Enviamos un enlace de confirmación a{' '}
+              <strong style={{ color: '#1e1b4b' }}>{correoEnviado}</strong>.
+              Haz clic en el enlace del correo para activar tu cuenta.
+            </p>
+            <p style={{ fontSize: '0.82rem', color: '#9ca3af', marginBottom: 24 }}>
+              ¿No te llegó? Revisa la carpeta de spam o{' '}
+              <button
+                type="button"
+                className="auth-politica-link"
+                onClick={async () => {
+                  try {
+                    const { API_URL } = await import('../services/api');
+                    await fetch(`${API_URL}/auth/reenviar-confirmacion`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ correo: correoEnviado }),
+                    });
+                    setError('');
+                  } catch { /* silencio */ }
+                }}
+              >
+                reenvía el correo
+              </button>
+              .
+            </p>
+            <Link to="/login" className="submit-button" style={{ display: 'inline-block', textDecoration: 'none' }}>
+              Ir al inicio de sesión
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-container auth-container--register">
@@ -156,13 +225,13 @@ export const FormularioRegistro = () => {
                 onClick={usarUbicacion}
                 disabled={geoLoading}
               >
-                {geoLoading ? '⏳ Detectando…' : '📍 Usar mi ubicación'}
+                {geoLoading ? <><IconLoader size={14}/> Detectando…</> : <><IconMapPin size={14}/> Usar mi ubicación</>}
               </button>
 
               {geoData && (
                 <>
                   <p className="geo-hint geo-hint--ok">
-                    ✓ Ubicación detectada{geoData.city ? `: ${geoData.city}` : ''}
+                    <><IconCheck size={14}/> Ubicación detectada{geoData.city ? `: ${geoData.city}` : ''}</>
                     {geoData.source === 'ip' ? ' (aproximada por IP)' : ''}
                   </p>
                   <div className="geo-map-wrap">
@@ -176,22 +245,63 @@ export const FormularioRegistro = () => {
               )}
             </div>
 
-            {/* Fila 3 */}
-            <div className="form-group">
+            {/* Contraseña con medidor */}
+            <div className="form-group form-group--full">
               <label htmlFor="password">Contraseña</label>
               <input type="password" id="password" name="password"
                 value={formData.password} onChange={handleChange}
-                placeholder="Mínimo 6 caracteres" required />
+                placeholder="Mínimo 8 caracteres" required />
+
+              {formData.password.length > 0 && (
+                <>
+                  <div className="pwd-meter">
+                    {[1,2,3,4,5].map((i) => (
+                      <span key={i} className={`pwd-meter-bar pwd-meter-bar--${pwdStrength}${i <= pwdScore ? ' filled' : ''}`} />
+                    ))}
+                    <span className={`pwd-meter-label pwd-meter-label--${pwdStrength}`}>{pwdStrength}</span>
+                  </div>
+                  <ul className="pwd-rules">
+                    {pwdRules.map((r) => (
+                      <li key={r.label} className={r.test(formData.password) ? 'ok' : 'fail'}>
+                        {r.test(formData.password) ? <IconCheck size={12}/> : <IconX size={12}/>} {r.label}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
 
-            <div className="form-group">
+            <div className="form-group form-group--full">
               <label htmlFor="confirmPassword">Confirmar contraseña</label>
               <input type="password" id="confirmPassword" name="confirmPassword"
                 value={formData.confirmPassword} onChange={handleChange}
                 placeholder="••••••••" required />
+              {formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword && (
+                <p className="pwd-no-match">Las contraseñas no coinciden</p>
+              )}
             </div>
 
-            <button type="submit" className="submit-button form-group--full" disabled={loading}>
+            <div className="form-group--full auth-politica-row">
+              <input
+                type="checkbox"
+                id="aceptaDatos"
+                checked={aceptaDatos}
+                onChange={(e) => setAceptaDatos(e.target.checked)}
+              />
+              <label htmlFor="aceptaDatos" style={{ cursor: 'pointer', margin: 0 }}>
+                He leído y acepto la{' '}
+                <button
+                  type="button"
+                  className="auth-politica-link"
+                  onClick={() => setShowPolitica(true)}
+                >
+                  Política de Tratamiento de Datos Personales
+                </button>
+                . Declaro ser mayor de 18 años.
+              </label>
+            </div>
+
+            <button type="submit" className="submit-button form-group--full" disabled={loading || !aceptaDatos}>
               {loading ? 'Registrando…' : 'Crear cuenta →'}
             </button>
           </form>
@@ -201,6 +311,8 @@ export const FormularioRegistro = () => {
           </p>
         </div>
       </div>
+
+      {showPolitica && <PoliticaDatosModal onClose={() => setShowPolitica(false)} />}
     </div>
   );
 };

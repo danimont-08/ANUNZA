@@ -15,6 +15,8 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
   const [descripcion, setDescripcion] = useState('');
   const [hashtagInput, setHashtagInput] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
+  const [subcategoriaId, setSubcategoriaId] = useState('');
+  const [subcategorias, setSubcategorias] = useState([]);
   const [tipo, setTipo] = useState('ofrezco');
   const [agregarServicio, setAgregarServicio] = useState(false);
   const [precio, setPrecio] = useState('');
@@ -74,6 +76,7 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
       titulo: titulo.trim(),
       descripcion: text,
       categoria_id: Number(categoriaId),
+      subcategoria_id: subcategoriaId ? Number(subcategoriaId) : null,
       tipo,
       agregar_servicio: agregarServicio,
       precio: precioNum,
@@ -90,6 +93,9 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
       setTitulo('');
       setDescripcion('');
       setHashtagInput('');
+      setCategoriaId('');
+      setSubcategoriaId('');
+      setSubcategorias([]);
       setPrecio('');
       setMateriales('');
       setTiempoEstimado('');
@@ -134,13 +140,17 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
           <select
             required
             value={categoriaId}
-            onChange={(e) => setCategoriaId(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setCategoriaId(val);
+              setSubcategoriaId('');
+              const cat = categorias.find((c) => String(c.id) === val);
+              setSubcategorias(cat?.subcategorias || []);
+            }}
           >
             <option value="">— Seleccionar —</option>
             {categorias.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nombre}
-              </option>
+              <option key={c.id} value={c.id}>{c.nombre}</option>
             ))}
           </select>
         </label>
@@ -159,6 +169,21 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
           </select>
         </label>
       </div>
+
+      {subcategorias.length > 0 && (
+        <label className="pc-label">
+          Subcategoría
+          <select
+            value={subcategoriaId}
+            onChange={(e) => setSubcategoriaId(e.target.value)}
+          >
+            <option value="">— Sin subcategoría —</option>
+            {subcategorias.map((s) => (
+              <option key={s.id} value={s.id}>{s.nombre}</option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {tipo === 'ofrezco' && (
         <label className="pc-switch">

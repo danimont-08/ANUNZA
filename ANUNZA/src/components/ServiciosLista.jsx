@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatCOP } from '../utils/format';
+import { IconStar } from './icons';
 import './ServiciosLista.css';
 
 /**
@@ -10,7 +11,7 @@ const ServiciosLista = ({ servicios }) => {
     const filledStars = Math.round(rating);
     return Array.from({ length: 5 }, (_, index) => (
       <span key={index} className={index < filledStars ? 'star filled' : 'star'}>
-        ★
+        <IconStar size={14}/>
       </span>
     ));
   };

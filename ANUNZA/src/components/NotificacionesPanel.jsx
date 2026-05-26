@@ -1,13 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { marcarNotificacionLeida, marcarTodasLeidasApi } from '../models/notificacionModel';
+import { IconChat, IconComment, IconStar, IconHeart, IconAlertUser, IconBell } from './icons';
 import './NotificacionesPanel.css';
 
 const TIPO_ICONO = {
-  nuevo_mensaje: '💬',
-  comentario: '🗨️',
-  resena: '⭐',
-  me_gusta: '❤️',
-  reporte: '🚨',
+  nuevo_mensaje: <IconChat size={14} />,
+  comentario:    <IconComment size={14} />,
+  resena:        <IconStar size={14} />,
+  me_gusta:      <IconHeart size={14} />,
+  reporte:       <IconAlertUser size={14} />,
 };
 
 function formatRelTime(iso) {
@@ -65,7 +66,7 @@ export function NotificacionesPanel({ notificaciones, onClose, onRefresh, onNavi
             tabIndex={0}
             onKeyDown={(e) => e.key === 'Enter' && handleClick(n)}
           >
-            <span className="notif-icon">{TIPO_ICONO[n.tipo] || '🔔'}</span>
+            <span className="notif-icon">{TIPO_ICONO[n.tipo] || <IconBell size={14} />}</span>
             <div className="notif-body">
               <p className="notif-msg">{n.mensaje}</p>
               <time className="notif-time">{formatRelTime(n.created_at)}</time>

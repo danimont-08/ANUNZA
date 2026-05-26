@@ -10,6 +10,7 @@ import {
   toggleLikePost,
 } from '../../models/publicacionModel';
 import { fetchMiEstado } from '../../models/pagosModel';
+import { IconX } from '../icons';
 import './FeedSection.css';
 
 export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHighlightConsumed }) {
@@ -207,7 +208,7 @@ export function FeedSection({ user, onChatWithUser, highlightPublicacionId, onHi
             onClick={() => setShowComposer(false)}
             title="Cerrar formulario"
           >
-            ✕
+            <IconX size={16}/>
           </button>
           <PublicationComposer
             categorias={categorias}
