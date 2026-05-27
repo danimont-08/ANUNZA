@@ -105,43 +105,57 @@ export const FormularioRegistro = () => {
 
   if (correoEnviado) {
     return (
-      <div className="auth-container">
-        <div className="auth-panel-form" style={{ width: '100%' }}>
-          <div className="auth-box" style={{ maxWidth: 480, textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>
-              <IconCheck size={48} style={{ color: '#4f46e5' }} />
-            </div>
-            <h1 style={{ fontSize: '1.5rem', marginBottom: 8 }}>Revisa tu correo</h1>
-            <p style={{ color: '#6b7280', marginBottom: 20, lineHeight: 1.6 }}>
-              Enviamos un enlace de confirmación a{' '}
-              <strong style={{ color: '#1e1b4b' }}>{correoEnviado}</strong>.
-              Haz clic en el enlace del correo para activar tu cuenta.
-            </p>
-            <p style={{ fontSize: '0.82rem', color: '#9ca3af', marginBottom: 24 }}>
-              ¿No te llegó? Revisa la carpeta de spam o{' '}
-              <button
-                type="button"
-                className="auth-politica-link"
-                onClick={async () => {
-                  try {
-                    const { API_URL } = await import('../services/api');
-                    await fetch(`${API_URL}/auth/reenviar-confirmacion`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ correo: correoEnviado }),
-                    });
-                    setError('');
-                  } catch { /* silencio */ }
-                }}
-              >
-                reenvía el correo
-              </button>
-              .
-            </p>
-            <Link to="/login" className="submit-button" style={{ display: 'inline-block', textDecoration: 'none' }}>
-              Ir al inicio de sesión
-            </Link>
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: '#f5f2ff', fontFamily: 'sans-serif', padding: '1.5rem',
+      }}>
+        <div style={{
+          background: '#fff', borderRadius: 16, padding: '3rem 2.5rem',
+          maxWidth: 460, width: '100%', textAlign: 'center',
+          boxShadow: '0 8px 40px rgba(79,70,229,.12)',
+        }}>
+          <div style={{ marginBottom: 8, fontSize: 32, fontWeight: 900, color: '#1e1b4b', letterSpacing: 1 }}>
+            ANUN<span style={{ color: '#8b5cf6' }}>ZA</span>
           </div>
+          <div style={{ margin: '20px auto 16px', color: '#4f46e5' }}>
+            <IconCheck size={52} />
+          </div>
+          <h1 style={{ fontSize: '1.5rem', marginBottom: 10, color: '#1e1b4b' }}>Revisa tu correo</h1>
+          <p style={{ color: '#6b7280', marginBottom: 20, lineHeight: 1.6, fontSize: '0.95rem' }}>
+            Enviamos un enlace de confirmación a{' '}
+            <strong style={{ color: '#1e1b4b' }}>{correoEnviado}</strong>.
+            Haz clic en el enlace del correo para activar tu cuenta.
+          </p>
+          <p style={{ fontSize: '0.82rem', color: '#9ca3af', marginBottom: 28 }}>
+            ¿No te llegó? Revisa la carpeta de spam o{' '}
+            <button
+              type="button"
+              className="auth-politica-link"
+              onClick={async () => {
+                try {
+                  const { API_URL } = await import('../services/api');
+                  await fetch(`${API_URL}/auth/reenviar-confirmacion`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo: correoEnviado }),
+                  });
+                } catch { /* silencio */ }
+              }}
+            >
+              reenvía el correo
+            </button>
+            .
+          </p>
+          <Link
+            to="/login"
+            style={{
+              background: '#4f46e5', color: '#fff', textDecoration: 'none',
+              padding: '12px 32px', borderRadius: 8, fontWeight: 700,
+              fontSize: '0.95rem', display: 'inline-block',
+            }}
+          >
+            Ir al inicio de sesión
+          </Link>
         </div>
       </div>
     );

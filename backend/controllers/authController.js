@@ -118,9 +118,7 @@ export const confirmarCorreo = async (req, res) => {
     }
 
     await pool.query(
-      `UPDATE usuarios
-       SET correo_confirmado = true, token_confirmacion = NULL, token_confirmacion_exp = NULL
-       WHERE id = $1`,
+      `UPDATE usuarios SET correo_confirmado = true WHERE id = $1`,
       [user.id]
     );
 

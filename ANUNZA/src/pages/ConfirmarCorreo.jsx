@@ -17,10 +17,13 @@ export function ConfirmarCorreo() {
       return;
     }
 
+    let ignore = false;
+
     (async () => {
       try {
         const res = await fetch(`${API_URL}/auth/confirmar-correo?token=${encodeURIComponent(token)}`);
         const data = await res.json();
+        if (ignore) return;
         if (res.ok && data.ok) {
           setStatus('ok');
           setMessage(data.message || '¡Correo confirmado!');
@@ -32,10 +35,14 @@ export function ConfirmarCorreo() {
           setMessage(data.message || 'El enlace no es válido.');
         }
       } catch {
-        setStatus('error');
-        setMessage('No se pudo conectar con el servidor.');
+        if (!ignore) {
+          setStatus('error');
+          setMessage('No se pudo conectar con el servidor.');
+        }
       }
     })();
+
+    return () => { ignore = true; };
   }, [token]);
 
   return (
