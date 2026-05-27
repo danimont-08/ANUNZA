@@ -67,8 +67,14 @@ export const register = async (req, res) => {
         correo: correo.trim().toLowerCase(),
         token: tokenConfirmacion,
       });
+      console.log('Correo de confirmación enviado a:', correo.trim().toLowerCase());
     } catch (mailErr) {
-      console.error('Error enviando correo de confirmación:', mailErr.message);
+      console.error('Error enviando correo de confirmación:', mailErr);
+      return res.status(201).json({
+        needs_confirmation: true,
+        mail_error: mailErr.message,
+        message: 'Cuenta creada, pero no se pudo enviar el correo de confirmación. Contacta al administrador.',
+      });
     }
 
     res.status(201).json({

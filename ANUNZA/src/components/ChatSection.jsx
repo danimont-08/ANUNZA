@@ -181,16 +181,18 @@ export function ChatSection({
     socket.on('connect', joinRoom);
 
     const onNewMessage = ({ mensaje }) => {
-      setMensajes((prev) =>
-        prev.some((m) => m.id === mensaje.id) ? prev : [...prev, mensaje]
-      );
       setConversaciones((prev) =>
         prev.map((c) =>
-          c.id === mensaje.conversacion_id
+          String(c.id) === String(mensaje.conversacion_id)
             ? { ...c, ultimo_mensaje: mensaje.contenido }
             : c
         )
       );
+      if (String(mensaje.conversacion_id) === String(activeId)) {
+        setMensajes((prev) =>
+          prev.some((m) => String(m.id) === String(mensaje.id)) ? prev : [...prev, mensaje]
+        );
+      }
     };
 
     socket.off('new_message');
@@ -202,6 +204,13 @@ export function ChatSection({
       socket.off('new_message', onNewMessage);
     };
   }, [activeId]);
+
+  // Polling de respaldo: refresca mensajes cada 8s mientras se ve una conversación
+  useEffect(() => {
+    if (!activeId) return;
+    const id = setInterval(() => loadMensajes(activeId), 8_000);
+    return () => clearInterval(id);
+  }, [activeId, loadMensajes]);
 
   useEffect(() => {
     // scrollToBottom ya verifica internamente si el teclado está abierto
