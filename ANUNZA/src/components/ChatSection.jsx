@@ -71,7 +71,15 @@ export function ChatSection({
     setError('');
     try {
       const data = await apiFetch('/chat/conversaciones');
-      setConversaciones(data.conversaciones || []);
+      // Dedup por peer: si hay dos conversaciones con el mismo usuario, queda la más reciente
+      const seen = new Set();
+      const unique = (data.conversaciones || []).filter((c) => {
+        const key = c.peer?.id;
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      setConversaciones(unique);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -132,8 +140,8 @@ export function ChatSection({
         });
         if (cancelled) return;
 
-        // Si viene desde el botón chat de una publicación, enviar mensaje automático siempre
-        if (bootstrapPublicacionTitulo) {
+        // Enviar mensaje automático solo si la conversación es nueva
+        if (bootstrapPublicacionTitulo && data.is_new) {
           const autoMsg = `Hola, vi tu publicación "${bootstrapPublicacionTitulo}" y me gustaría obtener más información. ¿Podrías darme más detalles?`;
           try {
             await apiFetch(`/chat/conversaciones/${data.conversacion_id}/mensajes`, {
