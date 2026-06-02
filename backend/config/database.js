@@ -1,7 +1,10 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
-dotenv.config();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: resolve(__dirname, '../.env') });
 
 const { Pool } = pg;
 
@@ -34,6 +37,7 @@ export const testConnection = async () => {
   try {
     const client = await pool.connect();
     await client.query('SELECT 1');
+    await client.query('ALTER TABLE mensajes ADD COLUMN IF NOT EXISTS editado BOOLEAN DEFAULT false');
     client.release();
     console.log('Conectado a PostgreSQL (Supabase) exitosamente');
 

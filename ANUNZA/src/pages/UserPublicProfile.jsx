@@ -87,14 +87,6 @@ export function UserPublicProfile() {
             </button>
             <button
               type="button"
-              className="anunza-navbar-user"
-              onClick={() => navigate('/dashboard', { state: { openSection: 'perfil' } })}
-            >
-              <img src={me?.foto_perfil || DEFAULT_AVATAR} alt="" className="anunza-navbar-avatar" />
-              <span className="anunza-navbar-name">{me?.nombre}</span>
-            </button>
-            <button
-              type="button"
               className="anunza-navbar-logout"
               onClick={() => { logout(); navigate('/login'); }}
             >

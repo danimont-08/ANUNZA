@@ -212,3 +212,193 @@
   .feed-list { gap: 0.85rem; }
   .feed-new-btn { font-size: 0.85rem; padding: 0.65rem 0.75rem; }
 }
+
+/* ── Búsqueda ── */
+.feed-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #fff;
+  border: 1.5px solid rgba(138, 78, 255, 0.2);
+  border-radius: 12px;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 0.75rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.feed-search-bar:focus-within {
+  border-color: var(--anunza-violet, #8a4eff);
+  box-shadow: 0 0 0 3px rgba(138, 78, 255, 0.1);
+}
+.feed-search-bar svg { flex-shrink: 0; color: #9b8ec4; }
+.feed-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--anunza-midnight, #2f086d);
+  background: transparent;
+}
+.feed-search-input::placeholder { color: #b0aac8; }
+.feed-search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #b0aac8;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 4px;
+}
+.feed-search-clear:hover { color: #7c3aed; }
+
+/* ── Pills de tipo ── */
+.feed-tipo-pills {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.feed-tipo-pill {
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(138, 78, 255, 0.25);
+  background: transparent;
+  color: #7a6f96;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.feed-tipo-pill:hover {
+  border-color: var(--anunza-violet, #8a4eff);
+  color: var(--anunza-violet, #8a4eff);
+}
+.feed-tipo-pill.active {
+  background: var(--anunza-violet, #8a4eff);
+  border-color: var(--anunza-violet, #8a4eff);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── Punto indicador de filtros activos ── */
+.feed-filters-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--anunza-violet, #8a4eff);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ── Cargar más ── */
+.feed-load-more {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1.5px solid rgba(138, 78, 255, 0.3);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--anunza-violet, #8a4eff);
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.feed-load-more:hover:not(:disabled) {
+  background: #f0e9ff;
+  border-color: var(--anunza-violet, #8a4eff);
+}
+.feed-load-more:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Empty state ── */
+.feed-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.feed-empty-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--anunza-midnight, #2f086d);
+  margin: 0;
+}
+
+.feed-empty-sub {
+  font-size: 0.88rem;
+  color: #9b8ec4;
+  margin: 0;
+  max-width: 280px;
+}
+
+/* ── Category pills ── */
+.feed-cat-pills-wrap {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.feed-cat-pills {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.feed-cat-pills::-webkit-scrollbar { display: none; }
+
+/* Degradé derecho que indica más contenido */
+.feed-cat-pills-fade {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 6px;
+  width: 48px;
+  background: linear-gradient(to right, transparent, var(--bg-page, #f5f2ff));
+  pointer-events: none;
+}
+
+.feed-cat-pill {
+  flex-shrink: 0;
+  padding: 0.32rem 0.9rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-subtle, rgba(138,78,255,0.18));
+  background: var(--bg-surface, #fff);
+  color: var(--text-secondary, #7a6f96);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.feed-cat-pill:hover {
+  border-color: var(--anunza-violet, #8a4eff);
+  color: var(--anunza-violet, #8a4eff);
+}
+.feed-cat-pill.active {
+  background: var(--anunza-violet, #8a4eff);
+  border-color: var(--anunza-violet, #8a4eff);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── Sentinel infinite scroll ── */
+.feed-sentinel {
+  min-height: 32px;
+  margin-top: 0.5rem;
+}

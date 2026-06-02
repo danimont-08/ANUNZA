@@ -61,6 +61,19 @@ export const getFeed = async (req, res) => {
     calificacionMin = n;
   }
 
+  const q =
+    req.query.q != null && String(req.query.q).trim()
+      ? String(req.query.q).trim()
+      : null;
+
+  const tipo =
+    req.query.tipo === 'ofrezco' || req.query.tipo === 'busco'
+      ? req.query.tipo
+      : null;
+
+  const limit = Math.min(parseInt(req.query.limit) || 20, 80);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+
 try {
     const { rows } = await pool.query(
       `SELECT p.id,
@@ -130,31 +143,78 @@ try {
           AND ($5::numeric IS NULL OR p.precio >= $5)
           AND ($6::numeric IS NULL OR p.precio <= $6)
           AND ($7::float IS NULL OR COALESCE(rc.prom, 0) >= $7)
+          AND ($8::text IS NULL OR p.titulo ILIKE '%' || $8 || '%')
+          AND ($9::text IS NULL OR p.tipo = $9)
         ORDER BY
           CASE WHEN p.destacada = true
                     AND (p.destacada_hasta IS NULL OR p.destacada_hasta > NOW())
                THEN 0 ELSE 1 END,
           p.created_at DESC NULLS LAST
-        LIMIT 80`,
-      [userId, categoriaId, subcategoriaId, ciudad, precioMin, precioMax, calificacionMin]
+        LIMIT $10 OFFSET $11`,
+      [userId, categoriaId, subcategoriaId, ciudad, precioMin, precioMax, calificacionMin, q, tipo, limit, offset]
     );
 
     // Cache privado 30 s: el navegador no repite la petición si el usuario
     // navega a otra sección y vuelve en menos de medio minuto.
     res.set('Cache-Control', 'private, max-age=30');
+    const publicaciones = rows.map((r) => {
+      const pub = enrichPublicacionRow(r);
+      return {
+        ...pub,
+        resenas_count: r.resenas_count ?? 0,
+        promedio_resenas:
+          r.promedio_resenas != null ? Number(r.promedio_resenas) : null,
+      };
+    });
     res.json({
-      publicaciones: rows.map((r) => {
-        const pub = enrichPublicacionRow(r);
-        return {
-          ...pub,
-          resenas_count: r.resenas_count ?? 0,
-          promedio_resenas:
-            r.promedio_resenas != null ? Number(r.promedio_resenas) : null,
-        };
-      }),
+      publicaciones,
+      hay_mas: rows.length === limit,
+      offset: offset + rows.length,
     });
   } catch (error) {
     console.error('getFeed:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getPublicacionById = async (req, res) => {
+  const userId = req.userId;
+  const { publicacionId } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `SELECT p.id, p.titulo, p.descripcion, p.imagen, p.precio, p.tipo, p.estado,
+              p.created_at, p.usuario_id, p.categoria_id, p.subcategoria_id,
+              p.destacada, p.destacada_hasta,
+              u.nombre AS autor_nombre, u.foto_perfil AS autor_foto,
+              u.ciudad AS autor_ciudad, u.verificado AS autor_verificado, u.plan AS autor_plan,
+              cat.nombre AS categoria_nombre, subcat.nombre AS subcategoria_nombre,
+              COALESCE(ic.cnt,0)::int AS interacciones_count,
+              COALESCE(cc.cnt,0)::int AS comentarios_count,
+              COALESCE(rc.cnt,0)::int AS resenas_count,
+              COALESCE(rc.prom,0)::float AS promedio_resenas,
+              EXISTS (SELECT 1 FROM interacciones i2 WHERE i2.publicacion_id=p.id AND i2.usuario_id=$1 AND i2.tipo='me_gusta') AS user_liked,
+              EXISTS (SELECT 1 FROM interacciones i3 WHERE i3.publicacion_id=p.id AND i3.usuario_id=$1 AND i3.tipo='guardado') AS user_guardado
+       FROM publicaciones p
+       INNER JOIN usuarios u ON u.id = p.usuario_id
+       LEFT JOIN categorias cat ON cat.id = p.categoria_id
+       LEFT JOIN subcategorias subcat ON subcat.id = p.subcategoria_id
+       LEFT JOIN (SELECT publicacion_id, COUNT(*)::int AS cnt FROM interacciones WHERE tipo='me_gusta' GROUP BY publicacion_id) ic ON ic.publicacion_id=p.id
+       LEFT JOIN (SELECT publicacion_id, COUNT(*)::int AS cnt FROM comentarios GROUP BY publicacion_id) cc ON cc.publicacion_id=p.id
+       LEFT JOIN (SELECT t.publicacion_id, COUNT(*)::int AS cnt, ROUND(AVG(c.puntuacion)::numeric,1) AS prom FROM calificaciones c INNER JOIN trabajos t ON t.id=c.trabajo_id GROUP BY t.publicacion_id) rc ON rc.publicacion_id=p.id
+       WHERE p.id=$2`,
+      [userId, publicacionId]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Publicación no encontrada' });
+    const pub = enrichPublicacionRow(rows[0]);
+    res.json({
+      publicacion: {
+        ...pub,
+        resenas_count: rows[0].resenas_count ?? 0,
+        promedio_resenas: rows[0].promedio_resenas != null ? Number(rows[0].promedio_resenas) : null,
+      },
+    });
+  } catch (error) {
+    console.error('getPublicacionById:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -384,6 +444,63 @@ export const getComentarios = async (req, res) => {
     res.json({ comentarios: rows });
   } catch (error) {
     console.error('getComentarios:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updatePublication = async (req, res) => {
+  const userId = req.userId;
+  const { publicacionId } = req.params;
+  try {
+    const { rows: existing } = await pool.query(
+      `SELECT usuario_id, descripcion FROM publicaciones WHERE id = $1`,
+      [publicacionId]
+    );
+    if (!existing.length) return res.status(404).json({ message: 'Publicación no encontrada' });
+    if (existing[0].usuario_id !== userId) return res.status(403).json({ message: 'No autorizado' });
+
+    const { titulo, descripcion: descInput, categoria_id, subcategoria_id, tipo, precio, hashtags, agregar_servicio, service, media } = req.body;
+
+    const catId = parseInt(String(categoria_id), 10);
+    if (Number.isNaN(catId) || catId < 1) return res.status(400).json({ message: 'Categoría inválida' });
+
+    const text = String(descInput || '').trim();
+    if (!text) return res.status(400).json({ message: 'La descripción es obligatoria' });
+
+    const tags = Array.isArray(hashtags) ? hashtags : [];
+    const useService = !!agregar_servicio;
+    const descripcionStored = useService || tags.length
+      ? serializeDescripcion({ text, hashtags: tags, service: useService ? service || {} : null })
+      : text;
+
+    let precioVal = null;
+    if (precio != null && precio !== '') {
+      const n = Number(precio);
+      if (!Number.isNaN(n)) precioVal = n;
+    }
+
+    const tituloVal = String(titulo || '').trim() || text.slice(0, 120);
+    const tipoVal = tipo === 'busco' ? 'busco' : 'ofrezco';
+    const subCatId = subcategoria_id ? parseInt(String(subcategoria_id), 10) : null;
+
+    // Solo tocar la columna 'imagen' si el cliente envió 'media';
+    // de lo contrario se conservan las imágenes actuales.
+    const actualizarMedia = media !== undefined;
+    const imagenVal = actualizarMedia ? serializeMediaItems(media) : null;
+
+    const { rows } = await pool.query(
+      `UPDATE publicaciones
+       SET titulo = $1, descripcion = $2, categoria_id = $3, subcategoria_id = $4,
+           tipo = $5, precio = $6,
+           imagen = CASE WHEN $7::boolean THEN $8 ELSE imagen END
+       WHERE id = $9
+       RETURNING *`,
+      [tituloVal, descripcionStored, catId, subCatId || null, tipoVal, precioVal, actualizarMedia, imagenVal, publicacionId]
+    );
+
+    res.json({ publicacion: enrichPublicacionRow(rows[0]) });
+  } catch (error) {
+    console.error('updatePublication:', error);
     res.status(500).json({ message: error.message });
   }
 };

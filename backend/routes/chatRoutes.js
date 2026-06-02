@@ -6,6 +6,8 @@ import {
   getOrCreateConversation,
   listMessages,
   sendMessage,
+  editMessage,
+  deleteMessage,
 } from '../controllers/chatController.js';
 import {
   bloquearUsuario,
@@ -24,6 +26,8 @@ router.get('/conversaciones', verifyToken, verifyActiveAccount, listConversation
 router.post('/conversaciones', verifyToken, verifyActiveAccount, getOrCreateConversation);
 router.get('/conversaciones/:conversacionId/mensajes', verifyToken, verifyActiveAccount, listMessages);
 router.post('/conversaciones/:conversacionId/mensajes', verifyToken, verifyActiveAccount, sendMessage);
+router.patch('/mensajes/:mensajeId', verifyToken, verifyActiveAccount, editMessage);
+router.delete('/mensajes/:mensajeId', verifyToken, verifyActiveAccount, deleteMessage);
 
 // 3. Rutas de Bloqueos
 router.post('/bloqueos', verifyToken, verifyActiveAccount, bloquearUsuario);

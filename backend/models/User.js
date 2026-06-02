@@ -76,6 +76,16 @@ export class User {
     }
   }
 
+  static async toggleVerificado(id) {
+    const { rowCount, rows } = await pool.query(
+      `UPDATE usuarios SET verificado = NOT verificado WHERE id = $1
+       RETURNING id, nombre, verificado`,
+      [id]
+    );
+    if (!rowCount) return null;
+    return rows[0];
+  }
+
   /**
    * Crea usuario; id lo genera la BD (gen_random_uuid() por defecto en la tabla).
    */

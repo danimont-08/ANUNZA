@@ -1,6 +1,11 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
+import './context/ToastContext.css';
+import './dark-mode.css';
+import './animations.css';
 import { PrivateRoute } from './components/PrivateRoute';
 import { AdminRoute } from './components/AdminRoute';
 import { ModeradorRoute } from './components/ModeradorRoute';
@@ -19,6 +24,7 @@ const AdminDashboard     = lazy(() => import('./pages/admin/AdminDashboard').the
 const AdminUsers         = lazy(() => import('./pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })));
 const AdminReports       = lazy(() => import('./pages/admin/AdminReports').then(m => ({ default: m.AdminReports })));
 const ModeradorLayout    = lazy(() => import('./pages/moderador/ModeradorLayout').then(m => ({ default: m.ModeradorLayout })));
+const PublicacionPage    = lazy(() => import('./pages/PublicacionPage').then(m => ({ default: m.PublicacionPage })));
 
 import './App.css';
 
@@ -38,6 +44,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <ThemeProvider>
+        <ToastProvider>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -53,6 +61,11 @@ function App() {
             <Route
               path="/perfil/:userId"
               element={<PrivateRoute><UserPublicProfile /></PrivateRoute>}
+            />
+
+            <Route
+              path="/pub/:pubId"
+              element={<PrivateRoute><PublicacionPage /></PrivateRoute>}
             />
 
             <Route
@@ -76,6 +89,8 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </ToastProvider>
+        </ThemeProvider>
       </AuthProvider>
     </Router>
   );

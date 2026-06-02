@@ -613,11 +613,29 @@
 /* ── Responsive ────────────────────────────────────── */
 
 @media (max-width: 768px) {
-  /* Contenido ocupa todo el ancho, padding inferior para la barra fija */
+  /* El layout deja de ser 2 columnas: el contenido ocupa todo el ancho */
   .admin-body {
-    grid-template-columns: 1fr;
+    display: block;
+    height: auto;
+    overflow: visible;
     padding: 1rem 0.75rem 68px;
-    gap: 1rem;
+  }
+
+  /* El sidebar deja de ser caja con ancho fijo; sus hijos se reposicionan */
+  .admin-sidebar {
+    display: contents;
+  }
+
+  /* El footer del sidebar (avatar + salir) no va en móvil */
+  .admin-sidebar-footer {
+    display: none;
+  }
+
+  /* El contenido fluye con scroll normal de la página */
+  .admin-main {
+    overflow: visible;
+    height: auto;
+    padding: 0;
   }
 
   /* Nav fija al fondo — igual que el sidebar del Dashboard en móvil */

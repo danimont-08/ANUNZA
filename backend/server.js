@@ -46,10 +46,11 @@ app.use(compression());
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 800,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Demasiadas solicitudes, intenta mas tarde.' },
+  skip: (req) => req.path.startsWith('/api/notificaciones'),
 });
 
 const authLimiter = rateLimit({

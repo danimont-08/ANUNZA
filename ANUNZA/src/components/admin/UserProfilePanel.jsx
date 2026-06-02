@@ -1,9 +1,9 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { fetchAdminUsuario, fetchAdminUserPublicaciones, patchUserEstado } from '../../models/adminModel';
+import { fetchAdminUsuario, fetchAdminUserPublicaciones, patchUserEstado, patchUserVerificado } from '../../models/adminModel';
 import { DEFAULT_AVATAR } from '../../utils/constants';
 import { formatDate, formatCOP } from '../../utils/format';
 import { ConfirmDialog } from '../ConfirmDialog';
-import { IconHeart, IconChat, IconX } from '../icons';
+import { IconHeart, IconChat, IconX, IconShieldCheck } from '../icons';
 import './UserProfilePanel.css';
 
 function PubCard({ pub }) {
@@ -79,6 +79,18 @@ export function UserProfilePanel({ userId, onClose, canActOn = true, onEstadoCha
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const handleVerificado = async () => {
+    setBusy(true);
+    try {
+      const data = await patchUserVerificado(userId);
+      setUsuario((prev) => ({ ...prev, verificado: data.verificado }));
+    } catch (e) {
+      setError(e.message || 'Error al actualizar verificación');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleEstado = (nuevoEstado) => setConfirm(nuevoEstado);
 
   const doEstado = async () => {
@@ -150,6 +162,17 @@ export function UserProfilePanel({ userId, onClose, canActOn = true, onEstadoCha
               {/* Acciones de moderación */}
               {canActOn && usuario.rol !== 'admin' && (
                 <div className="upp-actions">
+                  <button
+                    type="button"
+                    className={`admin-btn ${usuario.verificado ? 'admin-btn--secondary' : 'admin-btn--primary'}`}
+                    disabled={busy}
+                    onClick={handleVerificado}
+                    title={usuario.verificado ? 'Quitar verificación' : 'Verificar usuario'}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                  >
+                    {usuario.verificado ? <IconX size={15} /> : <IconShieldCheck size={15} />}
+                    {usuario.verificado ? 'Quitar verificación' : 'Verificar usuario'}
+                  </button>
                   {estado !== 'suspendido' ? (
                     <button
                       type="button"

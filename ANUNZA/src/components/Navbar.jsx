@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { usePageTransition } from '../hooks/usePageTransition';
 import logo from '../assets/Logo_Anunza.png';
-import { DEFAULT_AVATAR } from '../utils/constants';
 import './Navbar.css';
 
-export function Navbar({ user, onLogout, onOpenProfile, noLeidas = 0, onToggleNotificaciones }) {
+export function Navbar({ user, onLogout, noLeidas = 0, onToggleNotificaciones }) {
+  const go = usePageTransition();
   return (
     <header className="anunza-navbar">
       <div className="anunza-navbar-inner">
@@ -13,14 +14,14 @@ export function Navbar({ user, onLogout, onOpenProfile, noLeidas = 0, onToggleNo
         </Link>
         <div className="anunza-navbar-actions">
           {user?.rol === 'admin' && (
-            <Link to="/admin" className="anunza-admin-link" title="Panel de administración">
+            <button type="button" className="anunza-admin-link" title="Panel de administración" onClick={() => go('/admin')}>
               Admin
-            </Link>
+            </button>
           )}
           {user?.rol === 'moderador' && (
-            <Link to="/moderador" className="anunza-admin-link" title="Panel de moderación">
+            <button type="button" className="anunza-admin-link" title="Panel de moderación" onClick={() => go('/moderador')}>
               Moderación
-            </Link>
+            </button>
           )}
           {/* Campanita de notificaciones */}
           <button
@@ -48,15 +49,6 @@ export function Navbar({ user, onLogout, onOpenProfile, noLeidas = 0, onToggleNo
             {noLeidas > 0 && (
               <span className="anunza-notif-badge">{noLeidas > 9 ? '9+' : noLeidas}</span>
             )}
-          </button>
-
-          <button type="button" className="anunza-navbar-user" onClick={onOpenProfile}>
-            <img
-              src={user?.foto_perfil || DEFAULT_AVATAR}
-              alt=""
-              className="anunza-navbar-avatar"
-            />
-            <span className="anunza-navbar-name">{user?.nombre || 'Usuario'}</span>
           </button>
         </div>
       </div>

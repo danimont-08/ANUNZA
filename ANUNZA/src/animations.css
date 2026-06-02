@@ -1,0 +1,90 @@
+/* ════════════════════════════════════════════════════════════
+   Animaciones globales reutilizables de ANUNZA
+   Respeta prefers-reduced-motion para accesibilidad.
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Entrada de tarjetas del feed (escalonada) ── */
+@keyframes anunza-card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.feed-list > div {
+  animation: anunza-card-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.feed-list > div:nth-child(1) { animation-delay: 0.02s; }
+.feed-list > div:nth-child(2) { animation-delay: 0.06s; }
+.feed-list > div:nth-child(3) { animation-delay: 0.10s; }
+.feed-list > div:nth-child(4) { animation-delay: 0.14s; }
+.feed-list > div:nth-child(5) { animation-delay: 0.18s; }
+.feed-list > div:nth-child(n+6) { animation-delay: 0.20s; }
+
+/* ── Hover lift en tarjetas (solo dispositivos con puntero real) ── */
+@media (hover: hover) {
+  .pub-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .pub-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(47, 8, 109, 0.12);
+  }
+}
+
+/* ── Press feedback en botones (al tocar/clic se hunden levemente) ── */
+.pub-btn:active,
+.feed-tipo-pill:active,
+.feed-cat-pill:active,
+.filtros-apply:active,
+.epm-btn-save:active,
+.pp-action-btn:active,
+.pdm-action-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Entrada de paneles desplegables (comentarios/reseñas) ── */
+@keyframes anunza-panel-reveal {
+  from { opacity: 0; transform: translateY(-6px); max-height: 0; }
+  to   { opacity: 1; transform: none; }
+}
+.pub-panel-reveal {
+  animation: anunza-panel-reveal 0.25s ease both;
+}
+
+/* ── Entrada de notificaciones/avatares ── */
+@keyframes anunza-pop-in {
+  0%   { opacity: 0; transform: scale(0.8); }
+  60%  { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.anunza-notif-badge {
+  animation: anunza-pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Latido sutil del botón de chat (CTA) al pasar el cursor ── */
+@media (hover: hover) {
+  .pub-btn.pub-chat { transition: transform 0.2s ease, background 0.15s ease; }
+  .pub-btn.pub-chat:hover { transform: translateY(-1px); }
+}
+
+/* ── Transición suave al cambiar de tema (claro ↔ oscuro) ── */
+body,
+.dashboard, .admin-root,
+.pub-card, .feed-search-bar, .filtros,
+.sidebar, .anunza-navbar, .uppm-overlay, .pp-root {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Accesibilidad: si el usuario prefiere menos movimiento,
+   se desactivan todas las animaciones y transiciones.
+   ════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

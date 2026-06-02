@@ -138,6 +138,18 @@
   margin-bottom: 0.5rem;
 }
 
+.pub-title--clickable {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.pub-title--clickable:hover {
+  color: var(--anunza-violet, #8a4eff);
+}
+
+.pub-guardar.is-on {
+  color: var(--anunza-violet, #8a4eff);
+}
+
 .pub-desc {
   color: #333;
   line-height: 1.55;
@@ -155,6 +167,19 @@
   font-size: 0.85rem;
   color: var(--anunza-violet);
   font-weight: 600;
+}
+
+.pub-tag--clickable {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0.1rem 0.3rem;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.pub-tag--clickable:hover {
+  background: rgba(138, 78, 255, 0.1);
 }
 
 .pub-service {
@@ -207,6 +232,19 @@
   color: var(--anunza-midnight);
 }
 
+/* Botón de chat: acento violeta + separado a la derecha como CTA de contacto */
+.pub-btn.pub-chat {
+  margin-left: auto;
+  background: var(--anunza-violet, #8a4eff);
+  border-color: var(--anunza-violet, #8a4eff);
+  color: #fff;
+}
+.pub-btn.pub-chat:hover {
+  background: #7a3eef;
+  border-color: #7a3eef;
+}
+.pub-btn.pub-chat svg { stroke: #fff; }
+
 .pub-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -220,6 +258,7 @@
 .pub-btn-destacar {
   display: inline-flex;
   align-items: center;
+  margin-left: auto;
   border: 1px solid rgba(124, 58, 237, 0.25);
   background: #fff;
   border-radius: 999px;
@@ -494,4 +533,12 @@
   .pub-btn { padding: 0.4rem 0.55rem; font-size: 0.8rem; }
   .pub-actions { gap: 0.35rem; }
   .pub-menu-dropdown { min-width: 155px; }
+}
+
+/* En móvil la barra de acciones se reparte sin desbordar */
+@media (max-width: 420px) {
+  .pub-actions { gap: 0.3rem; }
+  .pub-btn { padding: 0.45rem 0.6rem; }
+  /* El botón de chat conserva su texto y se mantiene a la derecha */
+  .pub-btn.pub-chat { padding: 0.45rem 0.8rem; }
 }

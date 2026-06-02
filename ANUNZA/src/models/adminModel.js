@@ -23,6 +23,10 @@ export async function patchUserEstado(userId, estado) {
   });
 }
 
+export async function patchUserVerificado(userId) {
+  return apiFetch(`/admin/users/${userId}/verificado`, { method: 'PATCH' });
+}
+
 export async function fetchAdminReportes(estado = 'pendiente') {
   return apiFetch(`/admin/reportes?estado=${estado}`);
 }

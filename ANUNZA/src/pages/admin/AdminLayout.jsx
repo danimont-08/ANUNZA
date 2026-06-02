@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { NotificacionesPanel } from '../../components/NotificacionesPanel';
 import { fetchNotificaciones } from '../../models/notificacionModel';
 import { DEFAULT_AVATAR } from '../../utils/constants';
+import { usePageTransition } from '../../hooks/usePageTransition';
 import logo from '../../assets/Logo_Anunza.png';
 import '../../components/Navbar.css';
 import './Admin.css';
@@ -46,6 +47,7 @@ export function AdminLayout({
 }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const go = usePageTransition();
   const pollRef = useRef(null);
 
   const [notificaciones, setNotificaciones]   = useState([]);
@@ -95,7 +97,7 @@ export function AdminLayout({
             <img src={logo} alt="ANUNZA" className="anunza-navbar-logo" />
           </Link>
           <div className="anunza-navbar-actions">
-            <Link to="/dashboard" className="anunza-admin-link">Ir al feed</Link>
+            <button type="button" className="anunza-admin-link" onClick={() => go('/dashboard')}>Ir al feed</button>
 
             {/* Campanita de notificaciones */}
             <button
@@ -113,21 +115,6 @@ export function AdminLayout({
               {noLeidas > 0 && (
                 <span className="anunza-notif-badge">{noLeidas > 9 ? '9+' : noLeidas}</span>
               )}
-            </button>
-
-            {/* Perfil */}
-            <button
-              type="button"
-              className="anunza-navbar-user"
-              onClick={() => navigate('/dashboard', { state: { openSection: 'perfil' } })}
-              title="Ir a mi perfil"
-            >
-              <img
-                src={user?.foto_perfil || DEFAULT_AVATAR}
-                alt=""
-                className="anunza-navbar-avatar"
-              />
-              <span className="anunza-navbar-name">{user?.nombre || 'Usuario'}</span>
             </button>
 
           </div>

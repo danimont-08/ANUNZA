@@ -7,6 +7,7 @@ import {
   getUser,
   getUserPublicaciones,
   patchUserEstado,
+  patchUserVerificado,
   listReportes,
   patchReporteEstado,
   marcarReporteRevisado,
@@ -24,6 +25,7 @@ router.get('/users', listUsers);
 router.get('/users/:id', getUser);
 router.get('/users/:id/publicaciones', getUserPublicaciones);
 router.patch('/users/:id/estado', patchUserEstado);
+router.patch('/users/:id/verificado', patchUserVerificado);
 router.get('/reportes', listReportes);
 router.patch('/reportes/:id/estado', marcarReporteRevisado);
 router.delete('/reportes/:id', patchReporteEstado);

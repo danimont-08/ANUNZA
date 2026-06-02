@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiFetch, getStoredToken } from '../services/api';
 import { UserPublicProfileModal } from './UserPublicProfileModal';
 import { connectSocket, getSocket, disconnectSocket } from '../services/socket';
 import { ReportModal } from './feed/ReportModal';
-import { IconFlag, IconUserX, IconPin, IconInfo } from './icons';
+import { IconFlag, IconUserX, IconPin, IconInfo, IconTrash, IconDots } from './icons';
 import { DEFAULT_AVATAR } from '../utils/constants';
 import { formatTime } from '../utils/format';
 import './ChatSection.css';
@@ -18,6 +19,10 @@ export function ChatSection({
   bootstrapConversacionId,
   onBootstrapConsumed,
 }) {
+  const navigate = useNavigate();
+  const [editingMsgId, setEditingMsgId] = useState(null);
+  const [editingText, setEditingText]   = useState('');
+  const [msgMenuId, setMsgMenuId]       = useState(null);
   const [conversaciones, setConversaciones] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [mensajes, setMensajes] = useState([]);
@@ -140,15 +145,15 @@ export function ChatSection({
         });
         if (cancelled) return;
 
-        // Enviar mensaje automático solo si la conversación es nueva
-        if (bootstrapPublicacionTitulo && data.is_new) {
-          const autoMsg = `Hola, vi tu publicación "${bootstrapPublicacionTitulo}" y me gustaría obtener más información. ¿Podrías darme más detalles?`;
+        // Enviar mensaje de referencia cuando se llega desde una publicación
+        if (bootstrapPublicacionTitulo) {
+          const autoMsg = `Hola, me interesa tu publicación "${bootstrapPublicacionTitulo}". ¿Podrías darme más información?`;
           try {
             await apiFetch(`/chat/conversaciones/${data.conversacion_id}/mensajes`, {
               method: 'POST',
               body: JSON.stringify({ contenido: autoMsg, tipo: 'texto' }),
             });
-          } catch { /* silencioso si falla el auto-mensaje */ }
+          } catch { /* silencioso si falla */ }
         }
 
         await loadConversaciones();
@@ -206,10 +211,25 @@ export function ChatSection({
     socket.off('new_message');
     socket.on('new_message', onNewMessage);
 
+    const onMsgEdited = ({ mensajeId, contenido }) => {
+      setMensajes((prev) => prev.map((m) =>
+        String(m.id) === String(mensajeId) ? { ...m, contenido, editado: true } : m
+      ));
+    };
+    const onMsgDeleted = ({ mensajeId }) => {
+      setMensajes((prev) => prev.map((m) =>
+        String(m.id) === String(mensajeId) ? { ...m, tipo: 'eliminado', contenido: null } : m
+      ));
+    };
+    socket.off('message_edited'); socket.on('message_edited', onMsgEdited);
+    socket.off('message_deleted'); socket.on('message_deleted', onMsgDeleted);
+
     return () => {
       socket.emit('leave_conversation', activeId);
       socket.off('connect', joinRoom);
       socket.off('new_message', onNewMessage);
+      socket.off('message_edited', onMsgEdited);
+      socket.off('message_deleted', onMsgDeleted);
     };
   }, [activeId]);
 
@@ -224,6 +244,46 @@ export function ChatSection({
     // scrollToBottom ya verifica internamente si el teclado está abierto
     scrollToBottom();
   }, [mensajes]);
+
+  // Cerrar menú de mensaje al click fuera (ignora clicks dentro del propio menú)
+  useEffect(() => {
+    if (!msgMenuId) return;
+    const handler = (e) => {
+      if (e.target.closest('.chat-msg-menu-wrap')) return;
+      setMsgMenuId(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [msgMenuId]);
+
+  const startEdit = (msg) => {
+    setEditingMsgId(msg.id);
+    setEditingText(msg.contenido || '');
+  };
+  const cancelEdit = () => { setEditingMsgId(null); setEditingText(''); };
+
+  const confirmEdit = async (msgId) => {
+    if (!editingText.trim()) return;
+    try {
+      await apiFetch(`/chat/mensajes/${msgId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ contenido: editingText.trim() }),
+      });
+      setMensajes((prev) => prev.map((m) =>
+        m.id === msgId ? { ...m, contenido: editingText.trim(), editado: true } : m
+      ));
+    } catch { /* silencioso */ }
+    cancelEdit();
+  };
+
+  const confirmDelete = async (msgId) => {
+    try {
+      await apiFetch(`/chat/mensajes/${msgId}`, { method: 'DELETE' });
+      setMensajes((prev) => prev.map((m) =>
+        m.id === msgId ? { ...m, tipo: 'eliminado', contenido: null } : m
+      ));
+    } catch { /* silencioso */ }
+  };
 
   const send = async () => {
     const text = draft.trim();
@@ -401,19 +461,68 @@ export function ChatSection({
                 <div className="chat-messages-spacer" />
                 {mensajes.map((m) => {
                   const mine = m.remitente_id === user?.id;
+                  const eliminado = m.tipo === 'eliminado';
+                  const isEditing = editingMsgId === m.id;
                   return (
                     <div
                       key={m.id}
                       className={`chat-bubble-row ${mine ? 'is-mine' : 'is-theirs'}`}
                     >
-                      <div className={`chat-bubble ${mine ? 'mine' : 'theirs'}`}>
-                        {!mine && (
+                      <div className={`chat-bubble ${mine ? 'mine' : 'theirs'}${eliminado ? ' eliminated' : ''}`}>
+                        {!mine && !eliminado && (
                           <span className="chat-bubble-author">{m.remitente_nombre}</span>
                         )}
-                        <p>{m.contenido}</p>
-                        <time>{formatTime(m.created_at)}</time>
+                        {eliminado ? (
+                          <p className="chat-bubble-eliminated">Mensaje eliminado</p>
+                        ) : isEditing ? (
+                          <div className="chat-edit-wrap">
+                            <input
+                              className="chat-edit-input"
+                              value={editingText}
+                              onChange={(e) => setEditingText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') confirmEdit(m.id);
+                                if (e.key === 'Escape') cancelEdit();
+                              }}
+                              autoFocus
+                            />
+                            <div className="chat-edit-actions">
+                              <button type="button" onClick={() => confirmEdit(m.id)}>Guardar</button>
+                              <button type="button" onClick={cancelEdit}>Cancelar</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p>{m.contenido}</p>
+                            {m.editado && <span className="chat-edited-tag">(editado)</span>}
+                          </>
+                        )}
+                        {!isEditing && !eliminado && <time>{formatTime(m.created_at)}</time>}
                       </div>
-                      {!mine && (
+                      {mine && !eliminado && !isEditing && (
+                        <div className="chat-msg-menu-wrap">
+                          <button
+                            type="button"
+                            className="chat-msg-dots"
+                            onClick={() => setMsgMenuId(msgMenuId === m.id ? null : m.id)}
+                            aria-label="Opciones"
+                            aria-expanded={msgMenuId === m.id}
+                          >
+                            <IconDots size={14}/>
+                          </button>
+                          {msgMenuId === m.id && (
+                            <div className="chat-msg-dropdown">
+                              <button type="button" onClick={() => { startEdit(m); setMsgMenuId(null); }}>
+                                Editar mensaje
+                              </button>
+                              <button type="button" className="danger" onClick={() => { confirmDelete(m.id); setMsgMenuId(null); }}>
+                                Eliminar mensaje
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {!mine && !eliminado && (
                         <button
                           type="button"
                           className="chat-report-msg-btn"
@@ -529,6 +638,10 @@ export function ChatSection({
         <UserPublicProfileModal
           userId={profileUserId}
           onClose={() => setProfileUserId(null)}
+          onNavigateToPost={(pubId) => {
+            setProfileUserId(null);
+            navigate('/dashboard', { state: { openSection: 'inicio', highlightId: pubId } });
+          }}
         />
       )}
     </section>

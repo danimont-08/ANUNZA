@@ -94,6 +94,19 @@ export const patchUserEstado = async (req, res) => {
   }
 };
 
+/** PATCH /api/admin/users/:id/verificado */
+export const patchUserVerificado = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await User.toggleVerificado(id);
+    if (!updated) return res.status(404).json({ message: 'Usuario no encontrado' });
+    res.json({ verificado: updated.verificado, user: updated });
+  } catch (error) {
+    console.error('patchUserVerificado:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 /** GET /api/admin/users/:id */
 export const getUser = async (req, res) => {
   try {

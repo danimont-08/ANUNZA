@@ -1,66 +1,106 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { PlanPremiumModal } from './PlanPremiumModal';
 import { ConfirmDialog } from './ConfirmDialog';
+import { EditPublicacionModal } from './feed/EditPublicacionModal';
 import { fetchMiEstado } from '../models/pagosModel';
 import { deletePublicacion } from '../models/publicacionModel';
 import { apiFetch } from '../services/api';
 import { geolocateToCity, osmEmbedUrl } from '../utils/geolocate';
+import { compressImage } from '../utils/imageCompression';
 import { DEFAULT_AVATAR } from '../utils/constants';
 import { formatDate, formatCOP } from '../utils/format';
 import {
   IconShieldCheck, IconCrown, IconMapPin, IconCamera,
   IconArrowsUpDown, IconX, IconLoader, IconCheck,
-  IconHeart, IconChat,
+  IconHeart, IconChat, IconDots, IconTrash, IconSun, IconMoon,
 } from './icons';
 import './ProfileSection.css';
 import '../pages/UserPublicProfile.css';
 
-function PubCard({ pub, onClick, onDelete }) {
+function PubCard({ pub, onClick, onDelete, onEdit }) {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setShowMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showMenu]);
+
   return (
-    <article className="upp2-pub-card" onClick={onClick}>
-      {pub.imagen_preview
-        ? <img src={pub.imagen_preview} alt="" className="upp2-pub-img" />
-        : <div className="upp2-pub-img upp2-pub-img--empty" />}
-      <div className="upp2-pub-body">
-        <div className="upp2-pub-chips">
-          <span className={`upp2-chip ${pub.tipo === 'busco' ? 'upp2-chip--busco' : 'upp2-chip--ofrezco'}`}>
-            {pub.tipo === 'busco' ? 'Busco' : 'Ofrezco'}
-          </span>
-          {pub.categoria_nombre && (
-            <span className="upp2-chip upp2-chip--cat">{pub.categoria_nombre}</span>
+    <article className="upp2-pub-card">
+      <div onClick={onClick} style={{ cursor: 'pointer' }}>
+        {pub.imagen_preview
+          ? <img src={pub.imagen_preview} alt="" className="upp2-pub-img" />
+          : <div className="upp2-pub-img upp2-pub-img--empty" />}
+        <div className="upp2-pub-body">
+          <div className="upp2-pub-chips">
+            <span className={`upp2-chip ${pub.tipo === 'busco' ? 'upp2-chip--busco' : 'upp2-chip--ofrezco'}`}>
+              {pub.tipo === 'busco' ? 'Busco' : 'Ofrezco'}
+            </span>
+            {pub.categoria_nombre && (
+              <span className="upp2-chip upp2-chip--cat">{pub.categoria_nombre}</span>
+            )}
+          </div>
+          <p className="upp2-pub-title">{pub.titulo}</p>
+          {pub.precio != null && (
+            <p className="upp2-pub-price">{formatCOP(pub.precio)}</p>
           )}
+          <div className="upp2-pub-stats">
+            <span><IconHeart size={13} /> {pub.likes ?? 0}</span>
+            <span><IconChat size={13} /> {pub.comentarios_count ?? 0}</span>
+          </div>
+          <p className="upp2-pub-date">{formatDate(pub.created_at)}</p>
         </div>
-        <p className="upp2-pub-title">{pub.titulo}</p>
-        {pub.precio != null && (
-          <p className="upp2-pub-price">{formatCOP(pub.precio)}</p>
-        )}
-        <div className="upp2-pub-stats">
-          <span><IconHeart size={13} /> {pub.likes ?? 0}</span>
-          <span><IconChat size={13} /> {pub.comentarios_count ?? 0}</span>
-        </div>
-        <p className="upp2-pub-date">{formatDate(pub.created_at)}</p>
-        {onDelete && (
-          <button
-            type="button"
-            className="upp2-pub-delete-btn"
-            onClick={(e) => { e.stopPropagation(); onDelete(pub); }}
-            title="Eliminar publicación"
-          >
-            Eliminar
-          </button>
+      </div>
+
+      <div className="upp2-pub-menu-wrapper" ref={menuRef}>
+        <button
+          type="button"
+          className="upp2-pub-menu-btn"
+          onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+          title="Opciones"
+        >
+          <IconDots size={16} />
+        </button>
+        {showMenu && (
+          <div className="upp2-pub-menu">
+            {onEdit && (
+              <button
+                type="button"
+                className="upp2-pub-menu-item"
+                onClick={(e) => { e.stopPropagation(); onEdit(pub); setShowMenu(false); }}
+              >
+                <IconCheck size={15} /> Editar
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                className="upp2-pub-menu-item upp2-pub-menu-item--danger"
+                onClick={(e) => { e.stopPropagation(); onDelete(pub); setShowMenu(false); }}
+              >
+                <IconTrash size={15} /> Eliminar
+              </button>
+            )}
+          </div>
         )}
       </div>
     </article>
   );
 }
 
-export function ProfileSection({ user, updateProfile, onError, onNavigateToPost }) {
+export function ProfileSection({ user, updateProfile, onError, onNavigateToPost, dark, onToggleTheme, onLogout }) {
   const [editing, setEditing]               = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [miEstado, setMiEstado]             = useState(null);
   const [pubs, setPubs]                     = useState([]);
   const [pubsLoading, setPubsLoading]       = useState(false);
   const [pubToDelete, setPubToDelete]       = useState(null);
+  const [pubToEdit, setPubToEdit]           = useState(null);
   const [deleting, setDeleting]             = useState(false);
   const [geoLoading, setGeoLoading]         = useState(false);
   const [geoData, setGeoData]               = useState(null);
@@ -123,17 +163,16 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
     setData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const onPickPhoto = (e) => {
+  const onPickPhoto = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      onError('La imagen debe pesar menos de 2 MB.');
-      return;
-    }
-    const r = new FileReader();
-    r.onload = () => setData((d) => ({ ...d, foto_perfil: r.result }));
-    r.readAsDataURL(file);
     e.target.value = '';
+    try {
+      const compressed = await compressImage(file, { maxWidth: 400, maxHeight: 400, quality: 0.88 });
+      setData((d) => ({ ...d, foto_perfil: compressed }));
+    } catch {
+      onError('No se pudo procesar la imagen.');
+    }
   };
 
   const onCoverDragStart = (e) => {
@@ -159,17 +198,16 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
 
   const onCoverDragEnd = () => setDragStart(null);
 
-  const onPickCover = (e) => {
+  const onPickCover = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 4 * 1024 * 1024) {
-      onError('La portada debe pesar menos de 4 MB.');
-      return;
-    }
-    const r = new FileReader();
-    r.onload = () => setData((d) => ({ ...d, foto_portada: r.result }));
-    r.readAsDataURL(file);
     e.target.value = '';
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1600, maxHeight: 600, quality: 0.85 });
+      setData((d) => ({ ...d, foto_portada: compressed }));
+    } catch {
+      onError('No se pudo procesar la portada.');
+    }
   };
 
   const usarUbicacion = async () => {
@@ -260,6 +298,11 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
                     <span className="prof-badge prof-badge-premium"><IconCrown size={12}/> Premium</span>
                   )}
                 </h1>
+                {!user?.verificado && (
+                  <p className="prof-verificacion-hint">
+                    <IconShieldCheck size={13}/> No verificado · Contacta al soporte para verificar tu cuenta
+                  </p>
+                )}
                 <div className="upp2-meta-row">
                   {user?.ciudad && <span><IconMapPin size={14}/> {user.ciudad}</span>}
                   {user?.created_at && (
@@ -345,6 +388,7 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
                     pub={pub}
                     onClick={() => onNavigateToPost?.(pub.id)}
                     onDelete={(p) => setPubToDelete(p)}
+                    onEdit={(p) => setPubToEdit(p)}
                   />
                 ))}
               </div>
@@ -369,6 +413,34 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
               onConfirm={handleConfirmDelete}
               onCancel={() => setPubToDelete(null)}
             />
+          )}
+
+          {pubToEdit && (
+            <EditPublicacionModal
+              pub={pubToEdit}
+              onClose={() => setPubToEdit(null)}
+              onUpdated={() => {
+                setPubToEdit(null);
+                loadPubs();
+              }}
+            />
+          )}
+
+          {/* Ajustes rápidos — visibles solo en móvil (el sidebar no los muestra) */}
+          {(onToggleTheme || onLogout) && (
+            <div className="prof-mobile-settings">
+              {onToggleTheme && (
+                <button type="button" className="prof-settings-btn" onClick={onToggleTheme}>
+                  {dark ? <IconSun size={16} /> : <IconMoon size={16} />}
+                  {dark ? 'Modo claro' : 'Modo oscuro'}
+                </button>
+              )}
+              {onLogout && (
+                <button type="button" className="prof-settings-btn prof-settings-btn--logout" onClick={onLogout}>
+                  Cerrar sesión
+                </button>
+              )}
+            </div>
           )}
         </>
       ) : (
@@ -446,6 +518,16 @@ export function ProfileSection({ user, updateProfile, onError, onNavigateToPost 
                   <IconCamera size={18}/>
                 </button>
               </div>
+              {data.foto_perfil && (
+                <button
+                  type="button"
+                  className="prof-avatar-remove-btn"
+                  onClick={() => setData((d) => ({ ...d, foto_perfil: '' }))}
+                  title="Quitar foto de perfil"
+                >
+                  <IconX size={13} /> Quitar foto
+                </button>
+              )}
             </div>
           </div>
 

@@ -202,6 +202,8 @@
 
 .chat-bubble-row {
   display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .chat-bubble-row.is-mine {
@@ -647,3 +649,132 @@
   .chat-peer-bar { gap: 0.35rem; }
   .chat-action-btn { width: 30px; height: 30px; }
 }
+
+/* ── Editar / eliminar mensajes ── */
+.chat-bubble-row { position: relative; }
+
+/* Botón 3 puntos — en el flujo, lado interno del bubble (no desborda) */
+.chat-msg-menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+/* En mensajes propios el botón va a la izquierda del bubble */
+.chat-bubble-row.is-mine .chat-msg-menu-wrap { order: -1; }
+
+.chat-msg-dots {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle, rgba(138,78,255,0.18));
+  background: var(--bg-surface, #fff);
+  box-shadow: 0 1px 4px rgba(47, 8, 109, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #7a6f96);
+  opacity: 0.65;
+  transition: opacity 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+}
+.chat-bubble-row:hover .chat-msg-dots,
+.chat-msg-dots:focus,
+.chat-msg-dots[aria-expanded="true"] { opacity: 1; }
+.chat-msg-dots:hover,
+.chat-msg-dots[aria-expanded="true"] {
+  background: var(--bg-surface-2, #f0e9ff);
+  color: var(--anunza-violet, #8a4eff);
+  border-color: var(--anunza-violet, #8a4eff);
+}
+
+/* Dropdown del menú — abre hacia arriba para no chocar con el input ni mover el chat */
+.chat-msg-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  background: var(--bg-surface, #fff);
+  border: 1px solid var(--border-subtle, rgba(138,78,255,0.15));
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(47, 8, 109, 0.16);
+  z-index: 50;
+  min-width: 160px;
+  overflow: hidden;
+  padding: 4px;
+  transform-origin: bottom;
+  animation: epm-up-in 0.15s ease both;
+}
+
+@keyframes epm-up-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+/* Mensaje propio: botón hacia el centro → menú abre hacia la izquierda (espacio libre) */
+.chat-bubble-row.is-mine .chat-msg-dropdown { right: 0; }
+/* Mensaje ajeno: botón hacia el centro → menú abre hacia la derecha (espacio libre) */
+.chat-bubble-row.is-theirs .chat-msg-dropdown { left: 0; }
+.chat-msg-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-primary, #2f086d);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.chat-msg-dropdown button:hover { background: rgba(138, 78, 255, 0.1); color: var(--anunza-violet, #8a4eff); }
+.chat-msg-dropdown button.danger { color: #c0392b; }
+.chat-msg-dropdown button.danger:hover { background: #fde8e8; color: #c0392b; }
+
+/* Mensaje eliminado */
+.chat-bubble.eliminated { opacity: 0.5; }
+.chat-bubble-eliminated {
+  font-style: italic;
+  color: var(--text-muted, #b0aac8);
+  font-size: 0.85rem;
+}
+
+/* Tag "editado" */
+.chat-edited-tag {
+  font-size: 0.7rem;
+  color: var(--text-muted, #b0aac8);
+  font-style: italic;
+  margin-left: 0.3rem;
+}
+
+/* Input de edición inline */
+.chat-edit-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.chat-edit-input {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.92rem;
+  font-family: inherit;
+  color: inherit;
+  outline: none;
+  min-width: 160px;
+}
+.chat-edit-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+.chat-edit-actions button {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: rgba(255,255,255,0.25);
+  color: inherit;
+}
+.chat-edit-actions button:first-child { background: rgba(255,255,255,0.4); }

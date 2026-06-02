@@ -1,0 +1,222 @@
+/* ── Dark mode overrides ──────────────────────────────────
+   Usa los tokens semánticos de index.css para mantener coherencia.
+   Se aplica cuando <html data-theme="dark">
+────────────────────────────────────────────────────────── */
+
+[data-theme="dark"] body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+}
+
+/* Navbar */
+[data-theme="dark"] .anunza-navbar {
+  background: var(--bg-sidebar);
+  border-bottom-color: var(--border-subtle);
+}
+[data-theme="dark"] .anunza-navbar-inner { color: var(--text-primary); }
+[data-theme="dark"] .anunza-admin-link {
+  color: var(--anunza-violet);
+  background: rgba(138, 78, 255, 0.12);
+  border-color: var(--border-medium);
+}
+
+/* Sidebar */
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .admin-sidebar {
+  background: var(--bg-sidebar);
+  border-right-color: var(--border-subtle);
+}
+[data-theme="dark"] .sidebar-nav li { color: var(--text-secondary); }
+[data-theme="dark"] .sidebar-nav li:hover { background: rgba(138, 78, 255, 0.1); }
+[data-theme="dark"] .sidebar-nav li.active { background: rgba(138, 78, 255, 0.18); color: #c4a8ff; }
+[data-theme="dark"] .sidebar-footer { border-top-color: var(--border-subtle); }
+[data-theme="dark"] .anunza-navbar-user { color: var(--text-primary); }
+[data-theme="dark"] .anunza-navbar-user:hover { background: rgba(138, 78, 255, 0.15); }
+
+/* Dashboard body */
+[data-theme="dark"] .dashboard { background: var(--bg-page); }
+[data-theme="dark"] .admin-root { background: var(--bg-page); }
+
+/* Publication cards */
+[data-theme="dark"] .pub-card {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+  box-shadow: var(--card-shadow);
+}
+[data-theme="dark"] .pub-card-featured { border-color: rgba(138, 78, 255, 0.4); }
+[data-theme="dark"] .pub-author,
+[data-theme="dark"] .pub-title { color: var(--text-primary); }
+[data-theme="dark"] .pub-desc,
+[data-theme="dark"] .pub-time,
+[data-theme="dark"] .pub-loc { color: var(--text-secondary); }
+[data-theme="dark"] .pub-cat { color: var(--text-muted); }
+[data-theme="dark"] .pub-actions { border-top-color: var(--border-subtle); }
+[data-theme="dark"] .pub-btn { color: var(--text-secondary); }
+[data-theme="dark"] .pub-btn:hover { background: rgba(138, 78, 255, 0.12); }
+[data-theme="dark"] .pub-menu-dropdown {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+[data-theme="dark"] .pub-menu-dropdown button { color: var(--text-primary); }
+[data-theme="dark"] .pub-menu-dropdown button:hover { background: rgba(138,78,255,0.12); }
+[data-theme="dark"] .pub-panel { background: var(--bg-surface-2); border-top-color: var(--border-subtle); }
+[data-theme="dark"] .pub-c-body { background: var(--bg-surface); border-color: var(--border-subtle); }
+[data-theme="dark"] .pub-c-name { color: var(--text-primary); }
+[data-theme="dark"] .pub-c-text { color: var(--text-secondary); }
+[data-theme="dark"] .pub-comment-form input {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+/* Feed section */
+[data-theme="dark"] .feed-wrap { background: var(--bg-page); }
+[data-theme="dark"] .feed-header h1 { color: var(--text-primary); }
+[data-theme="dark"] .feed-sub { color: var(--text-secondary); }
+[data-theme="dark"] .feed-search-bar {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+[data-theme="dark"] .feed-search-input {
+  background: transparent;
+  color: var(--text-primary);
+}
+[data-theme="dark"] .feed-search-input::placeholder { color: var(--text-muted); }
+[data-theme="dark"] .feed-tipo-pill {
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+[data-theme="dark"] .feed-tipo-pill:hover { color: var(--anunza-violet); border-color: var(--anunza-violet); }
+[data-theme="dark"] .feed-tipo-pill.active { background: var(--anunza-violet); border-color: var(--anunza-violet); color: #fff; }
+[data-theme="dark"] .feed-filters-toggle { background: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-secondary); }
+[data-theme="dark"] .feed-load-more { background: var(--bg-surface); border-color: var(--border-subtle); }
+[data-theme="dark"] .feed-plan-banner { background: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-secondary); }
+
+/* Category pills */
+[data-theme="dark"] .feed-cat-pill {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+[data-theme="dark"] .feed-cat-pill.active { background: var(--anunza-violet); color: #fff; }
+
+/* Skeleton */
+[data-theme="dark"] .sk-card { background: var(--bg-surface); border-color: var(--border-subtle); }
+[data-theme="dark"] .sk-shimmer {
+  background: linear-gradient(90deg, #1a1230 25%, #2a1f48 50%, #1a1230 75%);
+  background-size: 200% 100%;
+}
+
+/* Profile section */
+[data-theme="dark"] .upp2-hero { background: var(--bg-surface); box-shadow: var(--card-shadow); }
+[data-theme="dark"] .upp2-about,
+[data-theme="dark"] .upp2-pubs-section { background: var(--bg-surface); border-color: var(--border-subtle); }
+[data-theme="dark"] .upp2-name { color: var(--text-primary); }
+[data-theme="dark"] .upp2-meta-row { color: var(--text-secondary); }
+[data-theme="dark"] .upp2-pub-card { background: var(--bg-surface-2); border-color: var(--border-subtle); }
+[data-theme="dark"] .upp2-pub-title { color: var(--text-primary); }
+
+/* Modals */
+[data-theme="dark"] .uppm-overlay { background: var(--bg-page); }
+[data-theme="dark"] .uppm-topbar { background: var(--bg-sidebar); border-bottom-color: var(--border-subtle); }
+[data-theme="dark"] .pdm-overlay { background: var(--bg-page); }
+[data-theme="dark"] .pdm-topbar { background: var(--bg-sidebar); border-bottom-color: var(--border-subtle); }
+[data-theme="dark"] .pdm-body { color: var(--text-primary); }
+[data-theme="dark"] .pdm-title { color: var(--text-primary); }
+[data-theme="dark"] .pdm-cats { color: var(--text-secondary); }
+[data-theme="dark"] .pdm-author {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+[data-theme="dark"] .pdm-author-name { color: var(--text-primary); }
+[data-theme="dark"] .pdm-author-meta { color: var(--text-muted); }
+[data-theme="dark"] .pdm-desc { background: var(--bg-surface); border-color: var(--border-subtle); }
+[data-theme="dark"] .pdm-desc p { color: var(--text-secondary); }
+[data-theme="dark"] .pdm-stats { color: var(--text-muted); }
+[data-theme="dark"] .pdm-actions { background: var(--bg-sidebar); border-top-color: var(--border-subtle); }
+[data-theme="dark"] .pdm-action-btn { color: var(--text-muted); }
+[data-theme="dark"] .pdm-action-btn:hover:not(:disabled) { background: rgba(138,78,255,0.15); color: var(--anunza-violet); }
+
+/* Historial */
+[data-theme="dark"] .hist-wrap { background: var(--bg-page); }
+[data-theme="dark"] .hist-card { background: var(--bg-surface); border-color: var(--border-subtle); }
+[data-theme="dark"] .hist-card h2 { color: var(--text-primary); }
+[data-theme="dark"] .hist-item-link { color: var(--anunza-violet); }
+
+/* Notification panel */
+[data-theme="dark"] .notif-panel { background: var(--bg-surface); border-color: var(--border-subtle); }
+
+/* Forms */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder { color: var(--text-muted); }
+
+/* Admin */
+[data-theme="dark"] .admin-body { background: var(--bg-page); }
+[data-theme="dark"] .admin-main { background: var(--bg-page); }
+[data-theme="dark"] .admin-table-wrap { background: var(--bg-surface); border-color: var(--border-subtle); }
+[data-theme="dark"] .admin-table th { background: var(--bg-surface-2); color: var(--text-primary); }
+[data-theme="dark"] .admin-table td { color: var(--text-secondary); border-bottom-color: var(--border-subtle); }
+[data-theme="dark"] .admin-table tbody tr:hover { background: rgba(138,78,255,0.06); }
+[data-theme="dark"] .admin-toolbar { background: var(--bg-surface); border-color: var(--border-subtle); }
+[data-theme="dark"] .admin-stat-card { background: var(--bg-surface); border-color: var(--border-subtle); }
+[data-theme="dark"] .admin-nav a { color: var(--text-secondary); }
+[data-theme="dark"] .admin-nav a.active { background: rgba(138,78,255,0.18); color: #c4a8ff; }
+[data-theme="dark"] .admin-nav a:hover:not(.active) { background: rgba(138,78,255,0.1); }
+[data-theme="dark"] .admin-page-title { color: var(--text-primary); }
+
+[data-theme="dark"] .feed-cat-pills-fade {
+  background: linear-gradient(to right, transparent, var(--bg-page, #0e0a1c));
+}
+
+/* Filtros */
+[data-theme="dark"] .filtros {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+[data-theme="dark"] .filtros-head-title { color: var(--text-primary); }
+[data-theme="dark"] .filtros-select,
+[data-theme="dark"] .filtros-input,
+[data-theme="dark"] .filtros-price-input {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+[data-theme="dark"] .filtros-select-wrap,
+[data-theme="dark"] .filtros-input-wrap,
+[data-theme="dark"] .filtros-price-box {
+  background: var(--bg-surface-2);
+  border-color: var(--border-subtle);
+}
+[data-theme="dark"] .filtros-star {
+  background: var(--bg-surface-2);
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+}
+[data-theme="dark"] .filtros-star.is-active {
+  background: var(--anunza-violet);
+  border-color: var(--anunza-violet);
+  color: #fff;
+}
+[data-theme="dark"] .filtros-apply {
+  background: rgba(138,78,255,0.12);
+  color: var(--text-muted);
+}
+[data-theme="dark"] .filtros-apply.is-ready {
+  background: var(--btn-primary);
+  color: #fff;
+}
+
+/* Logo — la pastilla lavanda lo contiene limpiamente en dark mode */
+[data-theme="dark"] .anunza-navbar-brand {
+  background: #f5f2ff;
+  border-radius: 10px;
+  padding: 2px 6px;
+}

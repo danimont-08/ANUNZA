@@ -7,13 +7,13 @@
 }
 
 .anunza-navbar-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0.65rem 1.25rem;
+  width: 100%;
+  padding: 0.65rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  box-sizing: border-box;
 }
 
 .anunza-navbar-brand {
@@ -42,6 +42,9 @@
   border-radius: 8px;
   border: 1px solid rgba(138, 78, 255, 0.35);
   background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  font-family: inherit;
+  line-height: normal;
 }
 
 .anunza-admin-link:hover {

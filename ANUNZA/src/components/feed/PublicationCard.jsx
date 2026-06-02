@@ -12,15 +12,16 @@ import {
 } from '../../models/publicacionModel';
 import { ReportModal } from './ReportModal';
 import { DestacarModal } from './DestacarModal';
+import { EditPublicacionModal } from './EditPublicacionModal';
 import { ConfirmDialog } from '../ConfirmDialog';
 import {
   IconHeart, IconChat, IconComment, IconStar,
   IconShare, IconBookmark, IconFlag, IconAlertUser, IconDots, IconTrash,
-  IconShieldCheck, IconCrown, IconMapPin, IconX,
+  IconShieldCheck, IconCrown, IconMapPin, IconX, IconCheck,
 } from '../icons';
 import { DEFAULT_AVATAR } from '../../utils/constants';
 import { formatDate, formatCOP } from '../../utils/format';
-import { useToast } from '../Toast';
+import { useToast } from '../../context/ToastContext';
 import './PublicationCard.css';
 import './DestacarModal.css';
 
@@ -36,7 +37,7 @@ function isDestacadaActiva(p) {
   return new Date(p.destacada_hasta.endsWith('Z') ? p.destacada_hasta : p.destacada_hasta + 'Z') > new Date();
 }
 
-export const PublicationCard = React.memo(function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError, onDestacar, onDelete }) {
+export const PublicationCard = React.memo(function PublicationCard({ p, currentUserId, onToggleLike, onOpenChat, onError, onDestacar, onDelete, onUpdate, onHashtagClick, onNavigateToPost }) {
   const [profileUserId, setProfileUserId]   = useState(null);
   const [openComments, setOpenComments]     = useState(false);
   const [openResenas, setOpenResenas]       = useState(false);
@@ -45,10 +46,11 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
   const [openDestacar, setOpenDestacar]     = useState(false);
   const [openMenu, setOpenMenu]             = useState(false);
   const [confirmDelete, setConfirmDelete]   = useState(false);
+  const [openEdit, setOpenEdit]             = useState(false);
   const [deleting, setDeleting]             = useState(false);
   const [isGuardado, setIsGuardado]         = useState(p.user_guardado ?? false);
   const [guardandoLoading, setGuardandoLoading] = useState(false);
-  const { showToast, ToastEl } = useToast();
+  const showToast = useToast();
   const menuRef = useRef(null);
 
   const destacadaActiva = isDestacadaActiva(p);
@@ -144,10 +146,13 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
   };
 
   const shareLink = async () => {
-    const url = `${window.location.origin}/dashboard?post=${p.id}`;
+    const url = `${window.location.origin}/pub/${p.id}`;
     try {
       await navigator.clipboard.writeText(url);
-    } catch { onError('No se pudo copiar el enlace'); }
+      showToast('Enlace copiado', 'success');
+    } catch {
+      showToast('No se pudo copiar el enlace', 'error');
+    }
   };
 
   const handleDelete = async () => {
@@ -215,15 +220,7 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
           {openMenu && (
             <div className="pub-menu-dropdown">
               <button type="button" onClick={() => { shareLink(); setOpenMenu(false); }}>
-                <IconShare /> Reenviar
-              </button>
-              <button
-                type="button"
-                onClick={() => { handleGuardar(); setOpenMenu(false); }}
-                disabled={guardandoLoading}
-              >
-                <IconBookmark saved={isGuardado} />
-                {isGuardado ? 'Guardado' : 'Guardar'}
+                <IconShare /> Compartir
               </button>
               {!esMio && (
                 <button
@@ -241,6 +238,14 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
                   onClick={() => { setOpenReportUser(true); setOpenMenu(false); }}
                 >
                   <IconAlertUser /> Reportar usuario
+                </button>
+              )}
+              {esMio && (
+                <button
+                  type="button"
+                  onClick={() => { setOpenEdit(true); setOpenMenu(false); }}
+                >
+                  <IconCheck size={14} /> Editar publicación
                 </button>
               )}
               {esMio && (
@@ -265,7 +270,12 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
       {tags.length > 0 && (
         <div className="pub-tags">
           {tags.map((t) => (
-            <span key={t} className="pub-tag">#{t}</span>
+            <button
+              key={t}
+              type="button"
+              className="pub-tag pub-tag--clickable"
+              onClick={() => onHashtagClick?.(`#${t}`)}
+            >#{t}</button>
           ))}
         </div>
       )}
@@ -286,8 +296,9 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
 
       <MediaCarousel items={media} />
 
-      {/* ── Barra de acciones (solo iconos) ── */}
+      {/* ── Barra de acciones ── */}
       <footer className="pub-actions">
+        {/* Interacciones sociales */}
         <button
           type="button"
           className={`pub-btn pub-like ${p.user_liked ? 'is-on' : ''}`}
@@ -301,16 +312,39 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
 
         <button
           type="button"
+          className="pub-btn"
+          onClick={toggleComments}
+          aria-label={`Comentarios · ${commentCount}`}
+          title={`Comentarios · ${commentCount}`}
+        >
+          <IconComment />
+          {commentCount > 0 && <span>{commentCount}</span>}
+        </button>
+
+        <button
+          type="button"
           className={`pub-btn pub-resenas ${resenasCount > 0 ? 'has-rating' : ''}`}
           onClick={toggleResenas}
           aria-label={resenasTitle}
           title={resenasTitle}
         >
           <IconStar />
-          {resenasCount > 0 && promedioResenas != null && <span>{promedioResenas}<IconStar size={12}/></span>}
           {resenasCount > 0 && <span>({resenasCount})</span>}
         </button>
 
+        {/* Guardar */}
+        <button
+          type="button"
+          className={`pub-btn pub-guardar ${isGuardado ? 'is-on' : ''}`}
+          onClick={handleGuardar}
+          disabled={guardandoLoading}
+          aria-label={isGuardado ? 'Guardado' : 'Guardar'}
+          title={isGuardado ? 'Guardado' : 'Guardar'}
+        >
+          <IconBookmark saved={isGuardado} />
+        </button>
+
+        {/* Chat: CTA de contacto, separado a la derecha */}
         {!esMio && (
           <button
             type="button"
@@ -320,19 +354,9 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
             title="Iniciar chat"
           >
             <IconChat />
+            <span>Chat</span>
           </button>
         )}
-
-        <button
-          type="button"
-          className="pub-btn"
-          onClick={toggleComments}
-          aria-label={`Comentarios · ${commentCount}`}
-          title={`Comentarios · ${commentCount}`}
-        >
-          <IconComment />
-          {commentCount > 0 && <span>{commentCount}</span>}
-        </button>
 
         {esMio && !destacadaActiva && (
           <button
@@ -499,6 +523,17 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
         <UserPublicProfileModal
           userId={profileUserId}
           onClose={() => setProfileUserId(null)}
+          onNavigateToPost={(pubId) => {
+            setProfileUserId(null);
+            onNavigateToPost?.(pubId);
+          }}
+        />
+      )}
+      {openEdit && (
+        <EditPublicacionModal
+          pub={p}
+          onClose={() => setOpenEdit(false)}
+          onUpdated={(updated) => onUpdate?.(updated)}
         />
       )}
       {confirmDelete && (
@@ -510,7 +545,6 @@ export const PublicationCard = React.memo(function PublicationCard({ p, currentU
           onCancel={() => setConfirmDelete(false)}
         />
       )}
-      {ToastEl}
     </article>
   );
 });

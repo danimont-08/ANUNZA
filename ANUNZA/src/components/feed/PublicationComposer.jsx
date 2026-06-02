@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { compressImage } from '../../utils/imageCompression';
 import './PublicationComposer.css';
 
 function readFileAsDataUrl(file) {
@@ -41,7 +42,9 @@ export function PublicationComposer({ categorias, onCreated, onError }) {
         continue;
       }
       const isVid = f.type.startsWith('video/');
-      const url = await readFileAsDataUrl(f);
+      const url = isVid
+        ? await readFileAsDataUrl(f)
+        : await compressImage(f, { maxWidth: 1400, maxHeight: 1400, quality: 0.82 });
       next.push({ url, type: isVid ? 'video' : 'image' });
     }
     setMedia(next);

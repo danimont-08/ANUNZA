@@ -9,11 +9,11 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5001',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5001',
         changeOrigin: true,
         ws: true,
       }
@@ -22,10 +22,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor separado para mejor caché del navegador
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-supabase': ['@supabase/supabase-js'],
+        // Función (compatible con rolldown/Vite 8): separa vendors para mejor caché
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (/[\\/]react(-dom|-router-dom)?[\\/]/.test(id)) return 'vendor-react';
+            if (id.includes('@supabase')) return 'vendor-supabase';
+          }
         },
       },
     },

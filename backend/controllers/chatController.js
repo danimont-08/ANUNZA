@@ -185,6 +185,7 @@ export const listMessages = async (req, res) => {
 
     const { rows } = await pool.query(
       `SELECT m.id, m.conversacion_id, m.remitente_id, m.contenido, m.tipo, m.created_at,
+              COALESCE(m.editado, false) AS editado,
               u.nombre AS remitente_nombre, u.foto_perfil AS remitente_foto
        FROM mensajes m
        INNER JOIN usuarios u ON u.id = m.remitente_id
@@ -282,6 +283,46 @@ export const sendMessage = async (req, res) => {
     res.status(201).json({ mensaje: fullMsg });
   } catch (error) {
     console.error('sendMessage:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const editMessage = async (req, res) => {
+  const userId = req.userId;
+  const { mensajeId } = req.params;
+  const { contenido } = req.body;
+  if (!String(contenido || '').trim()) return res.status(400).json({ message: 'Contenido vacío' });
+  try {
+    const { rows } = await pool.query(
+      `UPDATE mensajes SET contenido = $1, editado = true
+       WHERE id = $2 AND remitente_id = $3
+       RETURNING id, conversacion_id, contenido, editado`,
+      [String(contenido).trim(), mensajeId, userId]
+    );
+    if (!rows.length) return res.status(403).json({ message: 'No autorizado o mensaje no encontrado' });
+    getIo()?.to(`conv:${rows[0].conversacion_id}`).emit('message_edited', { mensajeId: rows[0].id, contenido: rows[0].contenido });
+    res.json({ mensaje: rows[0] });
+  } catch (error) {
+    console.error('editMessage:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteMessage = async (req, res) => {
+  const userId = req.userId;
+  const { mensajeId } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE mensajes SET tipo = 'eliminado', contenido = NULL
+       WHERE id = $1 AND remitente_id = $2
+       RETURNING id, conversacion_id`,
+      [mensajeId, userId]
+    );
+    if (!rows.length) return res.status(403).json({ message: 'No autorizado o mensaje no encontrado' });
+    getIo()?.to(`conv:${rows[0].conversacion_id}`).emit('message_deleted', { mensajeId: rows[0].id });
+    res.json({ deleted: true });
+  } catch (error) {
+    console.error('deleteMessage:', error);
     res.status(500).json({ message: error.message });
   }
 };

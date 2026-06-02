@@ -9,7 +9,23 @@ import { HistorialSection } from '../components/HistorialSection';
 import { ProfileSection } from '../components/ProfileSection';
 import { NotificacionesPanel } from '../components/NotificacionesPanel';
 import { fetchNotificaciones } from '../models/notificacionModel';
+import { useTheme } from '../context/ThemeContext';
 import './Dashboard.css';
+
+const IconMoon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+);
+const IconSun = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+);
 
 const IconHome = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -44,6 +60,7 @@ const NAV_ITEMS = [
 
 export const Dashboard = () => {
   const { user, logout, updateProfile } = useAuth();
+  const { dark, toggle: toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -126,7 +143,6 @@ export const Dashboard = () => {
       <Navbar
         user={user}
         onLogout={handleLogout}
-        onOpenProfile={() => setActiveSection('perfil')}
         noLeidas={noLeidas}
         onToggleNotificaciones={handleToggleNotif}
       />
@@ -163,6 +179,16 @@ export const Dashboard = () => {
           <div className="sidebar-footer">
             <button
               type="button"
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={dark ? 'Modo claro' : 'Modo oscuro'}
+              aria-label={dark ? 'Activar modo claro' : 'Activar modo oscuro'}
+            >
+              {dark ? <IconSun /> : <IconMoon />}
+              <span>{dark ? 'Modo claro' : 'Modo oscuro'}</span>
+            </button>
+            <button
+              type="button"
               className="anunza-navbar-user sidebar-user-btn"
               onClick={() => setActiveSection('perfil')}
             >
@@ -187,54 +213,59 @@ export const Dashboard = () => {
           {profileError && activeSection === 'perfil' && (
             <div className="dashboard-inline-err">{profileError}</div>
           )}
-          {activeSection === 'inicio' && (
-            <FeedSection
-              user={user}
-              highlightPublicacionId={feedHighlightId}
-              onHighlightConsumed={() => setFeedHighlightId(null)}
-              onChatWithUser={(uid, pubId, titulo) => {
-                setChatBootstrapUserId(uid);
-                setChatBootstrapPublicacionId(pubId ?? null);
-                setChatBootstrapPublicacionTitulo(titulo ?? null);
-                setChatBootstrapConvId(null);
-                setActiveSection('mensajes');
-              }}
-            />
-          )}
-          {activeSection === 'mensajes' && (
-            <ChatSection
-              user={user}
-              bootstrapOtroUsuarioId={chatBootstrapUserId}
-              bootstrapPublicacionId={chatBootstrapPublicacionId}
-              bootstrapPublicacionTitulo={chatBootstrapPublicacionTitulo}
-              bootstrapConversacionId={chatBootstrapConvId}
-              onBootstrapConsumed={() => {
-                setChatBootstrapUserId(null);
-                setChatBootstrapPublicacionId(null);
-                setChatBootstrapPublicacionTitulo(null);
-                setChatBootstrapConvId(null);
-              }}
-            />
-          )}
-          {activeSection === 'historial' && (
-            <HistorialSection
-              onNavigateToPost={(id) => {
-                setFeedHighlightId(id);
-                setActiveSection('inicio');
-              }}
-            />
-          )}
-          {activeSection === 'perfil' && (
-            <ProfileSection
-              user={user}
-              updateProfile={updateProfile}
-              onError={setProfileError}
-              onNavigateToPost={(id) => {
-                setFeedHighlightId(id);
-                setActiveSection('inicio');
-              }}
-            />
-          )}
+          <div key={activeSection} className="section-anim">
+            {activeSection === 'inicio' && (
+              <FeedSection
+                user={user}
+                highlightPublicacionId={feedHighlightId}
+                onHighlightConsumed={() => setFeedHighlightId(null)}
+                onChatWithUser={(uid, pubId, titulo) => {
+                  setChatBootstrapUserId(uid);
+                  setChatBootstrapPublicacionId(pubId ?? null);
+                  setChatBootstrapPublicacionTitulo(titulo ?? null);
+                  setChatBootstrapConvId(null);
+                  setActiveSection('mensajes');
+                }}
+              />
+            )}
+            {activeSection === 'mensajes' && (
+              <ChatSection
+                user={user}
+                bootstrapOtroUsuarioId={chatBootstrapUserId}
+                bootstrapPublicacionId={chatBootstrapPublicacionId}
+                bootstrapPublicacionTitulo={chatBootstrapPublicacionTitulo}
+                bootstrapConversacionId={chatBootstrapConvId}
+                onBootstrapConsumed={() => {
+                  setChatBootstrapUserId(null);
+                  setChatBootstrapPublicacionId(null);
+                  setChatBootstrapPublicacionTitulo(null);
+                  setChatBootstrapConvId(null);
+                }}
+              />
+            )}
+            {activeSection === 'historial' && (
+              <HistorialSection
+                onNavigateToPost={(id) => {
+                  setFeedHighlightId(id);
+                  setActiveSection('inicio');
+                }}
+              />
+            )}
+            {activeSection === 'perfil' && (
+              <ProfileSection
+                user={user}
+                updateProfile={updateProfile}
+                onError={setProfileError}
+                onNavigateToPost={(id) => {
+                  setFeedHighlightId(id);
+                  setActiveSection('inicio');
+                }}
+                dark={dark}
+                onToggleTheme={toggleTheme}
+                onLogout={handleLogout}
+              />
+            )}
+          </div>
         </main>
       </div>
     </div>

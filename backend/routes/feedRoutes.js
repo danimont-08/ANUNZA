@@ -3,7 +3,9 @@ import { verifyToken, verifyActiveAccount } from '../middleware/auth.js';
 import {
   getFeed,
   getCategorias,
+  getPublicacionById,
   createPublication,
+  updatePublication,
   deletePublication,
   toggleLike,
   toggleGuardar,
@@ -24,6 +26,8 @@ router.post('/publicaciones', verifyToken, verifyActiveAccount, createPublicatio
 router.get('/', verifyToken, verifyActiveAccount, getFeed);
 router.post('/publicaciones/:publicacionId/like', verifyToken, verifyActiveAccount, toggleLike);
 router.post('/publicaciones/:publicacionId/guardar', verifyToken, verifyActiveAccount, toggleGuardar);
+router.get('/publicaciones/:publicacionId', verifyToken, verifyActiveAccount, getPublicacionById);
+router.put('/publicaciones/:publicacionId', verifyToken, verifyActiveAccount, updatePublication);
 router.delete('/publicaciones/:publicacionId', verifyToken, verifyActiveAccount, deletePublication);
 router.get('/publicaciones/:publicacionId/comentarios', verifyToken, verifyActiveAccount, getComentarios);
 router.post('/publicaciones/:publicacionId/comentarios', verifyToken, verifyActiveAccount, addComentario);

@@ -207,12 +207,13 @@
 .upp2-pub-card {
   border: 1px solid rgba(138, 78, 255, 0.12);
   border-radius: 14px;
-  overflow: hidden;
+  overflow: visible;
   background: #faf8ff;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .upp2-pub-card:hover {
@@ -321,4 +322,13 @@
 
 @media (max-width: 380px) {
   .upp2-pubs-grid { grid-template-columns: 1fr; }
+}
+
+.upp2-pub-card--clickable {
+  cursor: pointer;
+}
+.upp2-pub-card--clickable:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(138, 78, 255, 0.18);
+  border-color: rgba(138, 78, 255, 0.3);
 }

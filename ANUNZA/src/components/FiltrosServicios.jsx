@@ -1,7 +1,7 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../services/api';
 import { formatCOP } from '../utils/format';
-import { IconStar } from './icons';
+import { IconStar, IconMapPin, IconX } from './icons';
 import './FiltrosServicios.css';
 
 const EMPTY = {
@@ -12,6 +12,11 @@ const EMPTY = {
   precioMax: '',
   calificacionMin: '',
 };
+
+function countActive(f) {
+  return [f.categoria, f.subcategoria, f.ciudad, f.precioMin, f.precioMax, f.calificacionMin]
+    .filter(Boolean).length;
+}
 
 const FiltrosServicios = ({ onChange }) => {
   const [categorias, setCategorias] = useState([]);
@@ -53,114 +58,147 @@ const FiltrosServicios = ({ onChange }) => {
     onChange(EMPTY);
   };
 
+  const active = countActive(local);
+
   return (
-    <section className="filtros-servicios">
-      <h2>Filtrar servicios</h2>
+    <section className="filtros">
 
-      <div className="filtro-group">
-        <label htmlFor="categoria">Categoría</label>
-        <select
-          id="categoria"
-          value={local.categoria || ''}
-          onChange={handleCategoria}
-        >
-          <option value="">Todas las categorías</option>
-          {categorias.map((c) => (
-            <option key={c.id} value={c.id}>{c.nombre}</option>
-          ))}
-        </select>
+      {/* Header */}
+      <div className="filtros-head">
+        <span className="filtros-head-title">
+          Filtros
+          {active > 0 && <span className="filtros-badge">{active}</span>}
+        </span>
+        {active > 0 && (
+          <button type="button" className="filtros-reset" onClick={handleLimpiar}>
+            <IconX size={12} /> Limpiar todo
+          </button>
+        )}
       </div>
 
-      {subcategorias.length > 0 && (
-        <div className="filtro-group">
-          <label htmlFor="subcategoria">Subcategoría</label>
-          <select
-            id="subcategoria"
-            value={local.subcategoria || ''}
-            onChange={(e) => set({ subcategoria: e.target.value ? Number(e.target.value) : '' })}
-          >
-            <option value="">Todas las subcategorías</option>
-            {subcategorias.map((s) => (
-              <option key={s.id} value={s.id}>{s.nombre}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Grid de filtros */}
+      <div className="filtros-grid">
 
-      <div className="filtro-group">
-        <label htmlFor="ciudad">Ciudad</label>
-        <input
-          id="ciudad"
-          type="text"
-          placeholder="Ej. Cali, Bogotá, Medellín"
-          value={local.ciudad}
-          onChange={(e) => set({ ciudad: e.target.value })}
-        />
-      </div>
-
-      <div className="filtro-group rango-precios">
-        <div>
-          <label htmlFor="precioMin">Precio mínimo</label>
-          <input
-            id="precioMin"
-            type="number"
-            min="0"
-            value={local.precioMin}
-            onChange={(e) => set({ precioMin: e.target.value })}
-            placeholder="Ej. 10000"
-          />
-          {local.precioMin !== '' && (
-            <div className="rango-values">{formatCOP(local.precioMin)}</div>
-          )}
+        {/* Categoría */}
+        <div className="filtros-field">
+          <label className="filtros-label" htmlFor="f-categoria">Categoría</label>
+          <div className="filtros-select-wrap">
+            <select id="f-categoria" className="filtros-select" value={local.categoria || ''} onChange={handleCategoria}>
+              <option value="">Todas</option>
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div>
-          <label htmlFor="precioMax">Precio máximo</label>
-          <input
-            id="precioMax"
-            type="number"
-            min="0"
-            value={local.precioMax}
-            onChange={(e) => set({ precioMax: e.target.value })}
-            placeholder="Sin límite"
-          />
-          {local.precioMax !== '' && (
-            <div className="rango-values">{formatCOP(local.precioMax)}</div>
-          )}
-        </div>
-      </div>
 
-      <div className="filtro-group rating-group">
-        <label>Calificación mínima</label>
-        <div className="rating-buttons">
-          {[1, 2, 3, 4, 5].map((v) => (
-            <button
-              key={v}
-              type="button"
-              className={v <= local.calificacionMin ? 'active' : ''}
-              onClick={() => set({ calificacionMin: local.calificacionMin === v ? '' : v })}
+        {/* Subcategoría */}
+        <div className={`filtros-field${subcategorias.length === 0 ? ' filtros-field--hidden' : ''}`}>
+          <label className="filtros-label" htmlFor="f-subcat">Subcategoría</label>
+          <div className="filtros-select-wrap">
+            <select
+              id="f-subcat"
+              className="filtros-select"
+              value={local.subcategoria || ''}
+              onChange={(e) => set({ subcategoria: e.target.value ? Number(e.target.value) : '' })}
             >
-              {v} <IconStar size={12}/>
-            </button>
-          ))}
+              <option value="">Todas</option>
+              {subcategorias.map((s) => (
+                <option key={s.id} value={s.id}>{s.nombre}</option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        {/* Ciudad */}
+        <div className="filtros-field">
+          <label className="filtros-label" htmlFor="f-ciudad">Ciudad</label>
+          <div className="filtros-input-wrap">
+            <IconMapPin size={15} />
+            <input
+              id="f-ciudad"
+              type="text"
+              className="filtros-input"
+              placeholder="Ej. Cali, Bogotá…"
+              value={local.ciudad}
+              onChange={(e) => set({ ciudad: e.target.value })}
+            />
+            {local.ciudad && (
+              <button type="button" className="filtros-input-clear" onClick={() => set({ ciudad: '' })}>
+                <IconX size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Precio */}
+        <div className="filtros-field filtros-field--price">
+          <label className="filtros-label">Precio</label>
+          <div className="filtros-price-row">
+            <div className="filtros-price-box">
+              <span className="filtros-price-prefix">Mín</span>
+              <input
+                type="number"
+                min="0"
+                className="filtros-price-input"
+                placeholder="0"
+                value={local.precioMin}
+                onChange={(e) => set({ precioMin: e.target.value })}
+              />
+            </div>
+            <span className="filtros-price-sep">–</span>
+            <div className="filtros-price-box">
+              <span className="filtros-price-prefix">Máx</span>
+              <input
+                type="number"
+                min="0"
+                className="filtros-price-input"
+                placeholder="∞"
+                value={local.precioMax}
+                onChange={(e) => set({ precioMax: e.target.value })}
+              />
+            </div>
+          </div>
+          {(local.precioMin || local.precioMax) && (
+            <p className="filtros-price-preview">
+              {local.precioMin ? formatCOP(local.precioMin) : '0'}
+              {' → '}
+              {local.precioMax ? formatCOP(local.precioMax) : 'sin límite'}
+            </p>
+          )}
+        </div>
+
+        {/* Calificación */}
+        <div className="filtros-field filtros-field--full">
+          <label className="filtros-label">Calificación mínima</label>
+          <div className="filtros-stars">
+            {[1, 2, 3, 4, 5].map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={`filtros-star${v <= local.calificacionMin ? ' is-active' : ''}`}
+                onClick={() => set({ calificacionMin: local.calificacionMin === v ? '' : v })}
+                aria-label={`${v} estrellas`}
+              >
+                <IconStar size={16} />
+                <span>{v}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
       </div>
 
-      <div className="filtros-actions">
-        <button
-          type="button"
-          className={`filtros-apply-btn${dirty ? ' has-changes' : ''}`}
-          onClick={handleAplicar}
-        >
-          Aplicar filtros
-        </button>
-        <button
-          type="button"
-          className="filtros-clear-btn"
-          onClick={handleLimpiar}
-        >
-          Limpiar
-        </button>
-      </div>
+      {/* Botón aplicar */}
+      <button
+        type="button"
+        className={`filtros-apply${dirty ? ' is-ready' : ''}`}
+        onClick={handleAplicar}
+        disabled={!dirty}
+      >
+        {dirty ? 'Aplicar filtros' : 'Sin cambios'}
+      </button>
+
     </section>
   );
 };
